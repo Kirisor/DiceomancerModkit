@@ -85,14 +85,28 @@ cd "$ROOT/studio"
 echo "  发布中（首次会下载运行时包，可能较慢）…"
 if [ "$SELF_CONTAINED" = "1" ]; then
   echo "  自包含模式（会下载 .NET 运行时包，首次较慢）…"
-  "$DOTNET" publish ModKit.Studio.csproj -c Release -r win-x64 --self-contained true \
+  if ! "$DOTNET" publish ModKit.Studio.csproj -c Release -r win-x64 --self-contained true \
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
-    -p:DebugType=none -o "$S" -v q 2>&1 | tail -5 | sed 's/^/    /'
+    -p:DebugType=none -o "$S" > "$DIST/publish.log" 2>&1; then
+    echo "  ✗ 自包含发布失败，详情见 dist/publish.log" >&2
+    tail -12 "$DIST/publish.log" | sed 's/^/    /' >&2
+    exit 1
+  fi
+  tail -3 "$DIST/publish.log" | sed 's/^/    /'
 else
   echo "  框架依赖模式（玩家需安装 .NET 10 Desktop Runtime；要自包含用 SELF_CONTAINED=1）…"
-  "$DOTNET" publish ModKit.Studio.csproj -c Release --self-contained false \
-    -p:DebugType=none -o "$S" -v q 2>&1 | tail -5 | sed 's/^/    /'
+  if ! "$DOTNET" publish ModKit.Studio.csproj -c Release --self-contained false \
+    -p:DebugType=none -o "$S" > "$DIST/publish.log" 2>&1; then
+    echo "  ✗ 发布失败，详情见 dist/publish.log" >&2
+    tail -12 "$DIST/publish.log" | sed 's/^/    /' >&2
+    exit 1
+  fi
+  tail -3 "$DIST/publish.log" | sed 's/^/    /'
 fi
+
+if [ ! -f "$S/ModKit.Studio.exe" ]; then echo "  ✗ 没产出 ModKit.Studio.exe" >&2; exit 1; fi
+# 校验 Studio 产物
+echo "  产物: ModKit.Studio.exe $(du -h "$S/ModKit.Studio.exe" | cut -f1)｜目录 $(du -sh "$S" | cut -f1)"
 
 mkdir -p "$S/docs"
 for d in "ModKit-作者手册.md" "ModKit-Studio使用手册.md" "ModKit-效果字典.md"; do
