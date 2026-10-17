@@ -1,0 +1,381 @@
+// =============================================================================
+//  ModKit.Game · 职业装配（新职业 = 一颗新球 + 一个 Class 牌组集合 + 一份初始牌组）
+//
+//  游戏侧的三件事（2026-10-15 勘察，全部来自反编译源码）：
+//    ① 职业名：`CardDataManager.GetClassNameByColorE(ColorE[])`
+//       要求 **恰好 3 个颜色**，在 `_colorCardDateCollections` 里找
+//       `cardCollectionType == Class` 且 `colorEs` 为其子集的集合，返回其 `cardCollectionName`。
+//       ⇒ 加一个 Class 集合 = 多一个职业；而且 `GetStandardCardDataCollectionByColorE`
+//         是按颜色子集收人，所以这个集合的卡会**自动进该职业的战役卡池**。
+//    ② 开局牌组 / 起始遗物：`CareerInformationForGameInitialize.allStartDeck`（List<StartColorESDecks>），
+//       按 `colorEs` 与玩家选中的 3 色比对（`DitwUtil.CheckTwoArraySame`）。
+//    ③ 选球界面介绍卡 `ClassIntroCard.SetByKey`：
+//       文案取本地化表 **`Encyclopedia`** 的 `<classKey>` 与 `<classKey>_Intro`；
+//       并且**硬取 `relicSos[1]`** 做护符预览 ⇒ 起始遗物少于 2 件会直接抛异常。
+//
+//  ⇒ 本类只做"把这三件事写进游戏"，球的出现与状态由 CareerPatch 负责。
+// =============================================================================
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Card;
+using Career;
+using Combat;
+using GameData;
+using ModKit.Api;
+using Relic;
+
+namespace ModKit.Game
+{
+    /// <summary>把 mod 声明的职业装配进游戏的职业/色球系统。</summary>
+    internal static class CareerAssembler
+    {
+        /// <summary>本地化表名 —— 职业名与介绍都在这里（ClassIntroCard 写死的）。</summary>
+        private const string EncyclopediaTable = "Encyclopedia";
+
+        /// <summary>原版已经做成球的 5 色（Black 不在其中 ⇒ 新职业至少要用 Black 才不撞车）。</summary>
+        private static readonly ColorE[] VanillaOrbColors = new ColorE[]
+        {
+            ColorE.Red, ColorE.Green, ColorE.Blue, ColorE.Purple, ColorE.Void
+        };
+
+        internal static void Assemble(
+            string modId,
+            string modRoot,
+            ClassSpec spec,
+            List<CardSo> modCards,
+            List<RelicSo> modRelics,
+            LocalizationPump pump,
+            AssemblyResult result,
+            IGameLog log)
+        {
+            if (spec == null) { return; }
+
+            try
+            {
+                // ---- 0. 校验（宁可在加载期报清楚，也不要开局界面才炸）----
+                if (spec.Colors == null || spec.Colors.Count != 3)
+                {
+                    result.Errors.Add(modId + "：职业 " + spec.Id + " 的 colors 必须恰好 3 个（游戏按 3 色组合认职业）。");
+                    return;
+                }
+
+                // 这个职业要占用的"新球"（由 mod 声明；平台只校验它确实是原版没做成球的颜色）
+                ColorE orbColor = GameCapabilitiesProbe.ToGameColor(spec.OrbColor);
+                if (VanillaOrbColors.Contains(orbColor))
+                {
+                    result.Errors.Add(modId + "：职业 " + spec.Id + " 声明的 orbColor = " + orbColor +
+                        " 已经是原版做成球的颜色，会和原版职业撞车。" +
+                        "必须挑原版没做成球的（目前只有 Black）。");
+                    return;
+                }
+
+                var colorEs = new ColorE[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    colorEs[i] = GameCapabilitiesProbe.ToGameColor(spec.Colors[i]);
+                }
+
+                if (!colorEs.Contains(orbColor))
+                {
+                    result.Errors.Add(modId + "：职业 " + spec.Id + " 声明的 orbColor = " + orbColor +
+                        " 不在它的 colors 三色里 —— 玩家凑不出这个组合，职业永远选不到。");
+                    return;
+                }
+
+                if (spec.StartRelics == null || spec.StartRelics.Count < 2)
+                {
+                    result.Errors.Add(modId + "：职业 " + spec.Id + " 的 startRelics 至少 2 件 —— " +
+                        "游戏的职业介绍卡硬取 relicSos[1] 做护符预览，少于 2 件会在开局界面抛异常。");
+                    return;
+                }
+
+                // ---- 0.5 平台侧启用（只有全部校验通过才会走到这里）----
+                //   ★ 这里是"接口 → 平台"的唯一接口点：平台把 mod 声明的球颜色 / 贴图 / 大小落下来，
+                //     并**到这一刻才**建每帧宿主。没有职业声明 ⇒ 平台在游戏里零足迹（可随时拆装）。
+                CareerPatch.ClassDeclared = true;
+                CareerPatch.ConfigureClass(orbColor, ModArt.Resolve(modRoot, spec.OrbSprite), spec.BallScale, log);
+                CareerPatch.EnsureHost(log);
+
+                // ---- 1. 按 id 取出平台的卡 / 遗物（卡名是 mod 前缀归一化后的完整名）----
+                var deckCards = new List<CardSo>();
+                var deckAmounts = new List<CardSoAndAmount>();
+                if (spec.StartDeck != null)
+                {
+                    foreach (var rawId in spec.StartDeck)
+                    {
+                        string cardName = Qualify(modId, rawId);
+                        CardSo so = modCards.FirstOrDefault(c => c != null && c.cardName == cardName);
+                        if (so == null)
+                        {
+                            result.Errors.Add(modId + "：职业 " + spec.Id + " 的初始牌组引用了不存在的卡 '" + rawId + "'。");
+                            continue;
+                        }
+                        deckCards.Add(so);
+                        deckAmounts.Add(new CardSoAndAmount { cardSo = so, amount = 1 });
+                    }
+                }
+                if (deckAmounts.Count == 0)
+                {
+                    result.Errors.Add(modId + "：职业 " + spec.Id + " 的初始牌组是空的。");
+                    return;
+                }
+
+                var relicSos = new List<RelicSo>();
+                foreach (var rawId in spec.StartRelics)
+                {
+                    string relicName = Qualify(modId, rawId);
+                    RelicSo so = modRelics.FirstOrDefault(r => r != null && r.relicInfo.relicName == relicName);
+                    if (so == null)
+                    {
+                        result.Errors.Add(modId + "：职业 " + spec.Id + " 的起始遗物引用了不存在的遗物 '" + rawId + "'。");
+                        continue;
+                    }
+                    relicSos.Add(so);
+                }
+                if (relicSos.Count < 2)
+                {
+                    result.Errors.Add(modId + "：职业 " + spec.Id + " 解析后只剩 " + relicSos.Count +
+                        " 件起始遗物（需要 ≥2）。");
+                    return;
+                }
+
+                // 职业 key：同时当本地化 key 前缀、牌组集合名、StartColorESDecks.classKey
+                string classKey = modId + "." + (string.IsNullOrEmpty(spec.Id) ? "class" : spec.Id);
+
+                // ---- 2. 注册 Class 牌组集合（职业名就是它的 cardCollectionName）----
+                var cdm = CardDataManager.Instance;
+                if (cdm == null)
+                {
+                    result.Warnings.Add(modId + "：CardDataManager.Instance 为 null，职业 " + spec.Id + " 未装配（下次启动会重试）。");
+                    return;
+                }
+
+                var collections = Reflect.Get<List<CardDateCollection>>(cdm, "_colorCardDateCollections");
+                if (collections == null)
+                {
+                    result.Errors.Add(modId + "：_colorCardDateCollections 取不到，职业未装配。");
+                    return;
+                }
+
+                bool exists = collections.Any(c => c != null && c.cardCollectionName == classKey);
+                if (!exists)
+                {
+                    // 卡池：优先用 spec.PoolCards（职业自己的卡池，决定整局能否变强）；
+                    // 没声明就退化成"初始牌组里的去重卡"。
+                    var poolCards = new List<CardSo>();
+                    if (spec.PoolCards != null && spec.PoolCards.Count > 0)
+                    {
+                        foreach (var rawId in spec.PoolCards)
+                        {
+                            string name = Qualify(modId, rawId);
+                            CardSo so = modCards.FirstOrDefault(c => c != null && c.cardName == name);
+                            if (so == null)
+                            {
+                                result.Errors.Add(modId + "：职业 " + spec.Id + " 的卡池引用了不存在的卡 '" + rawId + "'。");
+                                continue;
+                            }
+                            if (!poolCards.Contains(so)) { poolCards.Add(so); }
+                        }
+                    }
+                    if (poolCards.Count == 0)
+                    {
+                        foreach (var c in deckCards) { if (!poolCards.Contains(c)) { poolCards.Add(c); } }
+                        result.Warnings.Add(modId + "：职业 " + spec.Id + " 没声明 poolCards，卡池退化为主牌组去重（"
+                            + poolCards.Count + " 张）。");
+                    }
+
+                    collections.Add(new CardDateCollection
+                    {
+                        cardCollectionType = CardCollectionType.Class,
+                        colorEs = colorEs,
+                        isInRandomPool = true,          // 该职业的卡按颜色子集进入本局卡池
+                        cardCollectionName = classKey,
+                        commonCards = poolCards.ToArray(),
+                        unCommonCards = new CardSo[0],
+                        rareCards = new CardSo[0],
+                        startDeck = deckAmounts.ToArray(),
+                        startRelic = relicSos.ToArray()
+                    });
+                    log.Info("已注册职业牌组集合：" + classKey + "（卡池 " + poolCards.Count + " 张 / 初始牌组 " +
+                        deckAmounts.Count + " 张 / 色组 " + string.Join("+", colorEs.Select(c => c.ToString())) + "）");
+                }
+
+                // ---- 2.5 职业隔离：把该 mod 的「通用卡集合」的 colorEs 收紧成职业三色 ----
+                //   原版图鉴（SubCollectionCards.GetCardsByClass）按「集合的 colorEs ⊆ 该职业三色」筛集合，
+                //   而**空数组是任意集合的子集** ⇒ 六个职业页会把 mod 卡全部收录。
+                //   收紧成职业三色（含 Black，不属于任何原版三色）后就不再出现在任何原版职业页，
+                //   只在我们自己的「模组图鉴」里露面。
+                try
+                {
+                    var allCollections = Reflect.Get<List<CardDateCollection>>(cdm, "_colorCardDateCollections");
+                    if (allCollections != null)
+                    {
+                        string standardCollection = "ModKit_" + modId;
+                        foreach (var col in allCollections)
+                        {
+                            if (col == null || col.cardCollectionName != standardCollection) { continue; }
+                            if (col.colorEs != null && col.colorEs.SequenceEqual(colorEs)) { continue; }
+                            col.colorEs = colorEs.ToArray();
+                            log.Info("职业隔离：集合 " + standardCollection + " 的 colorEs 已收紧为 " +
+                                string.Join("+", colorEs.Select(c => c.ToString())) + "（原版职业图鉴页不再收录）。");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Warn("职业隔离：收紧集合 colorEs 失败 —— " + ex.Message);
+                }
+
+                // ---- 3. 开局牌组 / 起始遗物 + 把新球放进序列化色表 ----
+                var init = CareerManager.Instance == null ? null : CareerManager.Instance.GetCareerInformationForInitialize();
+                if (init == null)
+                {
+                    result.Warnings.Add(modId + "：CareerInformationForGameInitialize 取不到，开局牌组未写入（职业仍在，牌组会是空）。");
+                }
+                else
+                {
+                    if (init.allStartDeck == null) { init.allStartDeck = new List<StartColorESDecks>(); }
+                    if (!init.allStartDeck.Any(d => d != null && d.classKey == classKey))
+                    {
+                        init.allStartDeck.Add(new StartColorESDecks
+                        {
+                            colorEs = colorEs,
+                            deck = deckAmounts.ToArray(),
+                            relicSos = relicSos.ToArray(),
+                            classKey = classKey
+                        });
+                        log.Info("已登记开局牌组：" + classKey + "（" + deckAmounts.Count + " 张牌、" +
+                            relicSos.Count + " 件起始遗物）");
+                    }
+
+                    // ★ 序列化的色表也要补一条：RefreshCareerOrbState 是按颜色 Find 的，
+                    //   而选球界面读的就是这份表（CareerPatch 另外给计算结果也补了一条，双保险）。
+                    if (init.colorEAndStates == null) { init.colorEAndStates = new List<ColorEAndState>(); }
+                    if (!init.colorEAndStates.Any(s => s != null && s.colorE == CareerPatch.NewOrbColor))
+                    {
+                        init.colorEAndStates.Add(new ColorEAndState(CareerPatch.NewOrbColor, ColorEState.Free));
+                    }
+                }
+
+                // ---- 4. 文案：Encyclopedia.<classKey> = 职业名，<classKey>_Intro = 介绍 ----
+                if (pump != null)
+                {
+                    if (!string.IsNullOrEmpty(spec.NameZh))
+                    {
+                        pump.Add("zh-Hans", EncyclopediaTable, classKey, spec.NameZh);
+                    }
+                    if (!string.IsNullOrEmpty(spec.IntroZh))
+                    {
+                        pump.Add("zh-Hans", EncyclopediaTable, classKey + "_Intro", spec.IntroZh);
+                    }
+                }
+
+                // ---- 5. 放开新球：从"看得见点不动"变成可选 ----
+                CareerPatch.OrbState = ColorEState.Free;
+
+                log.Info("职业装配完成：" + classKey + "（名「" + spec.NameZh + "」/ 球 " + CareerPatch.NewOrbColor +
+                    "=" + CareerPatch.OrbState + " / 牌组 " + deckAmounts.Count + " 张）");
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add(modId + "：职业 " + (spec.Id ?? "?") + " 装配异常 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
+        }
+
+        /// <summary>把 mod 内的短 id 归一化成平台用的完整名（已经是完整名则原样返回）。</summary>
+        private static string Qualify(string modId, string id)
+        {
+            if (string.IsNullOrEmpty(id)) { return id; }
+            return id.Contains(".") ? id : modId + "." + id;
+        }
+
+        /// <summary>
+        /// 从 mod 的入口程序集里扫描 <see cref="IModClassProvider"/> 并装配（没有就安静跳过）。
+        /// </summary>
+        /// <remarks>
+        /// 复用平台既有的"扫 mod 程序集"套路（与 <c>[ModEffect]</c> 的发现方式同源），
+        /// 好处是**不需要给 mod.json 新增字段**，职业声明跟着 mod 的 C# 走：
+        /// 卡 / 遗物仍然写在 JSON 里，职业只是按 id 引用它们。
+        /// </remarks>
+        internal static void AssembleFromModAssembly(
+            string modId,
+            string entryAssemblyPath,
+            List<CardSo> modCards,
+            List<RelicSo> modRelics,
+            IGameLog log,
+            AssemblyResult result)
+        {
+            if (string.IsNullOrEmpty(entryAssemblyPath)) { return; }   // 纯数据 mod：没有职业声明
+            try
+            {
+                System.Reflection.Assembly asm = null;
+                foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    try
+                    {
+                        if (!a.IsDynamic && string.Equals(a.Location, entryAssemblyPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            asm = a;
+                            break;
+                        }
+                    }
+                    catch { /* 动态程序集没有 Location，忽略 */ }
+                }
+                if (asm == null)
+                {
+                    result.Warnings.Add(modId + "：入口程序集尚未加载（" + entryAssemblyPath + "），职业声明被跳过。");
+                    return;
+                }
+
+                Type[] types;
+                try
+                {
+                    types = asm.GetTypes();
+                }
+                catch (System.Reflection.ReflectionTypeLoadException ex)
+                {
+                    // 引用游戏程序集时必然发生：能拿到多少算多少
+                    types = ex.Types.Where(t => t != null).ToArray();
+                }
+
+                var providerType = typeof(IModClassProvider);
+                int found = 0;
+                foreach (var t in types)
+                {
+                    if (t == null || t.IsAbstract || t.IsInterface) { continue; }
+                    if (!providerType.IsAssignableFrom(t)) { continue; }
+                    found++;
+
+                    ClassSpec spec;
+                    try
+                    {
+                        spec = ((IModClassProvider)Activator.CreateInstance(t)).ProvideClass();
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add(modId + "：职业声明 " + t.Name + " 读取失败 —— " + ex.GetType().Name + ": " + ex.Message);
+                        continue;
+                    }
+                    if (spec == null) { continue; }
+
+                    var pump = new LocalizationPump(log);
+                    Assemble(modId, System.IO.Path.GetDirectoryName(entryAssemblyPath), spec,
+                        modCards, modRelics, pump, result, log);
+                    var pumpResult = pump.Flush();
+                    if (pumpResult != null && log != null) { log.Info("职业文案写入：" + pumpResult); }
+                }
+
+                if (found == 0 && log != null)
+                {
+                    log.Info("职业声明：本 mod 未实现 IModClassProvider，跳过。");
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Warnings.Add(modId + "：扫描职业声明失败 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
+        }
+    }
+}

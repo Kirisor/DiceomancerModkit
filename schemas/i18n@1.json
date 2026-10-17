@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "modkit/i18n@1",
+  "title": "ModKit 本地化定义",
+  "description": "DICEOMANCER ModKit v1 的文案声明。平台会自动把条目设为 IsSmart——否则 {数字} 占位符会被游戏当作 String.Format 抛 FormatException，且该错误只表现为游戏内弹窗、日志零 Error。",
+  "type": "object",
+  "required": ["$schema", "language", "tables"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "const": "modkit/i18n@1" },
+    "language": {
+      "type": "string",
+      "minLength": 2,
+      "examples": ["zh-Hans", "zh-Hant", "en", "ja", "ru", "es", "pt-BR"],
+      "description": "语言标签。可用语言取决于游戏内已打包的本地化 bundle。"
+    },
+    "tables": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "表名 → (键 → 值)。常用表：CardName / FlavorText / EffectDescription / KeyWord / Relic。",
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": { "type": "string" }
+      }
+    }
+  }
+}

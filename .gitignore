@@ -1,0 +1,16 @@
+# 构建产物
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# 发布物（由打包脚本生成）
+dist/
+*.zip
+
+# 日志
+*.log
+docs/art/
+ArtSubDirectory
+voxel-art/

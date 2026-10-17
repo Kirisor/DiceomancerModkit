@@ -1,0 +1,14 @@
+# 统一换行：仓库内用 LF（脚本必须 LF，否则 bash 会报 $'\r' 语法错误）
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.cs    text eol=lf
+*.xaml  text eol=lf
+*.csproj text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+
+# 二进制
+*.png   binary
+*.dll   binary
+*.bank  binary

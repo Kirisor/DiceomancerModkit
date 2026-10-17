@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "modkit/card@1",
+  "title": "ModKit 卡牌定义",
+  "description": "DICEOMANCER ModKit v1 的卡牌声明。作者只需写这个文件，平台负责克隆原版资产、装配游戏内部结构、注册进卡池与本地化表。",
+  "type": "object",
+  "required": ["$schema", "id", "name", "cost", "rarity", "resolve", "artTemplate", "effects"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "const": "modkit/card@1",
+      "description": "契约版本。平台不认识的版本会被拒绝加载（不静默跳过）。"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,40}$",
+      "description": "mod 内唯一标识。平台会加 mod 前缀，避免跨 mod 冲突。"
+    },
+    "name": {
+      "$ref": "#/definitions/localizedText",
+      "description": "显示名。至少一种语言。"
+    },
+    "cost": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "string", "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"] },
+          {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"] }
+          }
+        ]
+      },
+      "description": "费用槽列表。[] = 无费用卡（原版「喷烟器」即如此）；[\"Void\"] = 一个虚色槽；[[\"Void\",\"Red\"]] = 一个多色槽（该格任一色都能付）。平台启动时探测该 build 真实注册的颜色与图标组合，未注册即加载期报错——不会让游戏抛 KeyNotFoundException。"
+    },
+    "rarity": {
+      "type": "string",
+      "enum": ["Common", "Uncommon", "Rare"]
+    },
+    "colors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"]
+      },
+      "description": "卡面流派色。"
+    },
+    "resolve": {
+      "type": "string",
+      "enum": ["OnCast", "OnDraw", "OnDiscard", "EndInHand"],
+      "description": "结算时机。"
+    },
+    "artTemplate": {
+      "type": "string",
+      "minLength": 1,
+      "description": "借用的原版卡名，提供卡面/动画/Tooltip。平台在加载期校验该卡名确实存在。"
+    },
+    "art": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "mod 自带的卡面图，相对 mod 目录的路径（如 art/my_card.png）。留空则沿用 artTemplate 的原版卡面。只收 .png/.jpg/.jpeg；建议正方形、边长 256~512 px。平台在加载期拒绝绝对路径与 .. 上跳，并校验文件确实存在。"
+    },
+    "effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/effect" }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "关键词名。未注册的关键词会在加载期报错。"
+    }
+  },
+  "definitions": {
+    "localizedText": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string" },
+      "description": "语言标签 → 文本，如 { \"zh-Hans\": \"我的打击\", \"en\": \"My Strike\" }。"
+    },
+    "numberSpec": {
+      "description": "数字槽：固定整数，或骰子表达式。",
+      "oneOf": [
+        { "type": "integer" },
+        {
+          "type": "object",
+          "required": ["dice"],
+          "additionalProperties": false,
+          "properties": {
+            "dice": {
+              "type": "object",
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "integer", "minimum": 0, "maximum": 99999 },
+                "max": { "type": "integer", "minimum": 0, "maximum": 99999 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "builtin": {
+          "type": "string",
+          "enum": [
+            "deal_damage", "heal", "block", "lose_life",
+            "draw", "discard_random",
+            "gain_mana", "set_max_mana", "clean_mana",
+            "apply_state", "gain_ability",
+            "add_card", "add_temporary_card", "upgrade_card",
+            "end_turn"
+          ],
+          "description": "内置语义名。与 custom 二选一。"
+        },
+        "custom": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{2,40}$",
+          "description": "自定义效果 id，对应代码里的 [ModEffect(\"...\")]。与 builtin 二选一。"
+        },
+        "amounts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/numberSpec" },
+          "description": "数字槽列表。多数效果只有 1 个槽。"
+        },
+        "target": {
+          "type": "string",
+          "enum": ["Self", "Opponent", "AllOpponents", "All", "RandomOpponent"],
+          "description": "目标。只有 5 个取值——游戏另外两个取值在目标解析路径上会静默不执行，平台不暴露。"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["Direct", "Indirect", "LoseLife"],
+          "description": "伤害模式。伤害类语义必填：直接伤害走命中判定与伤害调整器，间接伤害跳过——选错会静默改变玩法强度。"
+        },
+        "color": {
+          "type": "string",
+          "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"],
+          "description": "法力颜色，法力类语义用。"
+        },
+        "name": {
+          "type": "string",
+          "description": "状态名 / 能力名 / 卡牌 id / 触发点名，视语义而定。"
+        }
+      },
+      "oneOf": [
+        { "required": ["builtin"] },
+        { "required": ["custom"] }
+      ]
+    }
+  }
+}

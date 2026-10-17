@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    把 ModKit.Api + ModKit.Core 的**同一份源码**编译成 net8.0 版本，
+    供 ModKit.Studio（net10）直接引用 —— 这就是"Studio 直接依赖 ModKit"的实现方式：
+      · 插件侧仍然用 net472 编译（BepInEx / Mono 要求）；
+      · Studio 侧用这个 net8.0 编译产物；
+      · 两边编译的是**同一批 .cs 文件**，因此枚举、校验规则、效果名表永远不会漂移。
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ModKit.Contracts</AssemblyName>
+    <RootNamespace>ModKit</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0618;CS1591;CS8632</NoWarn>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\ModKit.Api\*.cs" />
+    <Compile Include="..\..\src\ModKit.Core\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\lib\Newtonsoft.Json.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

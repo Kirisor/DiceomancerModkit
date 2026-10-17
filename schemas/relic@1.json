@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "modkit/relic@1",
+  "title": "ModKit 遗物定义",
+  "description": "DICEOMANCER ModKit v1 的遗物声明。**只有触发型一种形态**：trigger + effects。（原\"特殊遗物\"通路 —— 遗物 JSON 的那个可选 C# 钩子字段 —— 已于 2026-10-14 删除：它在运行期没有任何消费者，只会把遗物静默装配成 artTemplate 那件原版遗物的克隆。见 docs/ModKit-能力缺口与下一步.md。）",
+  "type": "object",
+  "required": ["$schema", "id", "name", "artTemplate", "trigger", "effects"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "const": "modkit/relic@1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,40}$"
+    },
+    "name": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string" }
+    },
+    "artTemplate": {
+      "type": "string",
+      "minLength": 1,
+      "description": "借用的原版遗物名，提供图标与模板。平台在加载期校验其存在。"
+    },
+    "trigger": {
+      "type": "string",
+      "description": "触发点名。必须是平台内置的『实际发出』触发点名，不是游戏的 AllTriggerType 枚举。"
+    },
+    "effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object" }
+    },
+    "addToPool": {
+      "type": "boolean",
+      "default": true,
+      "description": "是否进入遗物池。false 时只能通过调试发放获得，便于对照测试。"
+    }
+  }
+}
