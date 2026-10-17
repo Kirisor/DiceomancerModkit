@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# 打包发布物：ModKit 平台包 / ModKit Studio 包 / 示例 mod
+#
+# 用法：bash /g/Modkit/studio/pack.sh [版本号]
+# 产出：/g/Modkit/dist/
+#
+# 说明：
+#   · 平台包只含运行必需文件（4 个 dll + 配置 + 许可），不含任何游戏素材；
+#   · Studio 包为 win-x64 自包含（玩家无需安装 .NET），附带字典类文档；
+#   · 所有 zip 附带 SHA256SUMS.txt。
+
+set -eu
+
+VERSION="${1:-0.1.0}"
+SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需要能下载 .NET 运行时包）；0 = 框架依赖
+ROOT="/g/Modkit"
+GAME="/g/deepseek space/DICEOMANCER"
+DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
+DIST="$ROOT/dist"
+STAGE="$DIST/stage"
+
+rm -rf "$DIST"
+mkdir -p "$DIST" "$STAGE"
+
+PY="/c/Users/admin/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe"
+
+zip_dir () {  # zip_dir <输出zip> <源目录>
+  "$PY" - "$1" "$2" <<'PY'
+import os, sys, zipfile
+out, src = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    for dirpath, _dirs, files in os.walk(src):
+        for f in files:
+            full = os.path.join(dirpath, f)
+            rel = os.path.relpath(full, src)
+            z.write(full, rel)
+print("  zip: %s (%.1f MB)" % (os.path.basename(out), os.path.getsize(out) / 1048576))
+PY
+}
+
+# ============================================================
+echo "=== 1/3 ModKit 平台包 ==="
+P="$STAGE/ModKit-Platform"
+mkdir -p "$P/BepInEx/plugins" "$P/BepInEx/config"
+
+for f in ModKit.Api.dll ModKit.Core.dll ModKit.Game.dll ModKit.Plugin.dll; do
+  if [ ! -f "$GAME/BepInEx/plugins/$f" ]; then
+    echo "  ✗ 缺少 $f（请先安装平台 dll 到 $GAME/BepInEx/plugins）" >&2
+    exit 1
+  fi
+  cp -f "$GAME/BepInEx/plugins/$f" "$P/BepInEx/plugins/"
+  printf "  + %-20s %s\n" "$f" "$(du -h "$GAME/BepInEx/plugins/$f" | cut -f1)"
+done
+
+cp -f "$GAME/BepInEx/config/diceomancer.modkit.cfg" "$P/BepInEx/config/"
+cp -f "$GAME/BepInEx/LICENSE" "$GAME/BepInEx/NOTICE" "$P/BepInEx/"
+
+cat > "$P/安装说明.txt" <<'TXT'
+ModKit 平台包（DICEOMANCER）
+============================
+
+前置：先安装 BepInEx 5.4.23.2 x64（解压到游戏根目录，与 Diceomancer.exe 同级）。
+
+安装：
+  1. 把本包里的 BepInEx\plugins\ModKit.*.dll 四个文件
+     复制到  <游戏根>\BepInEx\plugins\
+  2. （可选）把 BepInEx\config\diceomancer.modkit.cfg 复制到 <游戏根>\BepInEx\config\
+  3. mod 内容放到  <游戏根>\BepInEx\DiceomancerMods\<modid>\
+  4. 启动游戏
+
+验证：<游戏根>\BepInEx\LogOutput.log 里搜 [ModKit]，应出现
+      "mod 已加载：<modid>：卡 N / 遗物 M / 关键词 K"
+
+注意：四个 dll 必须一起装，少一个平台不工作。
+TXT
+
+zip_dir "$DIST/ModKit-Platform-$VERSION.zip" "$P"
+
+# ============================================================
+echo
+echo "=== 2/3 ModKit Studio 包（win-x64 自包含）==="
+S="$STAGE/ModKit-Studio"
+mkdir -p "$S"
+cd "$ROOT/studio"
+echo "  发布中（首次会下载运行时包，可能较慢）…"
+if [ "$SELF_CONTAINED" = "1" ]; then
+  echo "  自包含模式（会下载 .NET 运行时包，首次较慢）…"
+  "$DOTNET" publish ModKit.Studio.csproj -c Release -r win-x64 --self-contained true \
+    -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:DebugType=none -o "$S" -v q 2>&1 | tail -5 | sed 's/^/    /'
+else
+  echo "  框架依赖模式（玩家需安装 .NET 10 Desktop Runtime；要自包含用 SELF_CONTAINED=1）…"
+  "$DOTNET" publish ModKit.Studio.csproj -c Release --self-contained false \
+    -p:DebugType=none -o "$S" -v q 2>&1 | tail -5 | sed 's/^/    /'
+fi
+
+mkdir -p "$S/docs"
+for d in "ModKit-作者手册.md" "ModKit-Studio使用手册.md" "ModKit-效果字典.md"; do
+  [ -f "$ROOT/docs/$d" ] && cp -f "$ROOT/docs/$d" "$S/docs/"
+done
+
+cat > "$S/使用说明.txt" <<'TXT'
+ModKit Studio（DICEOMANCER mod 编辑器）
+=======================================
+
+本包为 Windows x64 自包含版本，无需安装 .NET。
+
+首次启动：
+  1. 双击 ModKit.Studio.exe
+  2. 若自动探测的游戏目录不对，点顶栏「浏览…」选游戏根目录（含 Diceomancer_Data 的那层）
+  3. 点「重新加载」，左侧出现你的 mod
+
+需要先安装：BepInEx + ModKit 平台包（否则做的 mod 没地方生效）。
+编辑 C# 行为类时需要另行安装 .NET SDK。
+
+文档在 docs\ 目录：作者手册、Studio 使用手册、效果字典。
+TXT
+
+zip_dir "$DIST/ModKit-Studio-$VERSION-win-x64.zip" "$S"
+
+# ============================================================
+echo
+echo "=== 3/3 示例 mod ==="
+E="$STAGE/example-mod"
+MOD="$GAME/BepInEx/DiceomancerMods/manual_demo"
+if [ -d "$MOD" ]; then
+  mkdir -p "$E/manual_demo"
+  for item in mod.json cards relics keywords i18n art sfx; do
+    [ -e "$MOD/$item" ] && cp -r "$MOD/$item" "$E/manual_demo/" 2>/dev/null || true
+  done
+  # 不带 dll/备份/笔记，示例只演示 JSON 内容
+  find "$E" -name "*.bak" -delete 2>/dev/null || true
+  find "$E" -name "*.dll" -delete 2>/dev/null || true
+  zip_dir "$DIST/Example-Mod-$VERSION.zip" "$E"
+else
+  echo "  （没有示例 mod 可打包）"
+fi
+
+# ============================================================
+echo
+echo "=== 校验和 ==="
+cd "$DIST"
+for z in *.zip; do
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$z"
+  else
+    "$PY" -c "import sys,hashlib;d=open(sys.argv[1],'rb').read();print(hashlib.sha256(d).hexdigest()+'  '+sys.argv[1])" "$z"
+  fi
+done | tee SHA256SUMS.txt | sed 's/^/  /'
+
+rm -rf "$STAGE"
+echo
+echo "=== 产物 ==="
+ls -lh "$DIST" | awk 'NR>1{printf "  %-42s %s\n", $9, $5}'
