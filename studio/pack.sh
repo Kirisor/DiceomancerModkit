@@ -85,9 +85,8 @@ cd "$ROOT/studio"
 echo "  发布中（首次会下载运行时包，可能较慢）…"
 if [ "$SELF_CONTAINED" = "1" ]; then
   echo "  自包含模式（会下载 .NET 运行时包，首次较慢）…"
-  if ! "$DOTNET" publish ModKit.Studio.csproj -c Release -r win-x64 --self-contained true \
-    -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
-    -p:DebugType=none -o "$S" > "$DIST/publish.log" 2>&1; then
+  # 自包含：走离线脚本（curl 直下运行时包，绕开 NuGet 客户端）
+  if ! bash "$ROOT/studio/pack-sc-offline.sh" > "$DIST/publish.log" 2>&1; then
     echo "  ✗ 自包含发布失败，详情见 dist/publish.log" >&2
     tail -12 "$DIST/publish.log" | sed 's/^/    /' >&2
     exit 1

@@ -14,3 +14,4 @@ dist/
 docs/art/
 ArtSubDirectory
 voxel-art/
+nuget-local/
