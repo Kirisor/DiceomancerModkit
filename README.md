@@ -1,52 +1,56 @@
-# DiceomancerModkit
+# 骰子浪游者 ModKit
 
-DICEOMANCER 的 mod 内容平台：用 **JSON 声明内容**（卡牌 / 遗物 / 关键词），需要特殊行为时再写少量 C#；配套图形化编辑器 **ModKit Studio**。
+[![最新版本](https://img.shields.io/github/v/release/Kirisor/DiceomancerModkit?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&sort=semver)](https://github.com/Kirisor/DiceomancerModkit/releases/latest)
+[![下载量](https://img.shields.io/github/downloads/Kirisor/DiceomancerModkit/total?label=%E4%B8%8B%E8%BD%BD)](https://github.com/Kirisor/DiceomancerModkit/releases)
+[![许可](https://img.shields.io/github/license/Kirisor/DiceomancerModkit?label=%E8%AE%B8%E5%8F%AF)](LICENSE)
 
-当前版本：**0.1.0**
+DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**（卡牌 / 遗物 / 关键词），需要特殊行为时再写少量 C#；配套图形化编辑器 **ModKit Studio**。
 
 ---
 
-## 我要玩别人做的 mod
+# ⬇ 下载
 
-下载 **`ModKit-Platform-<版本>.zip`**（约 150 KB）。
+| 我要… | 下载 | 说明 |
+|---|---|---|
+| **玩别人做的 mod** | **[ModKit-Platform-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.1.0/ModKit-Platform-0.1.0.zip)** | **150 KB · 必装**：平台本体（4 个 dll） |
+| **自己做 mod** | **[ModKit-Studio-0.1.0-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.1.0/ModKit-Studio-0.1.0-win-x64.zip)** | **54 MB · 双击即用**：编辑器，自包含，不用装 .NET |
+| **参考示例** | **[Example-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.1.0/Example-Mod-0.1.0.zip)** | 553 KB：13 张卡 + 2 遗物 + 关键词 + 文案 |
+| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.1.0/SHA256SUMS.txt) | 全校验和 |
 
-前置：先装 [BepInEx 5.4.23.2 x64](https://github.com/BepInEx/BepInEx/releases)，解压到游戏根目录（与 `Diceomancer.exe` 同级）。
+> 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
+> 全部历史版本见 [Releases](https://github.com/Kirisor/DiceomancerModkit/releases)。
 
-安装：
+前置：[BepInEx 5.4.23.2 x64](https://github.com/BepInEx/BepInEx/releases)，解压到游戏根目录（与 `Diceomancer.exe` 同级）。
 
-1. 把包里的 `BepInEx\plugins\ModKit.*.dll`（**四个文件**）复制到 `<游戏根>\BepInEx\plugins\`
-2. 把要玩的 mod 目录放到 `<游戏根>\BepInEx\DiceomancerMods\<modid>\`
-3. 启动游戏
+---
+
+## 安装（玩别人做的 mod）
+
+1. 装好 BepInEx（见上）
+2. 把 **平台包**里 `BepInEx\plugins\ModKit.*.dll`（**四个文件，缺一不可**）复制到 `<游戏根>\BepInEx\plugins\`
+3. 把要玩的 mod 目录放到 `<游戏根>\BepInEx\DiceomancerMods\<modid>\`
+4. 启动游戏
 
 验证：`BepInEx\LogOutput.log` 里搜 `[ModKit]`，应出现 `mod 已加载：<modid>：卡 N / 遗物 M / 关键词 K`。
 
 ---
 
-## 我要自己做 mod
+## 自己做 mod
 
-需要三样：
-
-| 下载 | 用途 |
-|---|---|
-| `ModKit-Platform-<版本>.zip` | 平台本体（**必须**，否则做的 mod 没地方生效） |
-| `ModKit-Studio-<版本>-win-x64.zip` | 编辑器（自包含，**不用装 .NET**，双击即用） |
-| `Example-Mod-<版本>.zip` | 示例 mod，可直接放进游戏对照 |
-
-流程：
-
-1. 装好 BepInEx + 平台包，启动游戏一次（会自动生成 `BepInEx\ModKitDump\` 的字典数据）
-2. 打开 ModKit Studio，首次启动选一下游戏根目录
+1. 装好 BepInEx + 平台包，**启动游戏一次**（自动生成 `BepInEx\ModKitDump\` 字典数据）
+2. 解压并双击 `ModKit.Studio.exe`，首次启动选一下游戏根目录
 3. 新建 / 编辑卡牌、遗物、关键词 → **保存**（自动同步文案）
 4. 需要 C# 行为时：关键词页「生成 / 载入行为类」→ 写代码 → 顶栏「编译本 mod」
 5. **重启游戏** → 看日志 → 把卡打出去验证
 
 > 只有写 C# 时才需要额外安装 .NET SDK；纯 JSON 内容不需要。
 
-文档：
+文档（也随 Studio 包附带）：
 
 - [作者手册](docs/ModKit-作者手册.md) —— 字段、写法、报错速查
 - [Studio 使用手册](docs/ModKit-Studio使用手册.md) —— 编辑器怎么用
 - [效果字典](docs/ModKit-效果字典.md) —— 效果 / 关键词 / 触发点 / 能力名单
+- [变更记录](CHANGELOG.md)
 
 ---
 
