@@ -12,7 +12,8 @@
 set -eu
 
 VERSION="${1:-0.1.0}"
-SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需要能下载 .NET 运行时包）；0 = 框架依赖
+SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需下载 .NET 运行时包）；0 = 框架依赖
+WITH_BEPINEX="${WITH_BEPINEX:-0}"       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
 ROOT="/g/Modkit"
 GAME="/g/deepseek space/DICEOMANCER"
 DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
@@ -128,6 +129,28 @@ ModKit Studio（DICEOMANCER mod 编辑器）
 
 文档在 docs\ 目录：作者手册、Studio 使用手册、效果字典。
 TXT
+
+# ---- 一键部署用的 payload：平台四件套 + 配置（可选 BepInEx）----
+PAY="$S/payload"
+mkdir -p "$PAY/plugins" "$PAY/config"
+for f in ModKit.Api.dll ModKit.Core.dll ModKit.Game.dll ModKit.Plugin.dll; do
+  cp -f "$P/BepInEx/plugins/$f" "$PAY/plugins/"
+done
+cp -f "$P/BepInEx/config/diceomancer.modkit.cfg" "$PAY/config/" 2>/dev/null || true
+if [ "$WITH_BEPINEX" = "1" ]; then
+  if [ -f "$GAME/BepInEx/core/BepInEx.dll" ]; then
+    mkdir -p "$PAY/bepinex/core"
+    cp -f "$GAME/winhttp.dll" "$GAME/doorstop_config.ini" "$PAY/bepinex/" 2>/dev/null || true
+    cp -f "$GAME/BepInEx/core/"*.dll "$PAY/bepinex/core/"
+    cp -f "$GAME/BepInEx/LICENSE" "$GAME/BepInEx/NOTICE" "$PAY/bepinex/" 2>/dev/null || true
+    echo "  payload: 含 BepInEx（$(du -sh "$PAY/bepinex" | cut -f1)）"
+  else
+    echo "  ! 本机没有 BepInEx，payload 不带 BepInEx"
+  fi
+else
+  echo "  payload: 仅平台四件套（要带 BepInEx 用 WITH_BEPINEX=1）"
+fi
+echo "  payload 大小: $(du -sh "$PAY" | cut -f1)"
 
 zip_dir "$DIST/ModKit-Studio-$VERSION-win-x64.zip" "$S"
 

@@ -49,6 +49,8 @@ ModKit Studio 是 DICEOMANCER ModKit 的图形化编辑器：把内容写成表�
 
 首次探测成功后会自动写入，之后启动直接读。想手工改也可以，改完重启 Studio。
 
+> 还没装 BepInEx 或平台 dll？装好 Studio 后可以用顶栏的「部署到游戏」一键完成，见 §十二。
+
 ### 2.3 找不到 mod 怎么办
 
 | 现象 | 原因 | 处理 |
@@ -284,3 +286,32 @@ bash studio/build-mod.sh <modId> [mods 根目录]
 - Studio 写出的就是《作者手册》里描述的同一种 JSON，两者可以混用；
 - 手写的复杂字段（`pool` / `require` / `setter` / 自定义 `upgrade` 结构）Studio 不会删，只会在表单里显示为不可编辑；
 - 想用外部编辑器直接改也没问题 —— 改完在 Studio 里点「重新加载」即可看到。
+
+---
+
+## 十二、一键部署到游戏
+
+顶栏「部署到游戏」把平台装进游戏目录，省掉手工复制。它做四件事：
+
+1. **BepInEx**：游戏目录里没有 `BepInEx\core\BepInEx.dll` 时，从 Studio 包自带的 `payload\bepinex\` 安装
+2. **平台四件套**：把 `ModKit.Api/Core/Game/Plugin.dll` 复制到 `<游戏根>\BepInEx\plugins\`
+3. **配置**：`diceomancer.modkit.cfg` **只在缺失时**写入，不覆盖你已改过的开关
+4. **当前 mod**：把左侧选中的 mod 复制到游戏真正读的 mods 根目录
+
+规则：
+
+- **游戏在运行时会拒绝部署**（dll 被占用会写坏）——先关游戏再点
+- 覆盖任何文件前都会备份到 `.modkit-bak\`（在 `plugins\` 或 `DiceomancerMods\` 下）
+- 内容一致时自动跳过，重复点击不会产生多余备份
+- 部署结果显示在底部状态栏下方，逐项标注「安装 / 更新 / 跳过 / 失败」
+
+失败处理：
+
+| 提示 | 处理 |
+|---|---|
+| 这个版本不含部署文件 | 你用的是不含 `payload\` 的包，请下载完整 Studio 包 |
+| 检测到未安装 BepInEx，且当前包未携带它 | 先手工安装 BepInEx 5.4.23.2 x64 |
+| 没有写权限 | 游戏装在 Program Files 时，以管理员身份运行 Studio |
+| 游戏正在运行 | 关闭游戏后重试 |
+
+部署完成后**重启游戏**生效；验证看 `BepInEx\LogOutput.log` 里的 `[ModKit]` 行。

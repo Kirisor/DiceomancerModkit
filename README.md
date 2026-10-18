@@ -22,6 +22,9 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 前置：[BepInEx 5.4.23.2 x64](https://github.com/BepInEx/BepInEx/releases)，解压到游戏根目录（与 `Diceomancer.exe` 同级）。
 
+> 懒人做法：装好 **ModKit Studio** 后用顶栏「**部署到游戏**」一键安装平台包（Studio 包里带了 BepInEx，会自动补装）。
+
+
 ---
 
 ## 安装（玩别人做的 mod）
