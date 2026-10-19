@@ -1,0 +1,18 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "frog_skin",
+  "name": { "zh-Hans": "蛙皮", "en": "Frog Skin" },
+  "cost": ["Void"],
+  "rarity": "Common",
+  "colors": ["Green"],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    { "builtin": "block", "amounts": [6] }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      { "index": 0, "amounts": [9] }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "modkit/i18n@1",
+  "language": "zh-Hans",
+  "tables": {
+    "CardName": {
+      "manual_demo.starter": "起手",
+      "manual_demo.manual_strike": "手册·打击",
+      "manual_demo.manual_seek": "手册·检索",
+      "manual_demo.manual_custom": "手册·自写效果",
+      "manual_demo.manual_art": "奶蛙剑",
+      "manual_demo.milk_frog": "奶蛙盾",
+      "manual_demo.frog_blessing": "蛙之祝福",
+      "manual_demo.manual_free": "奶蛙大笑"
+    },
+    "FlavorText": {
+      "manual_demo.starter": "万事开头难。",
+      "manual_demo.manual_strike": "最朴素的一拳。",
+      "manual_demo.manual_seek": "把想要的牌捞出来。",
+      "manual_demo.manual_custom": "平台管数据，你管行为。",
+      "manual_demo.manual_art": "这张卡的卡面是 mod 自带的图。",
+      "manual_demo.milk_frog": "哈哈哈哈哈。"
+    },
+    "KeyWord": {
+      "manual_bulwark": "手册坚壁",
+      "manual_bulwarkDescription": "本卡结算完成后，额外获得 3 点格挡。",
+      "milk_frog": "奶蛙",
+      "milk_frogDescription": "本卡结算完成后，仍在抽牌堆与弃牌堆里的「奶蛙」也会各结算一次；张数至多等于本关键词的数值，且它们不会再带动别的奶蛙。"
+    },
+    "CardRequirementDes": {
+      "manual_demo.req_blue": "绿色牌"
+    },
+    "Relic": {
+      "manual_demo.manual_relic_turn_draw": "手册·回合抽牌",
+      "manual_demo.manual_relic_battle_start": "手册·开场能力"
+    },
+    "EffectDescription": {
+      "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。"
+    }
+  }
+}

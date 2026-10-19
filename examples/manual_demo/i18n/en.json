@@ -1,0 +1,10 @@
+{
+  "$schema": "modkit/i18n@1",
+  "language": "en",
+  "tables": {
+    "CardName": {
+      "manual_demo.frog_blessing": "Frog Blessing",
+      "manual_demo.manual_free": "Manual Free"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "modkit/relic@1",
+  "id": "manual_relic_turn_draw",
+  "name": { "zh-Hans": "手册·回合抽牌", "en": "Manual Turn Draw" },
+  "artTemplate": "Bonfire",
+  "trigger": "WholeNewTurnStart",
+  "certainTurn": { "require": true, "turnCount": 2, "relation": "Exactly" },
+  "effects": [
+    { "builtin": "draw", "amounts": [2] }
+  ],
+  "addToPool": true
+}

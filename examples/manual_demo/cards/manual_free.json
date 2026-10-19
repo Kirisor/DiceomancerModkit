@@ -1,0 +1,56 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "manual_free",
+  "name": {
+    "zh-Hans": "奶蛙大笑",
+    "en": "Manual Free"
+  },
+  "cost": [
+    "Green",
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 3
+    }
+  ],
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "Evade",
+      "target": "Self",
+      "amounts": [
+        4
+      ]
+    }
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Void"
+      ]
+    ],
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          6
+        ]
+      }
+    ],
+    "keywordNumbers": [
+      {
+        "keyword": "milk_frog",
+        "number": 4
+      }
+    ]
+  }
+}

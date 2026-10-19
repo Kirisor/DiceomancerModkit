@@ -13,7 +13,8 @@ set -eu
 
 VERSION="${1:-0.1.0}"
 SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需下载 .NET 运行时包）；0 = 框架依赖
-WITH_BEPINEX="${WITH_BEPINEX:-0}"       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
+WITH_BEPINEX="${WITH_BEPINEX:-0}"
+EXAMPLE_SRC="${EXAMPLE_SRC:-}"    # 示例 mod 源目录；留空则用游戏目录里的 manual_demo       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
 ROOT="/g/Modkit"
 GAME="/g/deepseek space/DICEOMANCER"
 DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
@@ -139,10 +140,11 @@ done
 cp -f "$P/BepInEx/config/diceomancer.modkit.cfg" "$PAY/config/" 2>/dev/null || true
 if [ "$WITH_BEPINEX" = "1" ]; then
   if [ -f "$GAME/BepInEx/core/BepInEx.dll" ]; then
-    mkdir -p "$PAY/bepinex/core"
-    cp -f "$GAME/winhttp.dll" "$GAME/doorstop_config.ini" "$PAY/bepinex/" 2>/dev/null || true
-    cp -f "$GAME/BepInEx/core/"*.dll "$PAY/bepinex/core/"
-    cp -f "$GAME/BepInEx/LICENSE" "$GAME/BepInEx/NOTICE" "$PAY/bepinex/" 2>/dev/null || true
+    # 镜像安装布局：root/ → 游戏根；BepInEx/ → 游戏根\BepInEx
+    mkdir -p "$PAY/bepinex/root" "$PAY/bepinex/BepInEx/core"
+    cp -f "$GAME/winhttp.dll" "$GAME/doorstop_config.ini" "$PAY/bepinex/root/" 2>/dev/null || true
+    cp -f "$GAME/BepInEx/core/"*.dll "$PAY/bepinex/BepInEx/core/"
+    cp -f "$GAME/BepInEx/LICENSE" "$GAME/BepInEx/NOTICE" "$PAY/bepinex/BepInEx/" 2>/dev/null || true
     echo "  payload: 含 BepInEx（$(du -sh "$PAY/bepinex" | cut -f1)）"
   else
     echo "  ! 本机没有 BepInEx，payload 不带 BepInEx"
@@ -158,7 +160,7 @@ zip_dir "$DIST/ModKit-Studio-$VERSION-win-x64.zip" "$S"
 echo
 echo "=== 3/3 示例 mod ==="
 E="$STAGE/example-mod"
-MOD="$GAME/BepInEx/DiceomancerMods/manual_demo"
+MOD="${EXAMPLE_SRC:-$GAME/BepInEx/DiceomancerMods/manual_demo}"
 if [ -d "$MOD" ]; then
   mkdir -p "$E/manual_demo"
   for item in mod.json cards relics keywords i18n art sfx; do
@@ -167,7 +169,11 @@ if [ -d "$MOD" ]; then
   # 不带 dll/备份/笔记，示例只演示 JSON 内容
   find "$E" -name "*.bak" -delete 2>/dev/null || true
   find "$E" -name "*.dll" -delete 2>/dev/null || true
-  zip_dir "$DIST/Example-Mod-$VERSION.zip" "$E"
+  if [ "$(find "$E" -type f | wc -l)" -eq 0 ]; then
+    echo "  ! 示例 mod 源目录为空，跳过示例包（用 EXAMPLE_SRC=<目录> 指定）"
+  else
+    zip_dir "$DIST/Example-Mod-$VERSION.zip" "$E"
+  fi
 else
   echo "  （没有示例 mod 可打包）"
 fi

@@ -1,0 +1,34 @@
+{
+  "$schema": "modkit/mod@1",
+  "id": "manual_demo",
+  "name": "手册示例 Mod",
+  "version": "1.0.0",
+  "author": "(你的名字)",
+  "cards": [
+    "cards/manual_seek.json",
+    "cards/manual_art.json",
+    "cards/manual_free.json",
+    "cards/milk_frog.json",
+    "cards/frog_blessing.json",
+    "cards/frog_call.json",
+    "cards/frog_chorus.json",
+    "cards/frog_guard.json",
+    "cards/frog_king.json",
+    "cards/frog_leap.json",
+    "cards/frog_skin.json",
+    "cards/frog_tide.json",
+    "cards/frog_totem.json"
+  ],
+  "relics": [
+    "relics/manual_relic_turn_draw.json",
+    "relics/manual_relic_battle_start.json"
+  ],
+  "keywords": [
+    "keywords/manual_bulwark.json",
+    "keywords/milk_frog.json"
+  ],
+  "i18n": [
+    "i18n/zh-Hans.json"
+  ],
+  "entryAssembly": "manual_demo.dll"
+}

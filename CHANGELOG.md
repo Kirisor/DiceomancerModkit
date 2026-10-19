@@ -1,5 +1,16 @@
 # 变更记录
 
+## v0.2.1
+
+### 修复
+
+- **一键部署把 `core` 装错位置**：0.2.0 会把 BepInEx 的 `core\*.dll` 平铺到游戏根目录，
+  导致游戏根本启动不了 BepInEx。现改为按目标布局安装：
+  `payload\bepinex\root\` → 游戏根（`winhttp.dll`、`doorstop_config.ini`）、
+  `payload\bepinex\BepInEx\` → 游戏根 `BepInEx\`
+- 新增自愈：检测到游戏根下有错位的 `core\BepInEx.dll` 时，自动并入 `BepInEx\core\`
+  （0.2.0 部署过的用户再点一次「部署到游戏」即可修好）
+
 ## v0.2.0
 
 ### 新增

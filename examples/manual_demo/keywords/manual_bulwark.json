@@ -1,0 +1,13 @@
+{
+  "$schema": "modkit/keyword@1",
+  "id": "manual_bulwark",
+  "name": {
+    "zh-Hans": "手册坚壁",
+    "en": "Manual Bulwark"
+  },
+  "description": {
+    "zh-Hans": "本卡结算完成后，额外获得 3 点格挡。",
+    "en": "After this card resolves, gain an additional 3 Block."
+  },
+  "hasNumber": false
+}

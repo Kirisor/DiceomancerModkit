@@ -1,0 +1,19 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "manual_seek",
+  "name": { "zh-Hans": "手册·检索", "en": "Manual Seek" },
+  "cost": [["Purple", "Green"]],
+  "rarity": "Uncommon",
+  "colors": ["Green"],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "seek_card",
+      "amounts": [1],
+      "require": { "colors": ["Green"], "describeKey": "manual_demo.req_blue" }
+    },
+    { "builtin": "gain_mana", "amounts": [1], "color": "Green" },
+    { "builtin": "draw", "amounts": [1] }
+  ]
+}

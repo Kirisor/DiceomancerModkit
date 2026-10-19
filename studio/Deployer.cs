@@ -72,12 +72,32 @@ namespace ModKit.Studio
                         Status("检测到未安装 BepInEx，且当前 Studio 包未携带它 —— 请先安装 BepInEx 5.4.23.2 x64");
                         return;
                     }
-                    CopyTree(payloadBep, cfg.GameRoot, steps, "BepInEx");
+                    // payload/bepinex 按"目标布局"组织：
+                    //   root/    → 游戏根目录（winhttp.dll、doorstop_config.ini）
+                    //   BepInEx/ → 游戏根\BepInEx（core\*.dll、LICENSE、NOTICE）
+                    var rootSrc = Path.Combine(payloadBep, "root");
+                    var bepSrc = Path.Combine(payloadBep, "BepInEx");
+                    var legacyCore = Path.Combine(payloadBep, "core");
+                    if (Directory.Exists(rootSrc)) { CopyTree(rootSrc, cfg.GameRoot, steps, "BepInEx 注入文件"); }
+                    if (Directory.Exists(bepSrc)) { CopyTree(bepSrc, bep, steps, "BepInEx 引擎"); }
+                    if (Directory.Exists(legacyCore))
+                    {
+                        // 兼容旧包结构（core 直接平铺在 payload/bepinex 下）
+                        CopyTree(legacyCore, Path.Combine(bep, "core"), steps, "BepInEx 引擎（旧包）");
+                    }
+                    if (!Directory.Exists(rootSrc) && !Directory.Exists(bepSrc) && !Directory.Exists(legacyCore))
+                    {
+                        Status("payload\bepinex 结构不认识，部署中止");
+                        return;
+                    }
                 }
                 else
                 {
                     steps.Add(new DeployStep { Name = "BepInEx", Status = "跳过", Detail = "已安装" });
                 }
+
+                // ①.5 自愈：旧版部署曾把 core 平铺到游戏根目录，这里挪回 BepInEx\core
+                HealMisplacedCore(cfg, steps);
 
                 // ② 平台四件套
                 var plugins = cfg.PluginsPath;
@@ -176,6 +196,46 @@ namespace ModKit.Studio
             sb.AppendLine("中止：" + error);
             CompileReport.Text = sb.ToString();
             Status(error);
+        }
+
+        /// <summary>
+        /// 修复历史问题：0.2.0 的部署把 payload 的 core 目录平铺到了游戏根，
+        /// 这里检测到 &lt;游戏根&gt;\core\BepInEx.dll 且 BepInEx\core 缺文件时，整目录挪回 BepInEx\core。
+        /// </summary>
+        private static void HealMisplacedCore(StudioConfig cfg, List<DeployStep> steps)
+        {
+            try
+            {
+                var strayCore = Path.Combine(cfg.GameRoot, "core");
+                var realCore = Path.Combine(cfg.BepInExPath, "core");
+                var strayBep = Path.Combine(strayCore, "BepInEx.dll");
+                var realBep = Path.Combine(realCore, "BepInEx.dll");
+                if (!File.Exists(strayBep)) { return; }
+
+                Directory.CreateDirectory(realCore);
+                foreach (var f in Directory.GetFiles(strayCore))
+                {
+                    var dst = Path.Combine(realCore, Path.GetFileName(f));
+                    if (!File.Exists(dst)) { File.Copy(f, dst, true); }
+                    File.Delete(f);
+                }
+                foreach (var d in Directory.GetDirectories(strayCore))
+                {
+                    var dst = Path.Combine(realCore, Path.GetFileName(d));
+                    CopyTree(d, dst, new List<DeployStep>(), null);
+                }
+                try { Directory.Delete(strayCore, true); } catch { }
+                steps.Add(new DeployStep
+                {
+                    Name = "修复错位的 core",
+                    Status = "更新",
+                    Detail = "已移入 BepInEx\\core"
+                });
+            }
+            catch (Exception ex)
+            {
+                steps.Add(new DeployStep { Name = "修复错位的 core", Status = "失败", Detail = ex.Message });
+            }
         }
 
         private static bool GameIsRunning()

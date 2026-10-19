@@ -1,0 +1,10 @@
+{
+  "$schema": "modkit/keyword@1",
+  "id": "milk_frog",
+  "name": { "zh-Hans": "奶蛙", "en": "Milk Frog" },
+  "description": {
+    "zh-Hans": "本卡结算完成后，仍在抽牌堆与弃牌堆里的「奶蛙」也会各结算一次；张数至多等于本关键词的数值，且它们不会再带动别的奶蛙。",
+    "en": "After this card resolves, each Milk Frog still in the draw or discard pile resolves once more; the count is at most this keyword's number, and they do not trigger further Milk Frogs."
+  },
+  "hasNumber": true
+}

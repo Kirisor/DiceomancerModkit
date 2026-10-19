@@ -1,0 +1,11 @@
+{
+  "$schema": "modkit/relic@1",
+  "id": "manual_relic_battle_start",
+  "name": { "zh-Hans": "手册·开场能力", "en": "Manual Battle Start" },
+  "artTemplate": "BottleOfWater",
+  "trigger": "BattleStart",
+  "effects": [
+    { "builtin": "gain_ability", "name": "DiceBonus", "amounts": [{ "dice": { "min": 1, "max": 6 } }] }
+  ],
+  "addToPool": true
+}

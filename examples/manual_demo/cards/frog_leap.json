@@ -1,0 +1,19 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "frog_leap",
+  "name": { "zh-Hans": "跃蛙", "en": "Leaping Frog" },
+  "cost": ["Void"],
+  "rarity": "Common",
+  "colors": ["Green"],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    { "builtin": "deal_damage", "amounts": [6], "target": "Opponent", "mode": "Direct" },
+    { "builtin": "discard_random", "amounts": [1] }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      { "index": 0, "amounts": [9] }
+    ]
+  }
+}
