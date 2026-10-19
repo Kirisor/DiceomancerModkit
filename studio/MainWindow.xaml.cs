@@ -746,6 +746,41 @@ namespace ModKit.Studio
             return result;
         }
 
+        /// <summary>
+        /// 删除模组：不做不可恢复的删除，整目录移到 DiceomancerMods\.modkit-trash\ 下
+        /// （平台扫描会跳过 . 开头的目录，所以移走即等于卸载，随时可手动恢复）。
+        /// </summary>
+        private void OnDeleteModClick(object sender, RoutedEventArgs e)
+        {
+            var mod = ModList.SelectedItem as ModEntry;
+            if (mod == null) { Status("先在左侧选一个模组"); return; }
+
+            var id = mod.Id;
+            var trashDir = Path.Combine(_modsRoot, ".modkit-trash");
+            var nl = Environment.NewLine;
+            var answer = MessageBox.Show(
+                "确定删除模组「" + id + "」？" + nl + nl +
+                "整个目录会被移到：" + nl + trashDir + nl + nl +
+                "移走即等于卸载；需要恢复的话在资源管理器里把它移回去即可。",
+                "删除模组", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (answer != MessageBoxResult.Yes) { return; }
+
+            try
+            {
+                Directory.CreateDirectory(trashDir);
+                var dst = Path.Combine(trashDir, id + "." + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+                if (Directory.Exists(dst)) { dst = dst + "-2"; }
+                Directory.Move(mod.Dir, dst);
+                Status("已删除模组：" + id + " —— 目录已移到 " + dst);
+                ModList.SelectedItem = null;
+                Reload();
+            }
+            catch (Exception ex)
+            {
+                Status("删除模组失败：" + ex.Message + "（如果文件被占用，请先关掉游戏/编辑器里的占用程序）");
+            }
+        }
+
         private void OnReloadClick(object sender, RoutedEventArgs e) { Reload(); }
 
         private void OnBrowseClick(object sender, RoutedEventArgs e)
