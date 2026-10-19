@@ -441,20 +441,7 @@ namespace ModKit.Game
             bg.raycastTarget = true;
             bg.sprite = UiSkin.PanelRound;                      // 圆角底：四角倒角
             bg.type = Image.Type.Sliced;
-            var mask = paper.AddComponent<Mask>();
-            mask.showMaskGraphic = true;
-            var texGo = new GameObject("PaperTex", typeof(RectTransform));
-            texGo.transform.SetParent(paper.transform, false);
-            var texRt2 = texGo.GetComponent<RectTransform>();
-            texRt2.anchorMin = Vector2.zero;
-            texRt2.anchorMax = Vector2.one;
-            texRt2.offsetMin = Vector2.zero;
-            texRt2.offsetMax = Vector2.zero;
-            var texImg = texGo.AddComponent<Image>();
-            texImg.sprite = UiSkin.Paper;
-            texImg.type = Image.Type.Tiled;
-            texImg.color = new Color(1f, 1f, 1f, 0.9f);
-            texImg.raycastTarget = false;
+            UiSkin.AddPaperLayer(paper.transform);
             ApplyTexture(bg, PaperTexturePath, "纸页底图");
 
             // ③ 标题底块（先建，保证画在标题文字下面）

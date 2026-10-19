@@ -57,7 +57,7 @@ namespace ModKit.Game
         private static readonly Color Track = new Color(0.85f, 0.81f, 0.72f, 1f);
 
         private const float PanelW = 430f;
-        private const float PanelH = 760f;
+        private const float PanelH = 830f;
         private const float RowH = 84f;
         private const float RowGap = 8f;
         private const float ListH = 340f;
@@ -137,20 +137,7 @@ namespace ModKit.Game
             bg.sprite = UiSkin.PanelRound;                 // 圆角底：四角倒角
             bg.type = Image.Type.Sliced;
             bg.raycastTarget = true;
-            var mask = _panelGo.AddComponent<Mask>();
-            mask.showMaskGraphic = true;
-            var texGo = new GameObject("PaperTex", typeof(RectTransform));
-            texGo.transform.SetParent(prt, false);
-            var texRt2 = texGo.GetComponent<RectTransform>();
-            texRt2.anchorMin = Vector2.zero;
-            texRt2.anchorMax = Vector2.one;
-            texRt2.offsetMin = Vector2.zero;
-            texRt2.offsetMax = Vector2.zero;
-            var texImg = texGo.AddComponent<Image>();
-            texImg.sprite = UiSkin.Paper;
-            texImg.type = Image.Type.Tiled;
-            texImg.color = new Color(1f, 1f, 1f, 0.9f);
-            texImg.raycastTarget = false;
+            UiSkin.AddPaperLayer(prt);
 
             // 外框：程序化九宫格边框（比纸页大一圈）
             var frameRt = NewRect(prt, "Frame", new Vector2(0.5f, 0.5f), Vector2.zero,

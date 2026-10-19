@@ -11,6 +11,7 @@
 // =============================================================================
 
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ModKit.Game
 {
@@ -115,6 +116,43 @@ namespace ModKit.Game
                 _panelFrame.name = "ModKitPanelFrame";
                 return _panelFrame;
             }
+        }
+
+
+        /// <summary>
+        /// 在 parent 上盖一层"圆角纸纹"。Mask 只包住这一层，不会裁到外框/按钮等兄弟节点。
+        /// </summary>
+        internal static void AddPaperLayer(Transform parent)
+        {
+            var holder = new GameObject("PaperLayer", typeof(RectTransform));
+            holder.transform.SetParent(parent, false);
+            var hrt = holder.GetComponent<RectTransform>();
+            hrt.anchorMin = Vector2.zero;
+            hrt.anchorMax = Vector2.one;
+            hrt.offsetMin = Vector2.zero;
+            hrt.offsetMax = Vector2.zero;
+
+            var img = holder.AddComponent<Image>();
+            img.sprite = PanelRound;
+            img.type = Image.Type.Sliced;
+            img.color = Color.white;
+            img.raycastTarget = false;
+
+            var mask = holder.AddComponent<Mask>();
+            mask.showMaskGraphic = false;      // 只要遮罩形状，不显示这层白底
+
+            var tex = new GameObject("PaperTex", typeof(RectTransform));
+            tex.transform.SetParent(holder.transform, false);
+            var trt = tex.GetComponent<RectTransform>();
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = Vector2.zero;
+            trt.offsetMax = Vector2.zero;
+            var ti = tex.AddComponent<Image>();
+            ti.sprite = Paper;
+            ti.type = Image.Type.Tiled;
+            ti.color = new Color(1f, 1f, 1f, 0.9f);
+            ti.raycastTarget = false;
         }
 
         // ---------------- 生成 ----------------
