@@ -93,6 +93,12 @@ namespace ModKit.Game
         /// <summary>是否已挂钩。</summary>
         public static bool Installed { get { return _installed; } }
 
+        /// <summary>
+        /// 是否启用"自造第 6 颗球"（Black）。自建职业选择上线后不再需要玩家拖球，
+        /// 因此关闭：不造球、不加底座、也不给颜色表补 Black。
+        /// </summary>
+        internal static readonly bool EnableCustomOrb = false;
+
         /// <summary>当前职业界面对象（自建职业选择要用它调游戏的确认入口）。</summary>
         internal static SmallGames.WorldBetween.SubSmallGameChooseColor CurrentPicker;
 
@@ -256,6 +262,7 @@ namespace ModKit.Game
         /// <summary>把新颜色补进"基础色球"列表（原版只返回 5 色）。无职业声明时不动。</summary>
         private static void AfterGetAllBasicColor(ref ColorE[] __result)
         {
+            if (!EnableCustomOrb) { return; }
             if (!ClassDeclared) { return; }
             var list = new List<ColorE>(__result ?? new ColorE[0]);
             if (!list.Contains(NewOrbColor)) { list.Add(NewOrbColor); }
@@ -265,6 +272,7 @@ namespace ModKit.Game
         /// <summary>给选球界面的状态表补一条（原版 switch 没有 case Black）。无职业声明时不动。</summary>
         private static void AfterCalculateColorEAndStates(ref List<ColorEAndState> __result)
         {
+            if (!EnableCustomOrb) { return; }
             if (!ClassDeclared) { return; }
             if (__result == null) { return; }
             for (int i = 0; i < __result.Count; i++)
@@ -296,6 +304,7 @@ namespace ModKit.Game
             NewOrbPickerGo = __instance.gameObject;
             CurrentPicker = __instance;
             try { CareerPicker.Show(); } catch { }
+            if (!EnableCustomOrb) { return; }   // 自建面板接管 ⇒ 不造球、不准备底座
             PickerOpen = true;     // ★ 进入职业界面 ⇒ 允许（并由宿主）造球
             WarnOnceStatic("picker-open", "职业接缝：进入职业界面 → 自造球将（重新）创建。");
             try

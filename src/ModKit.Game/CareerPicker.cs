@@ -41,6 +41,11 @@ namespace ModKit.Game
 
         private static IGameLog _log;
 
+        /// <summary>临时：追加几个假职业，用来验证列表滚动。</summary>
+        internal static bool ShowDummyCareers = true;
+
+        private static readonly Dictionary<string, Sprite> _spriteCache = new Dictionary<string, Sprite>();
+
         internal static void Init(IGameLog log) { _log = log; }
 
         // 视觉常量
@@ -73,7 +78,8 @@ namespace ModKit.Game
         {
             try
             {
-                var specs = CareerAssembler.DeclaredSpecs;
+                var specs = new List<ClassSpec>(CareerAssembler.DeclaredSpecs);
+                if (ShowDummyCareers) { specs.AddRange(MakeDummyCareers()); }
                 if (specs == null || specs.Count == 0) { return; }
                 ChosenColors = null;
                 _selected = specs.Count > 0 ? specs[0] : null;
@@ -188,9 +194,21 @@ namespace ModKit.Game
                 var captured = spec;
                 btn.onClick.AddListener(() => { _selected = captured; RefreshSelection(); WriteDetail(); });
 
-                // 球色圆点（用 ● 字形染色，避免依赖球贴图）
-                NewText(rowRt, "●", 30f, OrbColor(spec), TextAlignmentOptions.Center,
-                    new Vector2(0f, 0.5f), new Vector2(34f, 0f), new Vector2(44f, 44f), false);
+                // 职业球图标：优先用 mod 自带的球贴图，没有就退回 ● 字形
+                var sprite = LoadOrbSprite(spec);
+                if (sprite != null)
+                {
+                    var iconRt = NewRect(rowRt, "Icon", new Vector2(0f, 0.5f), new Vector2(34f, 0f), new Vector2(46f, 46f));
+                    var iconImg = iconRt.gameObject.AddComponent<Image>();
+                    iconImg.sprite = sprite;
+                    iconImg.preserveAspect = true;
+                    iconImg.raycastTarget = false;
+                }
+                else
+                {
+                    NewText(rowRt, "●", 30f, OrbColor(spec), TextAlignmentOptions.Center,
+                        new Vector2(0f, 0.5f), new Vector2(34f, 0f), new Vector2(44f, 44f), false);
+                }
                 var nameT = NewText(rowRt, spec.NameZh, 23f, Ink, TextAlignmentOptions.Left,
                     new Vector2(0f, 0.5f), new Vector2(72f, 12f), new Vector2(240f, 30f), false);
                 nameT.rectTransform.pivot = new Vector2(0f, 0.5f);
@@ -245,10 +263,10 @@ namespace ModKit.Game
 
             // ---------- 按钮 ----------
             float btnTop = detailTop - 190f - 16f;
-            var start = NewButton(prt, "开始游戏", new Vector2(0f, 1f), new Vector2(0f, btnTop), new Vector2(PanelW - 66f, 66f), Accent, Ink);
+            var start = NewButton(prt, "开始游戏", new Vector2(0.5f, 1f), new Vector2(0f, btnTop), new Vector2(PanelW - 66f, 66f), Accent, Ink);
             if (start != null) { start.onClick.AddListener(Commit); }
 
-            var cancel = NewButton(prt, "用原版选球", new Vector2(0f, 1f), new Vector2(0f, btnTop - 76f), new Vector2(PanelW - 66f, 50f), PaperDim, InkSoft);
+            var cancel = NewButton(prt, "用原版选球", new Vector2(0.5f, 1f), new Vector2(0f, btnTop - 76f), new Vector2(PanelW - 66f, 50f), PaperDim, InkSoft);
             if (cancel != null)
             {
                 cancel.onClick.AddListener(() =>
@@ -377,6 +395,48 @@ namespace ModKit.Game
         }
 
         // ---------------- 辅助 ----------------
+
+        private static Sprite LoadOrbSprite(ClassSpec spec)
+        {
+            try
+            {
+                string path;
+                if (spec == null) { return null; }
+                if (!CareerAssembler.SpecOrbSprites.TryGetValue(spec, out path)) { return null; }
+                if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) { return null; }
+                if (_spriteCache.ContainsKey(path)) { return _spriteCache[path]; }
+
+                var bytes = System.IO.File.ReadAllBytes(path);
+                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!tex.LoadImage(bytes)) { return null; }
+                var sp = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+                _spriteCache[path] = sp;
+                return sp;
+            }
+            catch { return null; }
+        }
+
+        /// <summary>临时假职业：只为验证滚动列表，不参与装配，选了也只是按三色开局。</summary>
+        private static List<ClassSpec> MakeDummyCareers()
+        {
+            var list = new List<ClassSpec>();
+            for (int i = 1; i <= 5; i++)
+            {
+                list.Add(new ClassSpec
+                {
+                    Id = "dummy_" + i,
+                    NameZh = "假职业 " + i,
+                    IntroZh = "这是用于验证滚动列表的假职业（第 " + i + " 个）。选中它也能开局，只是用固定的三色组合。",
+                    Colors = new List<ManaColor> { ManaColor.Red, ManaColor.Green, ManaColor.Blue },
+                    OrbColor = ManaColor.Red,
+                    BallScale = 0.5f,
+                    StartDeck = new List<string>(),
+                    StartRelics = new List<string>(),
+                    PoolCards = new List<string>(),
+                });
+            }
+            return list;
+        }
 
         private static string ColorName(ManaColor c)
         {

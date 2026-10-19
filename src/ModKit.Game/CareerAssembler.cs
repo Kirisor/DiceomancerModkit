@@ -35,6 +35,10 @@ namespace ModKit.Game
         internal static readonly System.Collections.Generic.List<ModKit.Api.ClassSpec> DeclaredSpecs =
             new System.Collections.Generic.List<ModKit.Api.ClassSpec>();
 
+        /// <summary>各职业的球贴图绝对路径（供职业选择界面显示图标）。</summary>
+        internal static readonly System.Collections.Generic.Dictionary<ModKit.Api.ClassSpec, string> SpecOrbSprites =
+            new System.Collections.Generic.Dictionary<ModKit.Api.ClassSpec, string>();
+
 /// <summary>本地化表名 —— 职业名与介绍都在这里（ClassIntroCard 写死的）。</summary>
         private const string EncyclopediaTable = "Encyclopedia";
 
@@ -100,7 +104,9 @@ namespace ModKit.Game
                 //   ★ 这里是"接口 → 平台"的唯一接口点：平台把 mod 声明的球颜色 / 贴图 / 大小落下来，
                 //     并**到这一刻才**建每帧宿主。没有职业声明 ⇒ 平台在游戏里零足迹（可随时拆装）。
                 CareerPatch.ClassDeclared = true;
-                CareerPatch.ConfigureClass(orbColor, ModArt.Resolve(modRoot, spec.OrbSprite), spec.BallScale, log);
+                var orbSpritePath = ModArt.Resolve(modRoot, spec.OrbSprite);
+                SpecOrbSprites[spec] = orbSpritePath;
+                CareerPatch.ConfigureClass(orbColor, orbSpritePath, spec.BallScale, log);
                 CareerPatch.EnsureHost(log);
 
                 // ---- 1. 按 id 取出平台的卡 / 遗物（卡名是 mod 前缀归一化后的完整名）----
