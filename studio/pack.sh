@@ -163,12 +163,15 @@ E="$STAGE/example-mod"
 MOD="${EXAMPLE_SRC:-$GAME/BepInEx/DiceomancerMods/manual_demo}"
 if [ -d "$MOD" ]; then
   mkdir -p "$E/manual_demo"
-  for item in mod.json cards relics keywords i18n art sfx; do
+  for item in mod.json cards relics keywords i18n art sfx src manual_demo.dll; do
     [ -e "$MOD/$item" ] && cp -r "$MOD/$item" "$E/manual_demo/" 2>/dev/null || true
   done
-  # 不带 dll/备份/笔记，示例只演示 JSON 内容
+  # 只剔除备份与笔记；dll/src 是职业与关键词行为的实现，必须保留（否则没有职业球）
   find "$E" -name "*.bak" -delete 2>/dev/null || true
-  find "$E" -name "*.dll" -delete 2>/dev/null || true
+  find "$E" -name "*.pdb" -delete 2>/dev/null || true
+  if [ ! -f "$E/manual_demo/manual_demo.dll" ]; then
+    echo "  ! 示例缺少 manual_demo.dll —— 职业球不会出现"
+  fi
   if [ "$(find "$E" -type f | wc -l)" -eq 0 ]; then
     echo "  ! 示例 mod 源目录为空，跳过示例包（用 EXAMPLE_SRC=<目录> 指定）"
   else

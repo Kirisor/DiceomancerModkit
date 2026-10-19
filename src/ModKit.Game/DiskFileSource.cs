@@ -61,7 +61,7 @@ namespace ModKit.Game
                     // 跳过以下划线开头的目录：留给作者放草稿/禁用项，
                     // 与"平台不加载"的约定一致（作者把 mod 目录改名加 _ 即停用）。
                     string name = Path.GetFileName(dir);
-                    if (string.IsNullOrEmpty(name) || name.StartsWith("_", StringComparison.Ordinal))
+                    if (string.IsNullOrEmpty(name) || name.StartsWith("_", StringComparison.Ordinal) || name.StartsWith(".", StringComparison.Ordinal))
                     {
                         continue;
                     }

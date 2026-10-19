@@ -23,7 +23,7 @@ namespace ModKit.Game
     ///   卡牌 / 关键词 / 能力 = 每侧 2 列 × 2 行（每页 8 格）
     ///   遗物                = 每侧 3 列 × 2 行（每页 12 格）
     /// </summary>
-    internal static class ModCompendium
+    internal static partial class ModCompendium
     {
         // ---- 素材路径（Resources 下的路径，不含扩展名；留空则使用纯色）----
         // 例：图片放在 Assets/Resources/ModKit/paper.png，则填 "ModKit/paper"
@@ -58,6 +58,10 @@ namespace ModKit.Game
         private static readonly Button[] _tabButtons = new Button[4];
         private static readonly TextMeshProUGUI[] _tabTexts = new TextMeshProUGUI[4];
         private static Button _prevButton, _nextButton, _closeButton;
+
+        /// <summary>图鉴卡牌页是否显示「升级版」（与游戏自己的图鉴开关同义）。</summary>
+        private static bool _showUpgraded;
+        private static Button _upgradedButton;
         private static readonly RectTransform[] _pageRoots = new RectTransform[2];
         private static readonly RectTransform[] _slotRoots = new RectTransform[SlotCount];
         private static readonly List<CardBase> _spawned = new List<CardBase>();
@@ -499,6 +503,46 @@ namespace ModKit.Game
             ApplyTexture(_prevButton != null ? _prevButton.GetComponent<Image>() : null, ArrowTexturePath, "翻页箭头");
             ApplyTexture(_nextButton != null ? _nextButton.GetComponent<Image>() : null, ArrowTexturePath, "翻页箭头");
 
+            // 升级版开关（卡牌页专用）
+
+            _upgradedButton = NewButton(_panelGo.transform, UpgradedLabel(), new Vector2(0f, 0f), Vector2.zero,
+
+                new Vector2(170f, 60f), out _);
+
+            if (_upgradedButton != null)
+
+            {
+
+                var urt = _upgradedButton.transform as RectTransform;
+
+                urt.pivot = new Vector2(0f, 0f);
+
+                urt.anchoredPosition = new Vector2(180f, 18f);
+
+                _upgradedButton.onClick.AddListener(() =>
+
+                {
+
+                    _showUpgraded = !_showUpgraded;
+
+                    UpdateUpgradedLabel();
+
+                    Refresh();
+
+                });
+
+                ApplyTexture(_upgradedButton.GetComponent<Image>(), ArrowTexturePath, "升级开关");
+
+            }
+
+
+            _jumpText = NewText(_panelGo.transform, "", 26f, Ink, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+
+
+                new Vector2(0f, -150f), new Vector2(1200f, 40f));
+
+
+
             _pageText = NewText(_panelGo.transform, "", 28f, Ink, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 25f), new Vector2(320f, 44f));
             BuildInfoStrip();
@@ -708,6 +752,36 @@ namespace ModKit.Game
             catch { }
         }
 
+        private static string UpgradedLabel()
+
+        {
+
+            return _showUpgraded ? "升级版 ✓" : "升级版";
+
+        }
+
+
+        private static void UpdateUpgradedLabel()
+
+        {
+
+            try
+
+            {
+
+                if (_upgradedButton == null) { return; }
+
+                var txt = _upgradedButton.GetComponentInChildren<TMPro.TMP_Text>();
+
+                if (txt != null) { txt.text = UpgradedLabel(); }
+
+            }
+
+            catch { }
+
+        }
+
+
         private static bool SpawnRealCard(CardSo so, int slot)
         {
             try
@@ -723,6 +797,19 @@ namespace ModKit.Game
                 Vector3 world = slotRt.position;
                 var cb = cm.GenerateCardObjFromCardInfo(so.CardInfo, world, OwnerShip.Preview, CardScale);
                 if (cb == null) { return false; }
+
+                // 升级版开关：与游戏自己的图鉴同一套做法（CardManager.UpgradeCard 就地换卡）
+                if (_showUpgraded)
+                {
+                    try
+                    {
+                        if (!cm.UpgradeCard(cb))
+                        {
+                            Warn("升级", "这张卡没有可用的升级数据（upgrade 块），保持原样：" + so.cardName);
+                        }
+                    }
+                    catch (Exception ex) { Warn("升级", "切到升级版失败：" + Describe(ex)); }
+                }
                 // 开碰撞体，鼠标悬停才能触发游戏的 TooltipTrigger
                 try { cb.SetCollider(isActive: true); } catch { }
 
@@ -1336,6 +1423,11 @@ namespace ModKit.Game
 
                 if (_titleText != null) { _titleText.text = "模组图鉴 · " + TabTitles[_tab]; }
                 if (_pageText != null) { _pageText.text = (_page + 1) + " / " + pages + "　共 " + entries.Count + " 项"; }
+                if (_upgradedButton != null)
+                {
+                    _upgradedButton.gameObject.SetActive(_tab == 0);
+                    UpdateUpgradedLabel();
+                }
                 if (_prevButton != null) { _prevButton.interactable = _page > 0; }
                 if (_nextButton != null) { _nextButton.interactable = _page < pages - 1; }
 

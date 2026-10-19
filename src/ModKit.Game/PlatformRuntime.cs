@@ -235,6 +235,7 @@ namespace ModKit.Game
             // 为什么要另起炉灶：原版图鉴的六个职业页三色组是硬编码的，侧栏书签数量由 prefab 固定，
             // 往里塞第 7 页等于和原版 UI 结构较劲（游戏一更新就碎）。入口复刻原版牌子，面板自建。
             try { ModCompendium.Install(log); } catch (Exception ex) { log.Warn("模组图鉴安装失败：" + ex.Message); }
+            try { CompendiumJumpPatch.Install(log); } catch (Exception ex) { log.Warn("图鉴跳转安装失败：" + ex.Message); }
             // 能力中文名只存在于游戏本地化表，运行期导出一次给编辑器用
             try { AbilityNameDump.Run(log); } catch (Exception ex) { log.Warn("能力中文名导出失败：" + ex.Message); }
             // 游戏本地化表整表导出（触发点/稀有度/时机等中文原文）
