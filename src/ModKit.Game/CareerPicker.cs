@@ -131,8 +131,10 @@ namespace ModKit.Game
             prt.anchorMin = new Vector2(0f, 0.5f);
             prt.anchorMax = new Vector2(0f, 0.5f);
             prt.pivot = new Vector2(0f, 0.5f);
-            prt.anchoredPosition = new Vector2(150f, 0f);
+            // 整体缩到 86%：避免盖住左下角的「返回」，也减少误触
+            prt.anchoredPosition = new Vector2(140f, 24f);
             prt.sizeDelta = new Vector2(PanelW, PanelH);
+            prt.localScale = new Vector3(0.86f, 0.86f, 1f);
 
             var bg = _panelGo.AddComponent<Image>();
             bg.color = Paper;
