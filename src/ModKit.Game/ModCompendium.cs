@@ -422,8 +422,10 @@ namespace ModKit.Game
             brt.offsetMin = new Vector2(-6f, -6f);
             brt.offsetMax = new Vector2(6f, -34f);
             var borderImg = border.AddComponent<Image>();
-            borderImg.color = BorderInk;
+            borderImg.color = Color.white;
             borderImg.raycastTarget = false;
+            borderImg.sprite = UiSkin.PanelFrame;          // 程序化九宫格边框（圆角 + 金线 + 内阴影）
+            borderImg.type = Image.Type.Sliced;
             ApplyTexture(borderImg, BorderTexturePath, "回纹花边");
 
             // ② 纸页底（拦截点击）。顶边下移 40px（offsetMax.y = -40）
@@ -435,8 +437,10 @@ namespace ModKit.Game
             pprt.offsetMin = Vector2.zero;
             pprt.offsetMax = new Vector2(0f, -40f);
             var bg = paper.AddComponent<Image>();
-            bg.color = PanelPaper;
+            bg.color = Color.white;
             bg.raycastTarget = true;
+            bg.sprite = UiSkin.Paper;                      // 程序化纸纹（可平铺）
+            bg.type = Image.Type.Tiled;
             ApplyTexture(bg, PaperTexturePath, "纸页底图");
 
             // ③ 标题底块（先建，保证画在标题文字下面）
@@ -451,6 +455,8 @@ namespace ModKit.Game
             var tbImg = titleBg.AddComponent<Image>();
             tbImg.color = Paper;
             tbImg.raycastTarget = false;
+            tbImg.sprite = UiSkin.RowFrame;                // 标题底块也用细边框
+            tbImg.type = Image.Type.Sliced;
 
             _titleText = NewText(_panelGo.transform, "模组图鉴", 46f, Ink, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                 new Vector2(0f, 42f), new Vector2(900f, 60f));

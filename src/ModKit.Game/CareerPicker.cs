@@ -133,8 +133,19 @@ namespace ModKit.Game
             prt.localScale = new Vector3(0.86f, 0.86f, 1f);
 
             var bg = _panelGo.AddComponent<Image>();
-            bg.color = Paper;
+            bg.color = Color.white;
+            bg.sprite = UiSkin.Paper;                      // 程序化纸纹
+            bg.type = Image.Type.Tiled;
             bg.raycastTarget = true;
+
+            // 外框：程序化九宫格边框（比纸页大一圈）
+            var frameRt = NewRect(prt, "Frame", new Vector2(0.5f, 0.5f), Vector2.zero,
+                new Vector2(PanelW + 14f, PanelH + 14f));
+            var frameImg = frameRt.gameObject.AddComponent<Image>();
+            frameImg.sprite = UiSkin.PanelFrame;
+            frameImg.type = Image.Type.Sliced;
+            frameImg.color = Color.white;
+            frameImg.raycastTarget = false;
 
             // 标题
             NewText(prt, "模组职业", 34f, Ink, TextAlignmentOptions.Center,
@@ -186,6 +197,8 @@ namespace ModKit.Game
                 var rowBg = rowRt.gameObject.AddComponent<Image>();
                 rowBg.color = RowBg;
                 rowBg.raycastTarget = true;
+                rowBg.sprite = UiSkin.RowFrame;
+                rowBg.type = Image.Type.Sliced;
 
                 var btn = rowRt.gameObject.AddComponent<Button>();
                 btn.targetGraphic = rowBg;
@@ -248,6 +261,8 @@ namespace ModKit.Game
             var detailImg = detailBg.gameObject.AddComponent<Image>();
             detailImg.color = new Color(0.98f, 0.96f, 0.91f, 1f);
             detailImg.raycastTarget = false;
+            detailImg.sprite = UiSkin.RowFrame;
+            detailImg.type = Image.Type.Sliced;
 
             _detailText = NewText(detailBg, "", 18f, InkSoft, TextAlignmentOptions.TopLeft,
                 new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(PanelW - 106f, 128f), true);
@@ -470,6 +485,8 @@ namespace ModKit.Game
             var rt = NewRect(parent, "Btn_" + text, anchor, pos, size);
             var img = rt.gameObject.AddComponent<Image>();
             img.color = bgColor;
+            img.sprite = UiSkin.RowFrame;
+            img.type = Image.Type.Sliced;
             var btn = rt.gameObject.AddComponent<Button>();
             btn.targetGraphic = img;
             NewText(rt, text, 24f, textColor, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), Vector2.zero, size, false);
