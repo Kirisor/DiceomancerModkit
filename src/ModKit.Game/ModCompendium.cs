@@ -437,10 +437,24 @@ namespace ModKit.Game
             pprt.offsetMin = Vector2.zero;
             pprt.offsetMax = new Vector2(0f, -40f);
             var bg = paper.AddComponent<Image>();
-            bg.color = Color.white;
+            bg.color = new Color(0.965f, 0.945f, 0.90f, 1f);   // 纸底色（圆角填充，下面再盖纸纹）
             bg.raycastTarget = true;
-            bg.sprite = UiSkin.Paper;                      // 程序化纸纹（可平铺）
-            bg.type = Image.Type.Tiled;
+            bg.sprite = UiSkin.PanelRound;                      // 圆角底：四角倒角
+            bg.type = Image.Type.Sliced;
+            var mask = paper.AddComponent<Mask>();
+            mask.showMaskGraphic = true;
+            var texGo = new GameObject("PaperTex", typeof(RectTransform));
+            texGo.transform.SetParent(paper.transform, false);
+            var texRt2 = texGo.GetComponent<RectTransform>();
+            texRt2.anchorMin = Vector2.zero;
+            texRt2.anchorMax = Vector2.one;
+            texRt2.offsetMin = Vector2.zero;
+            texRt2.offsetMax = Vector2.zero;
+            var texImg = texGo.AddComponent<Image>();
+            texImg.sprite = UiSkin.Paper;
+            texImg.type = Image.Type.Tiled;
+            texImg.color = new Color(1f, 1f, 1f, 0.9f);
+            texImg.raycastTarget = false;
             ApplyTexture(bg, PaperTexturePath, "纸页底图");
 
             // ③ 标题底块（先建，保证画在标题文字下面）
@@ -455,7 +469,7 @@ namespace ModKit.Game
             var tbImg = titleBg.AddComponent<Image>();
             tbImg.color = Paper;
             tbImg.raycastTarget = false;
-            tbImg.sprite = UiSkin.RowFrame;                // 标题底块也用细边框
+            tbImg.sprite = UiSkin.RowRound;                // 标题底块（圆角 + 4px 边）
             tbImg.type = Image.Type.Sliced;
 
             _titleText = NewText(_panelGo.transform, "模组图鉴", 46f, Ink, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),

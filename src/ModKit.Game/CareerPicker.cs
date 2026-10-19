@@ -133,10 +133,24 @@ namespace ModKit.Game
             prt.localScale = new Vector3(0.86f, 0.86f, 1f);
 
             var bg = _panelGo.AddComponent<Image>();
-            bg.color = Color.white;
-            bg.sprite = UiSkin.Paper;                      // 程序化纸纹
-            bg.type = Image.Type.Tiled;
+            bg.color = new Color(0.965f, 0.945f, 0.90f, 1f);
+            bg.sprite = UiSkin.PanelRound;                 // 圆角底：四角倒角
+            bg.type = Image.Type.Sliced;
             bg.raycastTarget = true;
+            var mask = _panelGo.AddComponent<Mask>();
+            mask.showMaskGraphic = true;
+            var texGo = new GameObject("PaperTex", typeof(RectTransform));
+            texGo.transform.SetParent(prt, false);
+            var texRt2 = texGo.GetComponent<RectTransform>();
+            texRt2.anchorMin = Vector2.zero;
+            texRt2.anchorMax = Vector2.one;
+            texRt2.offsetMin = Vector2.zero;
+            texRt2.offsetMax = Vector2.zero;
+            var texImg = texGo.AddComponent<Image>();
+            texImg.sprite = UiSkin.Paper;
+            texImg.type = Image.Type.Tiled;
+            texImg.color = new Color(1f, 1f, 1f, 0.9f);
+            texImg.raycastTarget = false;
 
             // 外框：程序化九宫格边框（比纸页大一圈）
             var frameRt = NewRect(prt, "Frame", new Vector2(0.5f, 0.5f), Vector2.zero,
@@ -197,7 +211,7 @@ namespace ModKit.Game
                 var rowBg = rowRt.gameObject.AddComponent<Image>();
                 rowBg.color = RowBg;
                 rowBg.raycastTarget = true;
-                rowBg.sprite = UiSkin.RowFrame;
+                rowBg.sprite = UiSkin.RowRound;             // 圆角 + 4px 边
                 rowBg.type = Image.Type.Sliced;
 
                 var btn = rowRt.gameObject.AddComponent<Button>();
@@ -261,7 +275,7 @@ namespace ModKit.Game
             var detailImg = detailBg.gameObject.AddComponent<Image>();
             detailImg.color = new Color(0.98f, 0.96f, 0.91f, 1f);
             detailImg.raycastTarget = false;
-            detailImg.sprite = UiSkin.RowFrame;
+            detailImg.sprite = UiSkin.RowRound;
             detailImg.type = Image.Type.Sliced;
 
             _detailText = NewText(detailBg, "", 18f, InkSoft, TextAlignmentOptions.TopLeft,
@@ -485,7 +499,7 @@ namespace ModKit.Game
             var rt = NewRect(parent, "Btn_" + text, anchor, pos, size);
             var img = rt.gameObject.AddComponent<Image>();
             img.color = bgColor;
-            img.sprite = UiSkin.RowFrame;
+            img.sprite = UiSkin.RowRound;
             img.type = Image.Type.Sliced;
             var btn = rt.gameObject.AddComponent<Button>();
             btn.targetGraphic = img;

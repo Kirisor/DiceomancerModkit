@@ -1,12 +1,13 @@
 // =============================================================================
 //  ModKit.Game · 自建 UI 的皮肤资源（全部程序化生成，不引用任何外部/游戏素材）
 //
-//  三张精灵：
-//    Paper()      256×256 可平铺的纸纹（米色底 + 细噪点 + 纤维），配 Image.Type.Tiled
-//    PanelFrame() 96×96 九宫格边框（圆角 + 深棕外描边 + 内金线 + 内阴影），配 Image.Type.Sliced
-//    RowFrame()   48×48 九宫格细边框（条目/按钮用）
+//  精灵：
+//    Paper       256×256 可平铺纸纹（柏林噪声 + 纸纤维），配 Image.Type.Tiled
+//    PanelRound  96×96  圆角面板底（白填充 + 4px 描边），配 Sliced；也可当 Mask 用
+//    RowRound    48×48  圆角条目底（白填充 + 4px 描边），配 Sliced；条目/按钮/详情用
+//    PanelFrame  96×96  九宫格外框（圆角 + 4px 深棕描边 + 内金线 + 内阴影）
 //
-//  全部走 sRGB 颜色 + 2×2 超采样边缘，避免锯齿。
+//  圆角一致性：底图与外框用同一半径，四角自然形成倒角，不再露出直角。
 // =============================================================================
 
 using UnityEngine;
@@ -17,10 +18,21 @@ namespace ModKit.Game
     {
         private static Sprite _paper;
         private static Sprite _panelFrame;
-        private static Sprite _rowFrame;
-        private static Texture2D _paperTex;
+        private static Sprite _panelRound;
+        private static Sprite _rowRound;
 
-        /// <summary>纸纹底图（可平铺）。</summary>
+        /// <summary>面板圆角半径。</summary>
+        internal const float PanelRadius = 20f;
+
+        /// <summary>条目/按钮圆角半径。</summary>
+        internal const float RowRadius = 11f;
+
+        /// <summary>描边宽度（像素）。</summary>
+        internal const float StrokeWidth = 4f;
+
+        // ---------------- 纸纹 ----------------
+
+        /// <summary>纸纹底图（柏林噪声，可平铺）。</summary>
         internal static Sprite Paper
         {
             get
@@ -31,38 +43,33 @@ namespace ModKit.Game
                 tex.wrapMode = TextureWrapMode.Repeat;
                 tex.filterMode = FilterMode.Bilinear;
 
-                uint seed = 0x9E3779B9u;
-                System.Func<float> rnd = () =>
-                {
-                    seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
-                    return (seed & 0xFFFFFF) / 16777215f;
-                };
-
                 var px = new Color32[N * N];
                 for (int y = 0; y < N; y++)
                 {
                     for (int x = 0; x < N; x++)
                     {
-                        // 底：暖米色
-                        float r = 0.965f, g = 0.945f, b = 0.895f;
-                        // 细噪点（模拟纸纤维颗粒）
-                        float n = (rnd() - 0.5f) * 0.035f;
-                        // 长纤维：按行做低频起伏
-                        float fiber = Mathf.Sin(y * 0.35f + Mathf.Sin(x * 0.07f) * 2.2f) * 0.008f;
-                        // 大块淡斑
-                        float blotch = (Mathf.Sin(x * 0.045f) * Mathf.Sin(y * 0.038f)) * 0.012f;
-                        float k = n + fiber + blotch;
+                        // 多倍频柏林噪声（周期化 ⇒ 可无缝平铺）
+                        float n = 0f;
+                        n += 0.52f * (PerlinTileable(x, y, 64) - 0.5f);
+                        n += 0.26f * (PerlinTileable(x + 97, y + 41, 32) - 0.5f);
+                        n += 0.13f * (PerlinTileable(x + 13, y + 71, 16) - 0.5f);
+                        n += 0.09f * (PerlinTileable(x + 55, y + 5, 8) - 0.5f);
+
+                        // 纸纤维：纵向细纹
+                        float fiber = Mathf.Sin(y * 0.9f + PerlinTileable(x, y, 128) * 3.5f) * 0.006f;
+
+                        float k = n * 0.070f + fiber;
+
                         px[y * N + x] = new Color32(
-                            (byte)Mathf.Clamp((r + k) * 255f, 0f, 255f),
-                            (byte)Mathf.Clamp((g + k * 0.95f) * 255f, 0f, 255f),
-                            (byte)Mathf.Clamp((b + k * 0.9f) * 255f, 0f, 255f),
+                            (byte)Mathf.Clamp((0.968f + k) * 255f, 0f, 255f),
+                            (byte)Mathf.Clamp((0.950f + k * 0.95f) * 255f, 0f, 255f),
+                            (byte)Mathf.Clamp((0.902f + k * 0.88f) * 255f, 0f, 255f),
                             255);
                     }
                 }
                 tex.SetPixels32(px);
                 tex.Apply(false, false);
-                _paperTex = tex;
-                // 用整张图、无 border；Tiled 模式下需要 wrapMode = Repeat
+
                 _paper = Sprite.Create(tex, new Rect(0f, 0f, N, N), new Vector2(0.5f, 0.5f), 100f, 0,
                     SpriteMeshType.FullRect, Vector4.zero);
                 _paper.name = "ModKitPaper";
@@ -70,50 +77,112 @@ namespace ModKit.Game
             }
         }
 
-        /// <summary>面板九宫格边框（圆角 + 外描边 + 内金线 + 内阴影）。</summary>
+        // ---------------- 圆角填充 ----------------
+
+        /// <summary>面板圆角底（白填充 + 4px 描边），适合当底图或 Mask。</summary>
+        internal static Sprite PanelRound
+        {
+            get
+            {
+                if (_panelRound != null) { return _panelRound; }
+                _panelRound = BuildRounded(96, PanelRadius, 28, StrokeWidth, false);
+                _panelRound.name = "ModKitPanelRound";
+                return _panelRound;
+            }
+        }
+
+        /// <summary>条目/按钮圆角底（白填充 + 4px 描边）。</summary>
+        internal static Sprite RowRound
+        {
+            get
+            {
+                if (_rowRound != null) { return _rowRound; }
+                _rowRound = BuildRounded(48, RowRadius, 14, StrokeWidth, false);
+                _rowRound.name = "ModKitRowRound";
+                return _rowRound;
+            }
+        }
+
+        // ---------------- 外框 ----------------
+
+        /// <summary>面板九宫格外框（圆角 + 4px 深棕描边 + 内金线 + 内阴影）。</summary>
         internal static Sprite PanelFrame
         {
             get
             {
                 if (_panelFrame != null) { return _panelFrame; }
-                _panelFrame = BuildFrame(96, 20f, 28, 2.6f, 1.6f);
+                _panelFrame = BuildRounded(96, PanelRadius, 28, StrokeWidth, true);
                 _panelFrame.name = "ModKitPanelFrame";
                 return _panelFrame;
             }
         }
 
-        /// <summary>条目/按钮用的细边框。</summary>
-        internal static Sprite RowFrame
+        // ---------------- 生成 ----------------
+
+        /// <summary>周期化柏林噪声：把坐标折回 8×8 梯度网格，保证 N 平铺处首尾相接。</summary>
+        private static float PerlinTileable(int x, int y, int cellSize)
         {
-            get
+            float fx = (float)x / cellSize * 8f;
+            float fy = (float)y / cellSize * 8f;
+            int x0 = Mathf.FloorToInt(fx);
+            int y0 = Mathf.FloorToInt(fy);
+            float tx = fx - x0;
+            float ty = fy - y0;
+
+            int px0 = Wrap8(x0), px1 = Wrap8(x0 + 1);
+            int py0 = Wrap8(y0), py1 = Wrap8(y0 + 1);
+
+            float g00 = Grad(px0, py0, tx, ty);
+            float g10 = Grad(px1, py0, tx - 1f, ty);
+            float g01 = Grad(px0, py1, tx, ty - 1f);
+            float g11 = Grad(px1, py1, tx - 1f, ty - 1f);
+
+            float u = Fade(tx), v = Fade(ty);
+            float a = Mathf.Lerp(g00, g10, u);
+            float b = Mathf.Lerp(g01, g11, u);
+            return Mathf.Clamp01(Mathf.Lerp(a, b, v) * 0.7f + 0.5f);
+        }
+
+        private static int Wrap8(int v)
+        {
+            int r = v % 8;
+            return r < 0 ? r + 8 : r;
+        }
+
+        private static float Fade(float t) { return t * t * t * (t * (t * 6f - 15f) + 10f); }
+
+        private static float Grad(int ix, int iy, float dx, float dy)
+        {
+            int h = ((ix * 73856093) ^ (iy * 19349663)) & 7;
+            switch (h)
             {
-                if (_rowFrame != null) { return _rowFrame; }
-                _rowFrame = BuildFrame(48, 11f, 14, 1.8f, 0f);
-                _rowFrame.name = "ModKitRowFrame";
-                return _rowFrame;
+                case 0: return dx;
+                case 1: return dx + dy;
+                case 2: return dy;
+                case 3: return -dx + dy;
+                case 4: return -dx;
+                case 5: return -dx - dy;
+                case 6: return -dy;
+                default: return dx - dy;
             }
         }
 
         /// <summary>
-        /// 生成一张"中间透明、四周描边"的九宫格边框。
+        /// 生成圆角精灵。<paramref name="ringOnly"/> = true 时中间透明（外框），
+        /// false 时内部填充白色（底图/按钮底，可用 Image.color 染色）。
         /// </summary>
-        private static Sprite BuildFrame(int size, float radius, int border, float strokeW, float goldW)
+        private static Sprite BuildRounded(int size, float radius, int border, float strokeW, bool ringOnly)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.filterMode = FilterMode.Bilinear;
 
             var px = new Color32[size * size];
-            var clear = new Color32(0, 0, 0, 0);
-            for (int i = 0; i < px.Length; i++) { px[i] = clear; }
+            float hw = size * 0.5f, hh = size * 0.5f;
+            var stroke = new Color(0.155f, 0.125f, 0.105f, 1f);
+            var gold = new Color(0.788f, 0.635f, 0.153f, 0.72f);
+            var shadow = new Color(0.10f, 0.08f, 0.06f, 0.12f);
 
-            float hw = size * 0.5f;
-            float hh = size * 0.5f;
-            var stroke = new Color(0.155f, 0.125f, 0.105f, 1f);      // 深棕描边
-            var gold = new Color(0.788f, 0.635f, 0.153f, 0.72f);      // 内金线（柔和）
-            var shadow = new Color(0.10f, 0.08f, 0.06f, 0.12f);       // 内阴影
-
-            // 2×2 超采样抗锯齿
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
@@ -125,7 +194,7 @@ namespace ModKit.Game
                         {
                             float fx = x + 0.25f + sx * 0.5f - hw;
                             float fy = y + 0.25f + sy * 0.5f - hh;
-                            acc += SampleFrame(fx, fy, hw, hh, radius, strokeW, goldW, stroke, gold, shadow);
+                            acc += Sample(fx, fy, hw, hh, radius, strokeW, ringOnly, stroke, gold, shadow);
                         }
                     }
                     acc *= 0.25f;
@@ -144,7 +213,6 @@ namespace ModKit.Game
                 SpriteMeshType.FullRect, b);
         }
 
-        /// <summary>圆角矩形 SDF（<0 在内部）。</summary>
         private static float SdfRoundRect(float x, float y, float hw, float hh, float r)
         {
             float qx = Mathf.Abs(x) - hw + r;
@@ -154,36 +222,38 @@ namespace ModKit.Game
             return Mathf.Sqrt(ax * ax + ay * ay) + Mathf.Min(Mathf.Max(qx, qy), 0f) - r;
         }
 
-        private static Color SampleFrame(float x, float y, float hw, float hh, float radius,
-            float strokeW, float goldW, Color stroke, Color gold, Color shadow)
+        private static Color Sample(float x, float y, float hw, float hh, float radius, float strokeW,
+            bool ringOnly, Color stroke, Color gold, Color shadow)
         {
             float d = SdfRoundRect(x, y, hw, hh, radius);
             float ad = Mathf.Abs(d);
 
-            // 外描边
-            if (ad <= strokeW) { return stroke; }
+            // 4px 描边
+            if (ad <= strokeW * 0.5f) { return stroke; }
+            if (d > 0f) { return Color.clear; }
 
-            // 内金线（仅面板用）
-            if (goldW > 0f)
+            if (!ringOnly)
             {
-                float goldT = 1f - Mathf.Abs(ad - (strokeW + goldW * 0.9f)) / 1.0f;
-                if (goldT > 0f)
-                {
-                    var c = gold;
-                    c.a *= Mathf.Clamp01(goldT);
-                    return c;
-                }
+                // 底图：内部填白（外面由 Image.color 染成需要的底色）
+                return Color.white;
             }
 
-            // 内阴影：从描边内侧往里 8px 逐渐淡出（只在内部一侧）
-            if (d < 0f && d > -9f)
+            // 外框：内金线
+            float goldT = 1f - Mathf.Abs(ad - (strokeW * 0.5f + 1.8f)) / 1.1f;
+            if (goldT > 0f)
             {
-                float t = 1f - (-d) / 9f;
-                var c = shadow;
-                c.a *= Mathf.Clamp01(t * t);
+                var c = gold;
+                c.a *= Mathf.Clamp01(goldT);
                 return c;
             }
-
+            // 外框：内阴影
+            if (d > -10f)
+            {
+                float t = 1f - (-d) / 10f;
+                var c2 = shadow;
+                c2.a *= Mathf.Clamp01(t * t);
+                return c2;
+            }
             return Color.clear;
         }
     }
