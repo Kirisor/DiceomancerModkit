@@ -23,7 +23,7 @@ namespace ModKit.Game
     ///   卡牌 / 关键词 / 能力 = 每侧 2 列 × 2 行（每页 8 格）
     ///   遗物                = 每侧 3 列 × 2 行（每页 12 格）
     /// </summary>
-    internal static class ModCompendium
+    internal static partial class ModCompendium
     {
         // ---- 素材路径（Resources 下的路径，不含扩展名；留空则使用纯色）----
         // 例：图片放在 Assets/Resources/ModKit/paper.png，则填 "ModKit/paper"
@@ -534,6 +534,13 @@ namespace ModKit.Game
                 ApplyTexture(_upgradedButton.GetComponent<Image>(), ArrowTexturePath, "升级开关");
 
             }
+
+
+            _jumpText = NewText(_panelGo.transform, "", 26f, Ink, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+
+
+                new Vector2(0f, -150f), new Vector2(1200f, 40f));
+
 
 
             _pageText = NewText(_panelGo.transform, "", 28f, Ink, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
