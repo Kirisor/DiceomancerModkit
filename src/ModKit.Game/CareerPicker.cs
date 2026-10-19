@@ -44,7 +44,7 @@ namespace ModKit.Game
         /// <summary>临时：追加几个假职业，用来验证列表滚动。</summary>
         internal static bool ShowDummyCareers = true;
 
-        private static readonly Dictionary<string, Sprite> _spriteCache = new Dictionary<string, Sprite>();
+        // 贴图加载交给 ModArt（带缓存 + 坏图不炸装配）
 
         internal static void Init(IGameLog log) { _log = log; }
 
@@ -405,14 +405,10 @@ namespace ModKit.Game
                 string path;
                 if (spec == null) { return null; }
                 if (!CareerAssembler.SpecOrbSprites.TryGetValue(spec, out path)) { return null; }
-                if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) { return null; }
-                if (_spriteCache.ContainsKey(path)) { return _spriteCache[path]; }
-
-                var bytes = System.IO.File.ReadAllBytes(path);
-                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                if (!tex.LoadImage(bytes)) { return null; }
-                var sp = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
-                _spriteCache[path] = sp;
+                if (string.IsNullOrEmpty(path)) { return null; }
+                string error;
+                var sp = ModArt.Load(path, out error);   // ModArt 自带缓存，坏图返回 null
+                if (sp == null && !string.IsNullOrEmpty(error)) { Info("职业球贴图没加载出来：" + error); }
                 return sp;
             }
             catch { return null; }
