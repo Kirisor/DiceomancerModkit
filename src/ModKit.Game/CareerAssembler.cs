@@ -31,7 +31,11 @@ namespace ModKit.Game
     /// <summary>把 mod 声明的职业装配进游戏的职业/色球系统。</summary>
     internal static class CareerAssembler
     {
-        /// <summary>本地化表名 —— 职业名与介绍都在这里（ClassIntroCard 写死的）。</summary>
+        /// <summary>已成功装配的 mod 职业（供自建职业选择界面枚举）。</summary>
+        internal static readonly System.Collections.Generic.List<ModKit.Api.ClassSpec> DeclaredSpecs =
+            new System.Collections.Generic.List<ModKit.Api.ClassSpec>();
+
+/// <summary>本地化表名 —— 职业名与介绍都在这里（ClassIntroCard 写死的）。</summary>
         private const string EncyclopediaTable = "Encyclopedia";
 
         /// <summary>原版已经做成球的 5 色（Black 不在其中 ⇒ 新职业至少要用 Black 才不撞车）。</summary>
@@ -51,6 +55,7 @@ namespace ModKit.Game
             IGameLog log)
         {
             if (spec == null) { return; }
+            if (!DeclaredSpecs.Contains(spec)) { DeclaredSpecs.Add(spec); }
 
             try
             {
