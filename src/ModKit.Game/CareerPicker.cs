@@ -168,7 +168,11 @@ namespace ModKit.Game
             }
         }
 
-        /// <summary>写盘：把三色交给补丁，然后调游戏自己的确认入口。</summary>
+        /// <summary>
+        /// 确认：不调用原版 LeaveSubSmallGame（它只认 5 种原版三色组合，遇到 mod 组合会 NRE，
+        /// 而且会先把 _submitted 置 true ⇒ 之后永远静默返回）。
+        /// 改为直接写主菜单的三色，再复用平台的「强行切回房间」，玩家点主菜单的「开始游戏」即可。
+        /// </summary>
         private static void Commit()
         {
             try
@@ -184,7 +188,6 @@ namespace ModKit.Game
                     return;
                 }
 
-                ChosenColors = new List<ManaColor>(_selected.Colors);
                 var picker = CareerPatch.CurrentPicker;
                 if (picker == null)
                 {
@@ -192,10 +195,74 @@ namespace ModKit.Game
                     return;
                 }
 
-                Warn("自建职业选择：确认「" + _selected.NameZh + "」→ 交给游戏开局流程");
-                picker.LeaveSubSmallGame();
+                ChosenColors = new List<ManaColor>(_selected.Colors);
+
+                // ① 写主菜单三色（原版 public 字段 mainMenuSmallGameColorEs）
+                bool wrote = WriteMainMenuColors(picker, _selected.Colors);
+                // ② 关闭选球界面 + 回到房间（平台已有实现）
+                CareerOrbTicker.ForceSwitchBack(picker, "自建职业选择：" + _selected.Id);
+
+                var msg = wrote
+                    ? "已选「" + _selected.NameZh + "」——回到房间后点「开始游戏」即可"
+                    : "已选「" + _selected.NameZh + "」但写主菜单颜色失败，请看日志";
+                if (_hintText != null) { _hintText.text = msg; }
+                Warn(msg);
+                Hide();
             }
             catch (Exception ex) { Warn("自建职业确认失败：" + ex.GetType().Name + " " + ex.Message); }
+        }
+
+        /// <summary>反射写 SmallGameMainMenu.mainMenuSmallGameColorEs。</summary>
+        private static bool WriteMainMenuColors(SmallGames.WorldBetween.SubSmallGameChooseColor picker, List<ManaColor> colors)
+        {
+            try
+            {
+                var mainMenu = FindPrivateField(picker, "_mainMenu");
+                if (mainMenu == null) { Warn("写主菜单颜色失败：找不到 _mainMenu"); return false; }
+
+                var field = mainMenu.GetType().GetField("mainMenuSmallGameColorEs",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic);
+                if (field == null) { Warn("写主菜单颜色失败：找不到 mainMenuSmallGameColorEs"); return false; }
+
+                var list = field.GetValue(mainMenu) as List<ColorE>;
+                if (list == null)
+                {
+                    list = new List<ColorE>();
+                    field.SetValue(mainMenu, list);
+                }
+                list.Clear();
+                foreach (var c in colors) { list.Add((ColorE)(int)c); }
+
+                // 让主菜单刷新自己的圆环/开始按钮
+                try
+                {
+                    var refresh = mainMenu.GetType().GetMethod("RefreshPlayButton",
+                        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                        System.Reflection.BindingFlags.NonPublic);
+                    if (refresh != null) { refresh.Invoke(mainMenu, null); }
+                }
+                catch { }
+                return true;
+            }
+            catch (Exception ex) { Warn("写主菜单颜色异常：" + ex.Message); return false; }
+        }
+
+        private static object FindPrivateField(object target, string name)
+        {
+            try
+            {
+                var t = target.GetType();
+                while (t != null)
+                {
+                    var f = t.GetField(name, System.Reflection.BindingFlags.Instance |
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                    if (f != null) { return f.GetValue(target); }
+                    t = t.BaseType;
+                }
+            }
+            catch { }
+            return null;
         }
 
         private static string ColorsText(List<ManaColor> colors)
