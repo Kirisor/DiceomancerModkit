@@ -41,9 +41,6 @@ namespace ModKit.Game
 
         private static IGameLog _log;
 
-        /// <summary>临时：追加几个假职业，用来验证列表滚动。</summary>
-        internal static bool ShowDummyCareers = true;
-
         // 贴图加载交给 ModArt（带缓存 + 坏图不炸装配）
 
         internal static void Init(IGameLog log) { _log = log; }
@@ -79,7 +76,6 @@ namespace ModKit.Game
             try
             {
                 var specs = new List<ClassSpec>(CareerAssembler.DeclaredSpecs);
-                if (ShowDummyCareers) { specs.AddRange(MakeDummyCareers()); }
                 if (specs == null || specs.Count == 0) { return; }
                 ChosenColors = null;
                 _selected = specs.Count > 0 ? specs[0] : null;
@@ -412,28 +408,6 @@ namespace ModKit.Game
                 return sp;
             }
             catch { return null; }
-        }
-
-        /// <summary>临时假职业：只为验证滚动列表，不参与装配，选了也只是按三色开局。</summary>
-        private static List<ClassSpec> MakeDummyCareers()
-        {
-            var list = new List<ClassSpec>();
-            for (int i = 1; i <= 5; i++)
-            {
-                list.Add(new ClassSpec
-                {
-                    Id = "dummy_" + i,
-                    NameZh = "假职业 " + i,
-                    IntroZh = "这是用于验证滚动列表的假职业（第 " + i + " 个）。选中它也能开局，只是用固定的三色组合。",
-                    Colors = new List<ManaColor> { ManaColor.Red, ManaColor.Green, ManaColor.Blue },
-                    OrbColor = ManaColor.Red,
-                    BallScale = 0.5f,
-                    StartDeck = new List<string>(),
-                    StartRelics = new List<string>(),
-                    PoolCards = new List<string>(),
-                });
-            }
-            return list;
         }
 
         private static string ColorName(ManaColor c)
