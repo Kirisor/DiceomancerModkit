@@ -23,6 +23,7 @@
         <DockPanel Grid.Row="0" Grid.ColumnSpan="5" Margin="0,0,0,10">
             <TextBlock DockPanel.Dock="Left" Text="mods 根目录" Foreground="{StaticResource InkSoft}"
                        VerticalAlignment="Center" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="新建模组" Click="OnNewModClick" />
             <Button DockPanel.Dock="Right" Content="部署到游戏" Click="OnDeployClick" />
             <Button DockPanel.Dock="Right" Content="编译本 mod" Click="OnCompileModClick" />
             <Button DockPanel.Dock="Right" Content="重新加载" Click="OnReloadClick" />

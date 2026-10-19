@@ -593,6 +593,159 @@ namespace ModKit.Studio
             return kind == Kind.Card ? "modkit/card@1" : kind == Kind.Relic ? "modkit/relic@1" : "modkit/keyword@1";
         }
 
+        /// <summary>新建模组：在 mods 根目录下建 <id> 目录 + 清单 + 空目录，然后直接载入。</summary>
+        private void OnNewModClick(object sender, RoutedEventArgs e)
+        {
+            var root = ModsRootBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                Status("先在顶栏选择游戏目录（点「浏览…」），再新建模组");
+                return;
+            }
+            try { Directory.CreateDirectory(root); }
+            catch (Exception ex) { Status("mods 根目录不可用：" + ex.Message); return; }
+
+            var id = Prompt("新建模组", "模组 id（小写字母开头，可含小写字母 / 数字 / 下划线）", "my_mod");
+            if (id == null) { return; }
+            id = id.Trim().ToLowerInvariant();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-z][a-z0-9_]*$"))
+            {
+                Status("id 不合法：" + id + "（只能小写字母开头，含小写字母/数字/下划线）");
+                return;
+            }
+            var dir = Path.Combine(root, id);
+            if (Directory.Exists(dir))
+            {
+                Status("已存在同名模组：" + id);
+                return;
+            }
+
+            var name = Prompt("新建模组", "显示名（留空则用 id）", id);
+            if (name == null) { return; }
+            if (string.IsNullOrWhiteSpace(name)) { name = id; }
+
+            try
+            {
+                CreateModSkeleton(dir, id, name.Trim());
+            }
+            catch (Exception ex)
+            {
+                Status("建立模组失败：" + ex.Message);
+                return;
+            }
+
+            Reload();
+            SelectMod(id);
+            Status("已创建模组：" + id + "（" + dir + "）");
+        }
+
+        /// <summary>生成最小可用模组的目录结构与清单。</summary>
+        private static void CreateModSkeleton(string dir, string id, string displayName)
+        {
+            foreach (var sub in new[] { "cards", "relics", "keywords", "i18n", "art" })
+            {
+                Directory.CreateDirectory(Path.Combine(dir, sub));
+            }
+
+            var manifest = new JsonObject
+            {
+                ["$schema"] = "modkit/mod@1",
+                ["id"] = id,
+                ["name"] = displayName,
+                ["version"] = "1.0.0",
+                ["author"] = "",
+                ["cards"] = new JsonArray(),
+                ["relics"] = new JsonArray(),
+                ["keywords"] = new JsonArray(),
+                ["i18n"] = new JsonArray("i18n/zh-Hans.json"),
+            };
+            File.WriteAllText(Path.Combine(dir, "mod.json"),
+                manifest.ToJsonString(WriteOptions).Replace("\r\n", "\n") + "\n",
+                new UTF8Encoding(false));
+
+            var i18n = new JsonObject
+            {
+                ["$schema"] = "modkit/i18n@1",
+                ["language"] = "zh-Hans",
+                ["tables"] = new JsonObject(),
+            };
+            File.WriteAllText(Path.Combine(dir, "i18n", "zh-Hans.json"),
+                i18n.ToJsonString(WriteOptions).Replace("\r\n", "\n") + "\n",
+                new UTF8Encoding(false));
+
+            var readme = new StringBuilder();
+            readme.AppendLine("# " + displayName);
+            readme.AppendLine();
+            readme.AppendLine("模组 id：`" + id + "`");
+            readme.AppendLine();
+            readme.AppendLine("目录说明：");
+            readme.AppendLine();
+            readme.AppendLine("- `cards/`  卡牌 JSON");
+            readme.AppendLine("- `relics/` 遗物 JSON");
+            readme.AppendLine("- `keywords/` 关键词 JSON");
+            readme.AppendLine("- `i18n/zh-Hans.json` 卡名 / 说明等文案（key 用 `<modid>.<条目id>`）");
+            readme.AppendLine("- `art/` 卡面与职业球贴图（可选）");
+            readme.AppendLine();
+            readme.AppendLine("新条目进编辑器后会自动写入 `mod.json` 的清单。");
+            File.WriteAllText(Path.Combine(dir, "README.md"), readme.ToString(), new UTF8Encoding(false));
+        }
+
+        /// <summary>在左侧列表里选中指定 id 的模组。</summary>
+        private void SelectMod(string id)
+        {
+            foreach (var obj in ModList.Items)
+            {
+                var me = obj as ModEntry;
+                if (me != null && string.Equals(me.Id, id, StringComparison.Ordinal))
+                {
+                    ModList.SelectedItem = me;
+                    return;
+                }
+            }
+        }
+
+        /// <summary>极简输入框：返回 null 表示取消。</summary>
+        private static string Prompt(string title, string message, string initial)
+        {
+            var win = new Window
+            {
+                Title = title,
+                Width = 520,
+                SizeToContent = SizeToContent.Height,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ResizeMode = ResizeMode.NoResize,
+                Owner = Application.Current != null && Application.Current.MainWindow != null
+                    ? Application.Current.MainWindow : null,
+            };
+            var root = new StackPanel { Margin = new Thickness(18) };
+            root.Children.Add(new TextBlock
+            {
+                Text = message,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 10),
+            });
+            var box = new TextBox { Text = initial ?? "", Padding = new Thickness(6), FontSize = 15 };
+            root.Children.Add(box);
+            var bar = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 14, 0, 0),
+            };
+            var ok = new Button { Content = "确定", Width = 96, Height = 32, Margin = new Thickness(0, 0, 8, 0), IsDefault = true };
+            var cancel = new Button { Content = "取消", Width = 96, Height = 32, IsCancel = true };
+            bar.Children.Add(ok);
+            bar.Children.Add(cancel);
+            root.Children.Add(bar);
+            win.Content = root;
+
+            string result = null;
+            ok.Click += delegate { result = box.Text; win.Close(); };
+            win.Loaded += delegate { box.Focus(); box.SelectAll(); };
+            win.ShowDialog();
+            return result;
+        }
+
         private void OnReloadClick(object sender, RoutedEventArgs e) { Reload(); }
 
         private void OnBrowseClick(object sender, RoutedEventArgs e)
