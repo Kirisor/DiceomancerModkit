@@ -1,20 +1,19 @@
 // =============================================================================
 //  ModKit.Game · 自建职业选择（替代原版「拖三颗球」的小游戏界面）
 //
-//  思路（最小侵入）：
-//    原版确认职业的唯一链路是 SubSmallGameChooseColor.LeaveSubSmallGame()，
-//    而它有两个前置判断：IsAllSlotHasOrb()（三个槽都放了球）与 GetPickedColorES()（取三个颜色）。
-//    我们在这两个方法上打补丁：
-//      · 玩家在我们的面板里选了 mod 职业 ⇒ IsAllSlotHasOrb 直接返回 true、GetPickedColorES 返回该职业的三色；
-//      · 未选择（或选的是原版职业）⇒ 原样走原版逻辑。
-//    于是「确认 → 写主菜单颜色 → 写开局牌组/遗物 → 初始化飞升 → 结束小游戏」全部由游戏自己完成，
-//    我们不需要重写任何开局状态机。
+//  确认链路（最小侵入）：
+//    原版 LeaveSubSmallGame() 只认 5 种原版三色组合，遇到 mod 组合会在
+//    GetClassNameByColorE 处抛异常，而且会先把 _submitted 置 true ⇒ 之后点击静默无效。
+//    因此这里不调它：直接把三色写进 SmallGameMainMenu.mainMenuSmallGameColorEs，
+//    再复用平台已有的 ForceSwitchBack 回房间，玩家点主菜单「开始游戏」即按该职业开局
+//    （初始牌组/遗物由 CareerAssembler 写进 CareerInformationForGameInitialize）。
+//
+//  界面：左侧抽屉（不遮住原版护符与右侧介绍卡），职业列表可滚动。
 // =============================================================================
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Card;
 using HarmonyLib;
 using ModKit.Api;
 using TMPro;
@@ -28,22 +27,48 @@ namespace ModKit.Game
         /// <summary>玩家在自建面板里选定的职业颜色；非 null 表示由我们接管确认。</summary>
         internal static List<ManaColor> ChosenColors;
 
+        // 面板
         private static GameObject _canvasGo;
         private static GameObject _panelGo;
-        private static TextMeshProUGUI _titleText;
+        private static TextMeshProUGUI _countText;
+        private static TextMeshProUGUI _detailText;
+        private static TextMeshProUGUI _colorsText;
         private static TextMeshProUGUI _hintText;
+        private static ScrollRect _scroll;
+        private static RectTransform _content;
         private static ClassSpec _selected;
-        private static readonly List<Button> _entryButtons = new List<Button>();
+        private static readonly List<Row> _rows = new List<Row>();
 
         private static IGameLog _log;
 
         internal static void Init(IGameLog log) { _log = log; }
 
-        private static readonly Color Paper = new Color(0.96f, 0.94f, 0.88f, 1f);
+        // 视觉常量
+        private static readonly Color Paper = new Color(1f, 0.984f, 0.945f, 1f);
+        private static readonly Color PaperDim = new Color(0.945f, 0.91f, 0.85f, 1f);
         private static readonly Color Ink = new Color(0.16f, 0.13f, 0.11f, 1f);
-        private static readonly Color Accent = new Color(0.45f, 0.72f, 0.42f, 1f);
+        private static readonly Color InkSoft = new Color(0.42f, 0.36f, 0.30f, 1f);
+        private static readonly Color Accent = new Color(0.42f, 0.72f, 0.42f, 1f);
+        private static readonly Color Gold = new Color(0.79f, 0.64f, 0.15f, 1f);
+        private static readonly Color RowBg = new Color(0.99f, 0.97f, 0.93f, 1f);
+        private static readonly Color RowSel = new Color(0.88f, 0.95f, 0.85f, 1f);
+        private static readonly Color Track = new Color(0.85f, 0.81f, 0.72f, 1f);
 
-        /// <summary>进入职业界面时调用：有 mod 职业就显示自建面板。</summary>
+        private const float PanelW = 430f;
+        private const float PanelH = 760f;
+        private const float RowH = 84f;
+        private const float RowGap = 8f;
+        private const float ListH = 340f;
+
+        private sealed class Row
+        {
+            public ClassSpec Spec;
+            public Image Bg;
+            public TextMeshProUGUI Name;
+            public TextMeshProUGUI Id;
+            public GameObject Go;
+        }
+
         internal static void Show()
         {
             try
@@ -51,15 +76,16 @@ namespace ModKit.Game
                 var specs = CareerAssembler.DeclaredSpecs;
                 if (specs == null || specs.Count == 0) { return; }
                 ChosenColors = null;
-                _selected = null;
+                _selected = specs.Count > 0 ? specs[0] : null;
                 EnsureCanvas();
                 BuildPanel(specs);
                 if (_panelGo != null) { _panelGo.SetActive(true); }
+                RefreshSelection();
+                WriteDetail();
             }
-            catch (Exception ex) { Warn("自建职业界面显示失败：" + ex.GetType().Name + " " + ex.Message); }
+            catch (Exception ex) { Info("界面显示失败：" + ex.GetType().Name + " " + ex.Message); }
         }
 
-        /// <summary>离开职业界面时调用：清理。</summary>
         internal static void Hide()
         {
             try { if (_panelGo != null) { _panelGo.SetActive(false); } } catch { }
@@ -90,89 +116,183 @@ namespace ModKit.Game
         private static void BuildPanel(List<ClassSpec> specs)
         {
             if (_panelGo != null) { UnityEngine.Object.Destroy(_panelGo); _panelGo = null; }
-            _entryButtons.Clear();
+            _rows.Clear();
 
             _panelGo = new GameObject("ModKit_CareerPickerPanel", typeof(RectTransform));
             _panelGo.transform.SetParent(_canvasGo.transform, false);
-            var rt = _panelGo.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = Vector2.zero;
-            rt.sizeDelta = new Vector2(980f, 720f);
+
+            var prt = _panelGo.GetComponent<RectTransform>();
+            prt.anchorMin = new Vector2(0f, 0.5f);
+            prt.anchorMax = new Vector2(0f, 0.5f);
+            prt.pivot = new Vector2(0f, 0.5f);
+            prt.anchoredPosition = new Vector2(150f, 0f);
+            prt.sizeDelta = new Vector2(PanelW, PanelH);
 
             var bg = _panelGo.AddComponent<Image>();
             bg.color = Paper;
+            bg.raycastTarget = true;
 
-            _titleText = NewText(rt, "选择模组职业", 40f, Ink, new Vector2(0.5f, 1f), new Vector2(0f, -46f), new Vector2(900f, 56f));
+            // 标题
+            NewText(prt, "模组职业", 34f, Ink, TextAlignmentOptions.Center,
+                new Vector2(0.5f, 1f), new Vector2(0f, -52f), new Vector2(PanelW - 60f, 46f), true);
+            _countText = NewText(prt, "", 17f, InkSoft, TextAlignmentOptions.Center,
+                new Vector2(0.5f, 1f), new Vector2(0f, -84f), new Vector2(PanelW - 60f, 24f), true);
+            _countText.text = "共 " + specs.Count + " 个 · 滚轮或拖动浏览";
 
-            float y = -130f;
-            foreach (var spec in specs)
+            // 分隔线
+            var line = NewRect(prt, "Line", new Vector2(0.5f, 1f), new Vector2(0f, -102f), new Vector2(PanelW - 66f, 3f));
+            var lineImg = line.gameObject.AddComponent<Image>();
+            lineImg.color = new Color(0.85f, 0.80f, 0.70f, 1f);
+            lineImg.raycastTarget = false;
+
+            // ---------- 滚动列表 ----------
+            float listTop = -112f;
+            var viewport = NewRect(prt, "List", new Vector2(0.5f, 1f), new Vector2(-8f, listTop), new Vector2(PanelW - 78f, ListH));
+            viewport.pivot = new Vector2(0.5f, 1f);
+            var vpMask = viewport.gameObject.AddComponent<RectMask2D>();
+            vpMask.padding = Vector4.zero;
+            // 透明底板：让 ScrollRect 收到拖拽
+            var vpImg = viewport.gameObject.AddComponent<Image>();
+            vpImg.color = new Color(1f, 1f, 1f, 0.02f);
+            vpImg.raycastTarget = true;
+
+            _content = NewRect(viewport, "Content", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(PanelW - 78f, 10f));
+            _content.pivot = new Vector2(0.5f, 1f);
+            _content.anchoredPosition = Vector2.zero;
+
+            _scroll = viewport.gameObject.AddComponent<ScrollRect>();
+            _scroll.content = _content;
+            _scroll.viewport = viewport;
+            _scroll.horizontal = false;
+            _scroll.vertical = true;
+            _scroll.movementType = ScrollRect.MovementType.Clamped;
+            _scroll.scrollSensitivity = 36f;
+            _scroll.inertia = true;
+            _scroll.decelerationRate = 0.12f;
+
+            float y = 0f;
+            for (int i = 0; i < specs.Count; i++)
             {
+                var spec = specs[i];
                 if (spec == null || string.IsNullOrEmpty(spec.Id)) { continue; }
+
+                var rowRt = NewRect(_content, "Row_" + spec.Id, new Vector2(0.5f, 1f), new Vector2(0f, -y), new Vector2(PanelW - 88f, RowH));
+                rowRt.pivot = new Vector2(0.5f, 1f);
+
+                var rowBg = rowRt.gameObject.AddComponent<Image>();
+                rowBg.color = RowBg;
+                rowBg.raycastTarget = true;
+
+                var btn = rowRt.gameObject.AddComponent<Button>();
+                btn.targetGraphic = rowBg;
                 var captured = spec;
-                var btn = NewButton(rt, spec.NameZh + "（" + spec.Id + "）", new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(880f, 84f));
-                if (btn == null) { continue; }
-                var label = btn.GetComponentInChildren<TextMeshProUGUI>();
-                var sub = NewText(rt, OneLine(spec.IntroZh, 46), 20f, new Color(0.3f, 0.26f, 0.22f, 1f),
-                    new Vector2(0.5f, 1f), new Vector2(0f, y - 54f), new Vector2(860f, 26f));
-                btn.onClick.AddListener(() =>
-                {
-                    _selected = captured;
-                    RefreshSelection();
-                    if (_hintText != null)
-                    {
-                        _hintText.text = "已选：" + captured.NameZh + "　（颜色 " + ColorsText(captured.Colors) + "）";
-                    }
-                });
-                _entryButtons.Add(btn);
-                if (label != null) { label.color = Ink; }
-                if (sub != null) { sub.color = new Color(0.3f, 0.26f, 0.22f, 1f); }
-                y -= 118f;
+                btn.onClick.AddListener(() => { _selected = captured; RefreshSelection(); WriteDetail(); });
+
+                // 球色圆点（用 ● 字形染色，避免依赖球贴图）
+                NewText(rowRt, "●", 30f, OrbColor(spec), TextAlignmentOptions.Center,
+                    new Vector2(0f, 0.5f), new Vector2(34f, 0f), new Vector2(44f, 44f), false);
+                var nameT = NewText(rowRt, spec.NameZh, 23f, Ink, TextAlignmentOptions.Left,
+                    new Vector2(0f, 0.5f), new Vector2(72f, 12f), new Vector2(240f, 30f), false);
+                nameT.rectTransform.pivot = new Vector2(0f, 0.5f);
+                nameT.alignment = TextAlignmentOptions.Left;
+                var idT = NewText(rowRt, spec.Id, 16f, InkSoft, TextAlignmentOptions.Left,
+                    new Vector2(0f, 0.5f), new Vector2(72f, -14f), new Vector2(240f, 22f), false);
+                idT.rectTransform.pivot = new Vector2(0f, 0.5f);
+                idT.alignment = TextAlignmentOptions.Left;
+
+                _rows.Add(new Row { Spec = spec, Bg = rowBg, Name = nameT, Id = idT, Go = rowRt.gameObject });
+                y += RowH + RowGap;
             }
 
-            _hintText = NewText(rt, "点一个职业，再点下面的「开始」", 22f, new Color(0.3f, 0.26f, 0.22f, 1f),
-                new Vector2(0.5f, 0f), new Vector2(0f, 128f), new Vector2(880f, 30f));
+            _content.sizeDelta = new Vector2(PanelW - 78f, Mathf.Max(ListH, y));
 
-            var start = NewButton(rt, "开始", new Vector2(0.5f, 0f), new Vector2(0f, 56f), new Vector2(320f, 76f));
-            if (start != null)
-            {
-                start.onClick.AddListener(Commit);
-            }
+            // 滚动条（细条 + 滑块）
+            var track = NewRect(prt, "Scrollbar", new Vector2(0.5f, 1f), new Vector2(PanelW / 2f - 26f, listTop), new Vector2(6f, ListH));
+            track.pivot = new Vector2(0.5f, 1f);
+            var trackImg = track.gameObject.AddComponent<Image>();
+            trackImg.color = Track;
+            trackImg.raycastTarget = false;
 
-            var cancel = NewButton(rt, "使用原版选球", new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(320f, 56f));
+            var handle = NewRect(track, "Handle", new Vector2(0.5f, 1f), Vector2.zero, new Vector2(6f, 100f));
+            handle.pivot = new Vector2(0.5f, 1f);
+            var handleImg = handle.gameObject.AddComponent<Image>();
+            handleImg.color = InkSoft;
+
+            var sb = track.gameObject.AddComponent<Scrollbar>();
+            sb.handleRect = handle;
+            sb.targetGraphic = handleImg;
+            sb.direction = Scrollbar.Direction.BottomToTop;
+            _scroll.verticalScrollbar = sb;
+            _scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+            // ---------- 详情区 ----------
+            float detailTop = listTop - ListH - 18f;
+            var detailBg = NewRect(prt, "Detail", new Vector2(0.5f, 1f), new Vector2(0f, detailTop), new Vector2(PanelW - 66f, 190f));
+            detailBg.pivot = new Vector2(0.5f, 1f);
+            var detailImg = detailBg.gameObject.AddComponent<Image>();
+            detailImg.color = new Color(0.98f, 0.96f, 0.91f, 1f);
+            detailImg.raycastTarget = false;
+
+            _detailText = NewText(detailBg, "", 18f, InkSoft, TextAlignmentOptions.TopLeft,
+                new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(PanelW - 106f, 128f), true);
+            _detailText.rectTransform.pivot = new Vector2(0.5f, 1f);
+            _detailText.enableWordWrapping = true;
+
+            _colorsText = NewText(detailBg, "", 18f, InkSoft, TextAlignmentOptions.Left,
+                new Vector2(0f, 0f), new Vector2(20f, 20f), new Vector2(PanelW - 120f, 24f), false);
+            _colorsText.rectTransform.pivot = new Vector2(0f, 0f);
+            _colorsText.alignment = TextAlignmentOptions.Left;
+
+            // ---------- 按钮 ----------
+            float btnTop = detailTop - 190f - 16f;
+            var start = NewButton(prt, "开始游戏", new Vector2(0f, 1f), new Vector2(0f, btnTop), new Vector2(PanelW - 66f, 66f), Accent, Ink);
+            if (start != null) { start.onClick.AddListener(Commit); }
+
+            var cancel = NewButton(prt, "用原版选球", new Vector2(0f, 1f), new Vector2(0f, btnTop - 76f), new Vector2(PanelW - 66f, 50f), PaperDim, InkSoft);
             if (cancel != null)
             {
                 cancel.onClick.AddListener(() =>
                 {
                     ChosenColors = null;
+                    Info("已切回原版选球界面");
                     Hide();
-                    Warn("已切回原版选球界面（自建面板关闭）");
                 });
             }
+
+            _hintText = NewText(prt, "", 17f, InkSoft, TextAlignmentOptions.Center,
+                new Vector2(0.5f, 1f), new Vector2(0f, btnTop - 132f), new Vector2(PanelW - 66f, 22f), false);
         }
 
         private static void RefreshSelection()
         {
-            for (int i = 0; i < _entryButtons.Count; i++)
+            foreach (var row in _rows)
             {
-                var b = _entryButtons[i];
-                if (b == null) { continue; }
-                var img = b.GetComponent<Image>();
-                if (img != null)
-                {
-                    var isSel = _selected != null && b.GetComponentInChildren<TextMeshProUGUI>() != null
-                                && b.GetComponentInChildren<TextMeshProUGUI>().text.Contains(_selected.Id);
-                    img.color = isSel ? Accent : new Color(1f, 1f, 1f, 0.92f);
-                }
+                if (row == null || row.Bg == null) { continue; }
+                bool sel = _selected != null && row.Spec == _selected;
+                row.Bg.color = sel ? RowSel : RowBg;
+                row.Bg.rectTransform.sizeDelta = new Vector2(sel ? PanelW - 82f : PanelW - 88f, RowH);
+                if (row.Name != null) { row.Name.fontStyle = sel ? FontStyles.Bold : FontStyles.Normal; }
             }
         }
 
-        /// <summary>
-        /// 确认：不调用原版 LeaveSubSmallGame（它只认 5 种原版三色组合，遇到 mod 组合会 NRE，
-        /// 而且会先把 _submitted 置 true ⇒ 之后永远静默返回）。
-        /// 改为直接写主菜单的三色，再复用平台的「强行切回房间」，玩家点主菜单的「开始游戏」即可。
-        /// </summary>
+        private static void WriteDetail()
+        {
+            try
+            {
+                if (_detailText == null) { return; }
+                if (_selected == null) { _detailText.text = ""; return; }
+                var intro = (_selected.IntroZh ?? "").Replace("\\n", " ");
+                _detailText.text = intro;
+                if (_colorsText != null)
+                {
+                    _colorsText.text = "●  ●  ●   " + string.Join(" / ", _selected.Colors.Select(c => ColorName(c)));
+                }
+                if (_hintText != null) { _hintText.text = "已选：" + _selected.NameZh; }
+            }
+            catch (Exception ex) { Info("刷新详情失败：" + ex.Message); }
+        }
+
+        /// <summary>写盘：把三色交给主菜单，然后回到房间（见文件头说明）。</summary>
         private static void Commit()
         {
             try
@@ -196,45 +316,36 @@ namespace ModKit.Game
                 }
 
                 ChosenColors = new List<ManaColor>(_selected.Colors);
-
-                // ① 写主菜单三色（原版 public 字段 mainMenuSmallGameColorEs）
                 bool wrote = WriteMainMenuColors(picker, _selected.Colors);
-                // ② 关闭选球界面 + 回到房间（平台已有实现）
                 CareerOrbTicker.ForceSwitchBack(picker, "自建职业选择：" + _selected.Id);
 
                 var msg = wrote
                     ? "已选「" + _selected.NameZh + "」——回到房间后点「开始游戏」即可"
                     : "已选「" + _selected.NameZh + "」但写主菜单颜色失败，请看日志";
                 if (_hintText != null) { _hintText.text = msg; }
-                Warn(msg);
+                Info(msg);
                 Hide();
             }
-            catch (Exception ex) { Warn("自建职业确认失败：" + ex.GetType().Name + " " + ex.Message); }
+            catch (Exception ex) { Info("确认失败：" + ex.GetType().Name + " " + ex.Message); }
         }
 
-        /// <summary>反射写 SmallGameMainMenu.mainMenuSmallGameColorEs。</summary>
         private static bool WriteMainMenuColors(SmallGames.WorldBetween.SubSmallGameChooseColor picker, List<ManaColor> colors)
         {
             try
             {
                 var mainMenu = FindPrivateField(picker, "_mainMenu");
-                if (mainMenu == null) { Warn("写主菜单颜色失败：找不到 _mainMenu"); return false; }
+                if (mainMenu == null) { Info("写主菜单颜色失败：找不到 _mainMenu"); return false; }
 
                 var field = mainMenu.GetType().GetField("mainMenuSmallGameColorEs",
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
                     System.Reflection.BindingFlags.NonPublic);
-                if (field == null) { Warn("写主菜单颜色失败：找不到 mainMenuSmallGameColorEs"); return false; }
+                if (field == null) { Info("写主菜单颜色失败：找不到 mainMenuSmallGameColorEs"); return false; }
 
-                var list = field.GetValue(mainMenu) as List<ColorE>;
-                if (list == null)
-                {
-                    list = new List<ColorE>();
-                    field.SetValue(mainMenu, list);
-                }
+                var list = field.GetValue(mainMenu) as List<Card.ColorE>;
+                if (list == null) { list = new List<Card.ColorE>(); field.SetValue(mainMenu, list); }
                 list.Clear();
-                foreach (var c in colors) { list.Add((ColorE)(int)c); }
+                foreach (var c in colors) { list.Add((Card.ColorE)(int)c); }
 
-                // 让主菜单刷新自己的圆环/开始按钮
                 try
                 {
                     var refresh = mainMenu.GetType().GetMethod("RefreshPlayButton",
@@ -245,7 +356,7 @@ namespace ModKit.Game
                 catch { }
                 return true;
             }
-            catch (Exception ex) { Warn("写主菜单颜色异常：" + ex.Message); return false; }
+            catch (Exception ex) { Info("写主菜单颜色异常：" + ex.Message); return false; }
         }
 
         private static object FindPrivateField(object target, string name)
@@ -265,61 +376,75 @@ namespace ModKit.Game
             return null;
         }
 
-        private static string ColorsText(List<ManaColor> colors)
+        // ---------------- 辅助 ----------------
+
+        private static string ColorName(ManaColor c)
         {
-            try { return string.Join(" / ", colors.Select(c => c.ToString())); } catch { return "?"; }
+            switch (c)
+            {
+                case ManaColor.Red: return "红";
+                case ManaColor.Green: return "绿";
+                case ManaColor.Blue: return "蓝";
+                case ManaColor.Purple: return "紫";
+                case ManaColor.Void: return "虚空";
+                case ManaColor.Black: return "黑";
+            }
+            return c.ToString();
         }
 
-        private static string OneLine(string s, int max)
+        private static Color OrbColor(ClassSpec spec)
         {
-            if (string.IsNullOrEmpty(s)) { return ""; }
-            s = s.Replace("\n", " ").Replace("\r", " ");
-            return s.Length <= max ? s : s.Substring(0, max) + "…";
+            var c = spec.OrbColor;
+            switch (c)
+            {
+                case ManaColor.Red: return new Color(0.85f, 0.35f, 0.30f, 1f);
+                case ManaColor.Green: return new Color(0.45f, 0.75f, 0.40f, 1f);
+                case ManaColor.Blue: return new Color(0.40f, 0.60f, 0.85f, 1f);
+                case ManaColor.Purple: return new Color(0.65f, 0.45f, 0.80f, 1f);
+                case ManaColor.Void: return new Color(0.75f, 0.75f, 0.78f, 1f);
+                default: return new Color(0.18f, 0.15f, 0.20f, 1f);
+            }
         }
 
-        // ---------------- 极简 UI 辅助 ----------------
-
-        private static TextMeshProUGUI NewText(Transform parent, string text, float size, Color color,
-            Vector2 anchor, Vector2 anchoredPos, Vector2 sizeDelta)
+        private static RectTransform NewRect(Transform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size)
         {
-            var go = new GameObject("T_" + (text ?? "").Length, typeof(RectTransform));
+            var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = anchor;
             rt.anchorMax = anchor;
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = anchoredPos;
-            rt.sizeDelta = sizeDelta;
-            var t = go.AddComponent<TextMeshProUGUI>();
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+            return rt;
+        }
+
+        private static TextMeshProUGUI NewText(Transform parent, string text, float size, Color color,
+            TextAlignmentOptions align, Vector2 anchor, Vector2 pos, Vector2 sizeDelta, bool wrap)
+        {
+            var rt = NewRect(parent, "T_" + (text ?? "").Length, anchor, pos, sizeDelta);
+            var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
             t.text = text ?? "";
             t.fontSize = size;
             t.color = color;
-            t.alignment = TextAlignmentOptions.Center;
-            t.enableWordWrapping = false;
+            t.alignment = align;
+            t.enableWordWrapping = wrap;
+            t.raycastTarget = false;
             return t;
         }
 
-        private static Button NewButton(Transform parent, string text, Vector2 anchor, Vector2 anchoredPos, Vector2 sizeDelta)
+        private static Button NewButton(Transform parent, string text, Vector2 anchor, Vector2 pos, Vector2 size, Color bgColor, Color textColor)
         {
-            var go = new GameObject("Btn_" + text, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = anchor;
-            rt.anchorMax = anchor;
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = anchoredPos;
-            rt.sizeDelta = sizeDelta;
-
-            var img = go.AddComponent<Image>();
-            img.color = new Color(1f, 1f, 1f, 0.92f);
-            var btn = go.AddComponent<Button>();
+            var rt = NewRect(parent, "Btn_" + text, anchor, pos, size);
+            var img = rt.gameObject.AddComponent<Image>();
+            img.color = bgColor;
+            var btn = rt.gameObject.AddComponent<Button>();
             btn.targetGraphic = img;
-
-            NewText(go.transform, text, 26f, Ink, new Vector2(0.5f, 0.5f), Vector2.zero, sizeDelta);
+            NewText(rt, text, 24f, textColor, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), Vector2.zero, size, false);
             return btn;
         }
 
-        private static void Warn(string message)
+        private static void Info(string message)
         {
             try { if (_log != null) { _log.Info("[自建职业] " + message); } } catch { }
         }
@@ -333,11 +458,7 @@ namespace ModKit.Game
         {
             try
             {
-                if (CareerPicker.ChosenColors != null)
-                {
-                    __result = true;
-                    return false;
-                }
+                if (CareerPicker.ChosenColors != null) { __result = true; return false; }
             }
             catch { }
             return true;
@@ -347,14 +468,14 @@ namespace ModKit.Game
     [HarmonyPatch(typeof(SmallGames.WorldBetween.SubSmallGameChooseColor), "GetPickedColorES")]
     internal static class PickerColorsPatch
     {
-        private static void Postfix(ref ColorE[] __result)
+        private static void Postfix(ref Card.ColorE[] __result)
         {
             try
             {
                 var chosen = CareerPicker.ChosenColors;
                 if (chosen == null) { return; }
-                var arr = new ColorE[chosen.Count];
-                for (int i = 0; i < chosen.Count; i++) { arr[i] = (ColorE)(int)chosen[i]; }
+                var arr = new Card.ColorE[chosen.Count];
+                for (int i = 0; i < chosen.Count; i++) { arr[i] = (Card.ColorE)(int)chosen[i]; }
                 __result = arr;
             }
             catch { }
