@@ -76,7 +76,7 @@ namespace ModKit.Game
             get
             {
                 if (_panelFrame != null) { return _panelFrame; }
-                _panelFrame = BuildFrame(96, 22f, 28, 3.2f, 2.0f);
+                _panelFrame = BuildFrame(96, 20f, 28, 2.6f, 1.6f);
                 _panelFrame.name = "ModKitPanelFrame";
                 return _panelFrame;
             }
@@ -88,7 +88,7 @@ namespace ModKit.Game
             get
             {
                 if (_rowFrame != null) { return _rowFrame; }
-                _rowFrame = BuildFrame(48, 12f, 14, 2.2f, 0f);
+                _rowFrame = BuildFrame(48, 11f, 14, 1.8f, 0f);
                 _rowFrame.name = "ModKitRowFrame";
                 return _rowFrame;
             }
@@ -110,8 +110,8 @@ namespace ModKit.Game
             float hw = size * 0.5f;
             float hh = size * 0.5f;
             var stroke = new Color(0.155f, 0.125f, 0.105f, 1f);      // 深棕描边
-            var gold = new Color(0.788f, 0.635f, 0.153f, 0.95f);      // 内金线
-            var shadow = new Color(0.10f, 0.08f, 0.06f, 0.16f);       // 内阴影
+            var gold = new Color(0.788f, 0.635f, 0.153f, 0.72f);      // 内金线（柔和）
+            var shadow = new Color(0.10f, 0.08f, 0.06f, 0.12f);       // 内阴影
 
             // 2×2 超采样抗锯齿
             for (int y = 0; y < size; y++)
