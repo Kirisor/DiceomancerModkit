@@ -93,9 +93,8 @@ namespace ModKit.Game
         /// <summary>是否已挂钩。</summary>
         public static bool Installed { get { return _installed; } }
 
-        /// <summary>当前职业界面对象（自建职业选择需要它来调游戏的确认入口）。</summary>
+        /// <summary>当前职业界面对象（自建职业选择要用它调游戏的确认入口）。</summary>
         internal static SmallGames.WorldBetween.SubSmallGameChooseColor CurrentPicker;
-
 
         /// <summary>新球用的颜色（原版存在但没做成球）。</summary>
         /// <summary>
@@ -218,6 +217,7 @@ namespace ModKit.Game
                     ok++;
                 }
 
+                _installed = ok > 0;
                 CareerPicker.Init(_log);
                 _installed = ok > 0;
                 if (_installed)
@@ -243,11 +243,11 @@ namespace ModKit.Game
         /// 职业界面的两个收尾入口（<c>EndSubSmallGame</c> / <c>HideSubSmallGame</c>）的公共后置：
         /// 标记"职业界面已关闭"并立刻收掉自造球；再次进入时会重新创建。
         /// </summary>
-private static void AfterPickerClosed()
-{
-    try { CareerPicker.Reset(); } catch { }
-    CurrentPicker = null;
-if (!ClassDeclared) { return; }
+        private static void AfterPickerClosed()
+        {
+            try { CareerPicker.Reset(); } catch { }
+            CurrentPicker = null;
+            if (!ClassDeclared) { return; }
             PickerOpen = false;
             NewOrbPickerGo = null;
             try { CareerOrbTicker.DestroyBallNow("职业界面关闭（EndSubSmallGame / HideSubSmallGame）"); } catch { }
@@ -293,9 +293,9 @@ namespace ModKit.Game
             if (__instance == null) { return; }
             // ★ 记住职业界面的对象：它一被隐藏/销毁，就说明玩家退出了职业界面（确定或未确定）
             //   ⇒ 自造球必须跟着收掉（否则球会一直挂在最顶层，直到进游戏）。
-NewOrbPickerGo = __instance.gameObject;
-CurrentPicker = __instance;
-try { CareerPicker.Show(); } catch { }
+            NewOrbPickerGo = __instance.gameObject;
+            CurrentPicker = __instance;
+            try { CareerPicker.Show(); } catch { }
             PickerOpen = true;     // ★ 进入职业界面 ⇒ 允许（并由宿主）造球
             WarnOnceStatic("picker-open", "职业接缝：进入职业界面 → 自造球将（重新）创建。");
             try
