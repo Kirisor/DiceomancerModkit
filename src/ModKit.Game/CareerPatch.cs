@@ -235,6 +235,8 @@ namespace ModKit.Game
                 _installed = ok > 0;
                 CareerPicker.Init(_log);
                 _installed = ok > 0;
+                CareerPicker.Init(_log);
+                _installed = ok > 0;
                 if (_installed)
                 {
                     log.Info("职业接缝已挂钩 " + ok + " 处（色球候选 + 球状态）—— 新球 = " + NewOrbColor +
