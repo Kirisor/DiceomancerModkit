@@ -246,9 +246,39 @@ namespace ModKit.Game
                 case ManaColor.Void: return ColorE.Void;
                 case ManaColor.Black: return ColorE.Black;
                 default:
+                    // 自定义色（> Black）在平台枚举里没有成员，但**数值与游戏 ColorE 一一对应**，
+                    // 所以直接强转即可。mod 侧用 (ManaColor)6 这样的写法声明职业配色。
+                    int raw = (int)color;
+                    if (raw > (int)ManaColor.Black && raw <= 15) { return (ColorE)raw; }
                     throw new ArgumentOutOfRangeException("color", color,
                         "未知的平台颜色枚举值，映射表需要更新。");
             }
+        }
+
+        /// <summary>
+        /// 把"已注册的自定义色"直接报为可用费用色。
+        /// 理由：它们的图标由平台在 ManaManagerInitialize 之后注入（④），
+        /// 而探测常发生在主菜单（ManaManager 尚不可用）。若只认 ManaIconDic，
+        /// 作者写的 cost: ["Yellow"] 会被判非法、整张卡拒收。
+        /// </summary>
+        private static void AddRegisteredCustoms(List<ManaColor> result, IGameLog log)
+        {
+            try
+            {
+                var customs = CustomColorCompat.AllRegistered();
+                for (int i = 0; i < customs.Count; i++)
+                {
+                    var mc = (ManaColor)(int)customs[i].Value;
+                    if (result.Contains(mc)) { continue; }
+                    result.Add(mc);
+                }
+                if (customs.Count > 0 && log != null)
+                {
+                    log.Info("费用色探测：ManaManager 不可用，但已注册 " + customs.Count +
+                             " 个自定义色，按可用放行（图标进战斗后注入）。");
+                }
+            }
+            catch { }
         }
 
         private static List<ManaColor> ProbeColors(IGameLog log, ProbeSummary summary)
@@ -262,6 +292,10 @@ namespace ModKit.Game
                 if (mgr == null)
                 {
                     summary.Failures.Add("费用色：ManaManager.Instance 为 null（通常因为当前不在战斗世界内）");
+                    // ★ 仍要把"已注册的自定义色"报为可用：否则任何
+                    //   cost: ["Yellow"] 的卡都会被判"未注册图标键"并整张拒收
+                    //   （实机 2026-10-21：tune_weight 消失）。
+                    AddRegisteredCustoms(result, log);
                     return result;
                 }
                 dict = mgr.ManaIconDic;
@@ -269,25 +303,57 @@ namespace ModKit.Game
             catch (Exception ex)
             {
                 summary.Failures.Add("费用色：取 ManaManager 失败 —— " + ex.GetType().Name);
+                AddRegisteredCustoms(result, log);
                 return result;
             }
 
             if (dict == null)
             {
                 summary.Failures.Add("费用色：ManaIconDic 为 null");
+                AddRegisteredCustoms(result, log);
                 return result;
             }
 
-            foreach (var c in AllColors)
+            var candidates = new List<ManaColor>(AllColors);
+
+            // ★ 自定义色也要参与探测：它们在 mod 的 colors.json 里声明，
+            //   由 CustomColorCompat 注册后注入 ManaIconDic。不列进来，
+            //   校验器就不认"黄费用"，职业/卡牌的色组合会被判非法。
+            try
+            {
+                var customs = CustomColorCompat.AllRegistered();
+                for (int i = 0; i < customs.Count; i++)
+                {
+                    var mc = (ManaColor)(int)customs[i].Value;
+                    if (!candidates.Contains(mc)) { candidates.Add(mc); }
+                }
+            }
+            catch { }
+
+            foreach (var c in candidates)
             {
                 try
                 {
                     // 单色键：与游戏代码内部查表用的构造方式完全一致
                     // （Mana.cs:51 / ManaCost.cs:24 都用 new ColorEArray(单色)）
                     var gameColor = ToGameColor(c);
-                    if (dict.ContainsKey(new ColorEArray(gameColor)))
+
+                    // ★ 已注册的自定义色**天然可用**：
+                    //   它的图标由平台在 ManaManagerInitialize 之后注入（④），
+                    //   而探测常常发生在主菜单（ManaManager.Instance 还不可用），
+                    //   此时字典里没有该键。若只认字典，就会把作者写的
+                    //   cost: ["Yellow"] 判成"未注册图标键"并整张卡拒收
+                    //   （实机 2026-10-21：tune_weight 因此消失）。
+                    CustomColorCompat.CustomColor reg;
+                    bool isCustomRegistered = CustomColorCompat.TryGet(gameColor, out reg);
+
+                    if (isCustomRegistered || dict.ContainsKey(new ColorEArray(gameColor)))
                     {
                         result.Add(c);
+                        if (isCustomRegistered && !dict.ContainsKey(new ColorEArray(gameColor)) && log != null)
+                        {
+                            log.Info("费用色探测：自定义色 " + c + " 尚未在 ManaIconDic 中（战斗内会注入），按已注册放行。");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -401,7 +467,20 @@ namespace ModKit.Game
                 case ColorE.Purple: color = ManaColor.Purple; return true;
                 case ColorE.Void: color = ManaColor.Void; return true;
                 case ColorE.Black: color = ManaColor.Black; return true;
-                default: color = ManaColor.Void; return false;
+                default:
+                    // ★ 自定义色（> Black）数值与平台枚举一一对应，直接强转。
+                    //   这里若返回 false，费用槽组合探测会把 [6] 这类键**跳过**
+                    //   （日志表现为"识别出 N 个（跳过 1）"），
+                    //   校验器随后就判"未注册图标键"，整张卡被拒
+                    //   （实机 2026-10-21：tune_weight 消失）。
+                    int raw = (int)game;
+                    if (raw > (int)ColorE.Black && raw <= 15)
+                    {
+                        color = (ManaColor)raw;
+                        return true;
+                    }
+                    color = ManaColor.Void;
+                    return false;
             }
         }
 

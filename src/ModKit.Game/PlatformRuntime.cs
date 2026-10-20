@@ -166,6 +166,19 @@ namespace ModKit.Game
 
             log.Info("===== ModKit 流水线开始 =====");
 
+            // ---- ① 颜色别名注入（必须最早）----
+            // Core 的 ManaColorNames 是颜色名的唯一解析点（校验器 / 装配器 / 卡池检索都用它），
+            // 所以 mod 声明的别名要在**解析任何 mod 内容之前**注入，否则
+            // 「colors: ["Yellow"]」会被当成未知颜色。
+            try
+            {
+                CardColorAlias.EnsureLoaded(summary.ModsRoot, log);
+            }
+            catch (Exception ex)
+            {
+                log.Warn("颜色别名注入失败：" + ex.GetType().Name + ": " + ex.Message);
+            }
+
             // ---- 注册表 ----
             // ★ 顺序很关键：mod 的程序集必须在**建注册表之前**加载进 AppDomain。
             //   否则 mod 里的 CardKeyword* / [ModEffect] 类
@@ -231,6 +244,11 @@ namespace ModKit.Game
             // Stage 1 球状态是 Locked（界面看得见、点不动），职业数据装配好后再放成 Free。
             try { CareerPatch.Install(log); } catch (Exception ex) { log.Warn("职业接缝安装失败：" + ex.Message); }
 
+            // ---- 自定义颜色接缝：把 (ColorE)6 及以后"枚举里没有、但强转合法"的颜色接住 ----
+            // 覆盖：世界取色/亮色/法力贴图、每战场的 ManaIconDic 注入、AssetRefSo 两个字典、
+            // "全部颜色"枚举、法力音效名、Orb 文案。注册表为空时所有补丁放行原逻辑（零行为变化）。
+            try { CustomColorCompat.Install(log); } catch (Exception ex) { log.Warn("自定义颜色接缝安装失败：" + ex.Message); }
+
             // ---- 模组图鉴：主界面右上角挂一块牌子，点开只列 mod 内容的图鉴 ----
             // 为什么要另起炉灶：原版图鉴的六个职业页三色组是硬编码的，侧栏书签数量由 prefab 固定，
             // 往里塞第 7 页等于和原版 UI 结构较劲（游戏一更新就碎）。入口复刻原版牌子，面板自建。
@@ -240,6 +258,22 @@ namespace ModKit.Game
             try { AbilityNameDump.Run(log); } catch (Exception ex) { log.Warn("能力中文名导出失败：" + ex.Message); }
             // 游戏本地化表整表导出（触发点/稀有度/时机等中文原文）
             try { LocalizedTextDump.Run(log); } catch (Exception ex) { log.Warn("本地化文本导出失败：" + ex.Message); }
+
+            // ---- ①.5 读取 mod 声明的自定义颜色（colors.json）----
+            // 必须在能力探测与装配之前：颜色得先进入游戏的色表/图标表，
+            // 卡片的 cardColorEs 与费用槽才过校验（否则会被判"未知颜色"）。
+            try
+            {
+                int colorCount = CustomColorDecl.LoadAll(summary.ModsRoot, log);
+                if (colorCount > 0)
+                {
+                    log.Info("自定义颜色声明：共注册 " + colorCount + " 个（来源：mod 目录下的 " + CustomColorDecl.FileName + "）。");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Warn("自定义颜色声明：读取失败 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
 
             // ---- ② 探测能力 ----
             ProbeSummary probeSummary;

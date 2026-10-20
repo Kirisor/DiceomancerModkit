@@ -239,9 +239,51 @@ namespace ModKit.Core
             { "Black",  ManaColor.Black }
         };
 
+        /// <summary>
+        /// 平台注入的**自定义颜色别名**：名字 → 原始枚举值（&gt; Black）。
+        ///
+        /// 为什么放在 Core：颜色名的解析点是 <see cref="Resolve"/>，而它同时被
+        /// 校验器（费用槽 / 遗物随机色 / 效果参数）、装配器（卡身份色 / 费用 / 卡池检索）
+        /// 共用。别名只在 Game 层做文本替换的话，校验器仍然不认，
+        /// 「按颜色检索的卡池」和「随机颜色遗物」就会漏掉自定义色。
+        /// </summary>
+        private static readonly Dictionary<string, int> Aliases =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// 注册一个别名。值必须 &gt; Black；重名先到先得（返回 false 表示已被占用）。
+        /// 由平台在**解析 mod 内容之前**调用（Game 层读 colors.json 后注入）。
+        /// </summary>
+        public static bool RegisterAlias(string name, int rawValue)
+        {
+            if (string.IsNullOrEmpty(name)) { return false; }
+            if (rawValue <= (int)ManaColor.Black) { return false; }
+            if (ByName.ContainsKey(name)) { return false; }      // 别覆盖原版色名
+            if (Aliases.ContainsKey(name)) { return false; }
+            Aliases[name] = rawValue;
+            return true;
+        }
+
+        /// <summary>清空别名（单测用）。</summary>
+        public static void ClearAliases()
+        {
+            Aliases.Clear();
+        }
+
+        /// <summary>已注册的别名（诊断/错误提示用）。</summary>
+        public static IReadOnlyList<string> AliasNames
+        {
+            get { return new List<string>(Aliases.Keys); }
+        }
+
         public static IReadOnlyList<string> AllNames
         {
-            get { return new List<string>(ByName.Keys); }
+            get
+            {
+                var all = new List<string>(ByName.Keys);
+                all.AddRange(Aliases.Keys);
+                return all;
+            }
         }
 
         public static LookupResult<ManaColor> Resolve(string name)
@@ -250,6 +292,13 @@ namespace ModKit.Core
             if (!string.IsNullOrEmpty(name) && ByName.TryGetValue(name, out v))
             {
                 return new LookupResult<ManaColor>(true, v, name, null);
+            }
+
+            int raw;
+            if (!string.IsNullOrEmpty(name) && Aliases.TryGetValue(name, out raw))
+            {
+                // 自定义色在平台枚举里没有成员，但数值与游戏 ColorE 一一对应 ⇒ 直接强转
+                return new LookupResult<ManaColor>(true, (ManaColor)raw, name, null);
             }
 
             string hint = BuiltinEffectNames.Closest(name, AllNames);

@@ -82,6 +82,8 @@ namespace ModKit.Game
             try
             {
                 if (string.IsNullOrEmpty(path) || !File.Exists(path)) { return null; }
+                // 注意：自定义色别名不再在这里改文本 —— 已下沉到 Core 的 ManaColorNames
+                //（见 PlatformRuntime.RunOnce 开头的 CardColorAlias.EnsureLoaded）。
                 return File.ReadAllText(path, System.Text.Encoding.UTF8);
             }
             catch (Exception ex)

@@ -27,6 +27,15 @@ namespace ModKit.Game
         /// <summary>玩家在自建面板里选定的职业颜色；非 null 表示由我们接管确认。</summary>
         internal static List<ManaColor> ChosenColors;
 
+        /// <summary>
+        /// 本局已经确认过的三色（**不随面板开关清空**）。
+        /// 为什么要单独存一份：确认之后游戏还会再读几次"已选三色"
+        /// （`CareerPatch.AfterLeaveSubSmallGame` 的诊断读、`RefreshButtonAndIntroCard`），
+        /// 而 `Show()` 会把 `ChosenColors` 清成 null —— 那些读取就会退回原版
+        /// `GetPickedColorES`，槽里没球 ⇒ NRE（实机 2026-10-20：`读取已选球失败`/`确认失败`）。
+        /// </summary>
+        internal static List<ManaColor> ConfirmedColors;
+
         // 面板
         private static GameObject _canvasGo;
         private static GameObject _panelGo;
@@ -78,6 +87,7 @@ namespace ModKit.Game
                 var specs = new List<ClassSpec>(CareerAssembler.DeclaredSpecs);
                 if (specs == null || specs.Count == 0) { return; }
                 ChosenColors = null;
+                ConfirmedColors = null;      // 新一次选择从零开始；确认期间由 Commit 重新写入
                 _selected = specs.Count > 0 ? specs[0] : null;
                 EnsureCanvas();
                 BuildPanel(specs);
@@ -285,8 +295,12 @@ namespace ModKit.Game
             {
                 cancel.onClick.AddListener(() =>
                 {
+                    // ★ 两份状态都要清：只清 ChosenColors 的话，GetPickedColorES 的 prefix
+                    //   还会回 ConfirmedColors，原版界面就会出现"已选三色、槽却是空的"
+                    //   这种自相矛盾的状态（点确定没反应、介绍卡和圆点却已经是那个职业）。
                     ChosenColors = null;
-                    Info("已切回原版选球界面");
+                    ConfirmedColors = null;
+                    Info("已切回原版选球界面（面板侧的三色状态已清空）。");
                     Hide();
                 });
             }
@@ -347,18 +361,136 @@ namespace ModKit.Game
                     return;
                 }
 
-                ChosenColors = new List<ManaColor>(_selected.Colors);
-                bool wrote = WriteMainMenuColors(picker, _selected.Colors);
-                CareerOrbTicker.ForceSwitchBack(picker, "自建职业选择：" + _selected.Id);
+                // ★ 先把要用的一切抓成局部变量：`LeaveSubSmallGame` 内部会
+                //   `EndSubSmallGame` → `AfterPickerClosed` → `CareerPicker.Reset()`，
+                //   把 `_selected` 清成 null；之后再用 `_selected.NameZh` 就是空引用
+                //   （实机 2026-10-20：确认失败 NullReferenceException 正是这里）。
+                var chosen = new List<ManaColor>(_selected.Colors);
+                var classKey = CareerAssembler.GetClassKey(_selected);
+                string zh = _selected.NameZh;
+                string id = _selected.Id;
 
-                var msg = wrote
-                    ? "已选「" + _selected.NameZh + "」——回到房间后点「开始游戏」即可"
-                    : "已选「" + _selected.NameZh + "」但写主菜单颜色失败，请看日志";
-                if (_hintText != null) { _hintText.text = msg; }
+                ChosenColors = new List<ManaColor>(chosen);
+                ConfirmedColors = new List<ManaColor>(chosen);   // 确认后仍要能被读到，见字段注释
+                CareerAssembler.EnsureClassUnlocked(classKey, _log);
+
+                // ★ 首选：让游戏自己走确认流程。
+                //   我们只伪造 `GetPickedColorES`（prefix 直接回 ChosenColors/ConfirmedColors），
+                //   原版 `LeaveSubSmallGame()` 就会把「写三色 → 生成牌组/遗物 → 通知升魔盒 →
+                //   EndSubSmallGame 切屏」一次性做完 —— 这正是用职业球选职业时能正常开局的原因。
+                bool byGame = TryLeaveByGame(picker);
+
+                bool wrote = byGame, notified = byGame;
+                if (!byGame)
+                {
+                    // 回退：至少把三色与升魔盒写上并切回房间。
+                    // **不再由平台补发牌组/遗物**——那是原版确认流程的职责（见 2026-10-20 实机结论）。
+                    wrote = WriteMainMenuColors(picker, chosen);
+                    notified = ApplyCareerConfirmation(picker, classKey);
+                    CareerOrbTicker.ForceSwitchBack(picker, "自建职业选择：" + id);
+                }
+
+                string msg;
+                if (byGame) { msg = "已选「" + zh + "」（原版确认流程：牌组/遗物/升魔盒都已就位）——点「开始游戏」即可"; }
+                else if (!wrote) { msg = "已选「" + zh + "」但写主菜单颜色失败，请看日志"; }
+                else { msg = "已选「" + zh + "」，但原版确认失败——牌组/遗物不会生成" +
+                        (notified ? "" : "，升魔盒也没通知成功") + "，请看日志"; }
+                try { if (_hintText != null) { _hintText.text = msg; } } catch { }
                 Info(msg);
                 Hide();
             }
-            catch (Exception ex) { Info("确认失败：" + ex.GetType().Name + " " + ex.Message); }
+            catch (Exception ex)
+            {
+                var real = Unwrap(ex);
+                Info("确认失败：" + real.GetType().Name + ": " + real.Message + "｜" + TopFrames(real, 3));
+            }
+        }
+
+        /// <summary>
+        /// 调原版 `LeaveSubSmallGame()`（public）：由它自己完成「写三色 → 生成牌组/遗物 →
+        /// 通知升魔盒 → EndSubSmallGame 切屏」。
+        /// 前提：`PickerColorsPatch` 已把 `GetPickedColorES` 伪造成面板选的三色；
+        /// 否则原版会在 `slot.GetOrb()` 处空引用（实机证据：DMD 内 NRE）。
+        /// </summary>
+        private static bool TryLeaveByGame(SmallGames.WorldBetween.SubSmallGameChooseColor picker)
+        {
+            try
+            {
+                picker.LeaveSubSmallGame();
+                Info("已调用原版 LeaveSubSmallGame：写三色 / 生成牌组与遗物 / 通知升魔盒 / 切回房间都由游戏完成。");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var real = Unwrap(ex);
+                Info("原版 LeaveSubSmallGame 失败，回退到自建流程：" + real.GetType().Name + ": " +
+                    real.Message + "｜" + TopFrames(real, 2));
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 把「职业已确认」交给主界面的升魔盒 —— 等价于原版 `LeaveSubSmallGame():155`：
+        /// `_mainMenu.GetAscensionManager().Initialize(classKey)`。
+        /// 这是"进阶"能不能用的开关：`AscensionBox.Initialize` 会把 `_currentClass` 换成我们的 classKey，
+        /// 并按该职业的战绩重算可选的进阶等级（`GetClassMaxAscensionLevel` = 已通最高级 + 1）。
+        /// 不做的话 `_currentClass` 停在 "InvalidClass"，盒子按无效职业显示、进阶开不起来。
+        /// </summary>
+        private static bool ApplyCareerConfirmation(SmallGames.WorldBetween.SubSmallGameChooseColor picker, string classKey)
+        {
+            if (string.IsNullOrEmpty(classKey)) { return false; }
+            try
+            {
+                var mainMenu = FindPrivateField(picker, "_mainMenu");
+                if (mainMenu == null) { Info("升魔盒通知失败：找不到 _mainMenu"); return false; }
+
+                var getBox = mainMenu.GetType().GetMethod("GetAscensionManager",
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic);
+                var box = (getBox == null) ? null : getBox.Invoke(mainMenu, null);
+                if (box == null) { Info("升魔盒通知失败：GetAscensionManager() 返回 null"); return false; }
+
+                var init = box.GetType().GetMethod("Initialize",
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic);
+                if (init == null) { Info("升魔盒通知失败：AscensionBox.Initialize 不存在（游戏更新改签名？）"); return false; }
+
+                init.Invoke(box, new object[] { classKey });
+                Info("已把职业确认交给主界面：AscensionBox.Initialize(" + classKey + ")。");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var real = Unwrap(ex);
+                Info("升魔盒通知异常：" + real.GetType().Name + ": " + real.Message + "｜" + TopFrames(real, 2));
+                return false;
+            }
+        }
+
+        private static Exception Unwrap(Exception ex)
+        {
+            var tie = ex as System.Reflection.TargetInvocationException;
+            return (tie != null && tie.InnerException != null) ? tie.InnerException : ex;
+        }
+
+        private static string TopFrames(Exception ex, int count)
+        {
+            try
+            {
+                var st = ex.StackTrace;
+                if (string.IsNullOrEmpty(st)) { return "无栈"; }
+                var lines = st.Replace("\r", "").Split('\n');
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < lines.Length && i < count; i++)
+                {
+                    if (i > 0) { sb.Append(" ← "); }
+                    sb.Append(lines[i].Trim());
+                }
+                return sb.ToString();
+            }
+            catch { return "栈不可用"; }
         }
 
         private static bool WriteMainMenuColors(SmallGames.WorldBetween.SubSmallGameChooseColor picker, List<ManaColor> colors)
@@ -498,6 +630,106 @@ namespace ModKit.Game
         {
             try { if (_log != null) { _log.Info("[自建职业] " + message); } } catch { }
         }
+
+        /// <summary>给同文件的补丁类（如 OrphanOrbGuardPatch）写日志用。</summary>
+        internal static void LogInfo(string message) { Info(message); }
+    }
+
+    /// <summary>
+    /// 再次进入选球界面时的兜底。
+    /// 原版 `InitializeOrbs` 会遍历 `_mainMenu.mainMenuSmallGameColorEs`，对每个颜色
+    /// `_orbs.FirstOrDefault(o => o.colorE == colorE)` 然后直接 `.initialized` ——
+    /// 而 `EnableCustomOrb = false` 时 `_orbs` 只有原版 5 颗球，**没有 Black**；
+    /// 我们的职业确认又把 Black 写进了主菜单颜色 ⇒ 第二次进入职业选择时必定
+    /// `null.initialized` 空引用，`StartSubSmallGame` 中断、界面停在黑屏
+    /// （实机 2026-10-20：面板背后变成虚空）。
+    ///
+    /// 这里在调用前把"没有对应球"的颜色从主菜单颜色里临时摘掉，调用后**原样恢复**：
+    /// 不写存档、不改已确认的三色，只让原版界面能正常铺出它认识的那 5 颗球。
+    /// </summary>
+    [HarmonyPatch(typeof(SmallGames.WorldBetween.SubSmallGameChooseColor), "InitializeOrbs")]
+    internal static class OrphanOrbGuardPatch
+    {
+        private static List<Card.ColorE> _savedColors;
+        private static object _mainMenu;
+        private static System.Reflection.FieldInfo _colorsField;
+        private static bool _logged;
+
+        private static void Prefix(SmallGames.WorldBetween.SubSmallGameChooseColor __instance)
+        {
+            _savedColors = null;
+            _mainMenu = null;
+            _colorsField = null;
+            try
+            {
+                var t = __instance.GetType();
+                var flags = System.Reflection.BindingFlags.Instance |
+                            System.Reflection.BindingFlags.Public |
+                            System.Reflection.BindingFlags.NonPublic;
+
+                var menuField = t.GetField("_mainMenu", flags);
+                var orbsField = t.GetField("_orbs", flags);
+                if (menuField == null || orbsField == null) { return; }
+
+                _mainMenu = menuField.GetValue(__instance);
+                var orbs = orbsField.GetValue(__instance) as System.Collections.IEnumerable;
+                if (_mainMenu == null || orbs == null) { return; }
+
+                var orbColors = new HashSet<int>();
+                foreach (var orb in orbs)
+                {
+                    if (orb == null) { continue; }
+                    var f = orb.GetType().GetField("colorE", flags);
+                    if (f != null) { orbColors.Add(Convert.ToInt32(f.GetValue(orb))); }
+                }
+
+                _colorsField = _mainMenu.GetType().GetField("mainMenuSmallGameColorEs", flags);
+                if (_colorsField == null) { return; }
+
+                var current = _colorsField.GetValue(_mainMenu) as List<Card.ColorE>;
+                if (current == null || current.Count == 0) { return; }
+
+                var kept = new List<Card.ColorE>();
+                int dropped = 0;
+                foreach (var c in current)
+                {
+                    if (orbColors.Contains((int)c)) { kept.Add(c); }
+                    else { dropped++; }
+                }
+                if (dropped == 0) { return; }
+
+                _savedColors = current;                 // 记下原 list 实例，postfix 原样还回去
+                _colorsField.SetValue(_mainMenu, kept);
+                if (!_logged)
+                {
+                    _logged = true;
+                    CareerPicker.LogInfo("选球界面：主菜单颜色里有 " + dropped +
+                        " 个颜色没有对应的球（如 Black），已临时摘除，铺完球再恢复。");
+                }
+            }
+            catch
+            {
+                _savedColors = null;
+            }
+        }
+
+        private static void Postfix()
+        {
+            try
+            {
+                if (_savedColors != null && _mainMenu != null && _colorsField != null)
+                {
+                    _colorsField.SetValue(_mainMenu, _savedColors);
+                }
+            }
+            catch { }
+            finally
+            {
+                _savedColors = null;
+                _mainMenu = null;
+                _colorsField = null;
+            }
+        }
     }
 
     /// <summary>接管「三颗球是否都放好」与「取到哪三种颜色」。</summary>
@@ -516,19 +748,35 @@ namespace ModKit.Game
     }
 
     [HarmonyPatch(typeof(SmallGames.WorldBetween.SubSmallGameChooseColor), "GetPickedColorES")]
+    /// <summary>
+    /// 伪造「槽里选好了哪三颗球」。
+    /// ★ 必须是 **prefix**：原版方法体会遍历槽 `slot.GetOrb().GetColorE()`，
+    ///   而自建面板从没往槽里放球 ⇒ 原版在方法内部就 NRE，postfix 根本轮不到执行
+    ///   （实机 2026-10-20：`NullReferenceException at DMD<...GetPickedColorES>`）。
+    ///   改成 prefix 短路后，原版 `LeaveSubSmallGame()` 就能整条跑通：
+    ///   写三色 → 生成牌组/遗物 → 通知升魔盒 → EndSubSmallGame 切屏。
+    ///   没在面板里选过职业（ChosenColors == null）时放行原逻辑，零影响。
+    /// </summary>
+    [HarmonyPatch(typeof(SmallGames.WorldBetween.SubSmallGameChooseColor), "GetPickedColorES")]
     internal static class PickerColorsPatch
     {
-        private static void Postfix(ref Card.ColorE[] __result)
+        private static bool Prefix(ref Card.ColorE[] __result)
         {
             try
             {
                 var chosen = CareerPicker.ChosenColors;
-                if (chosen == null) { return; }
+                if (chosen == null || chosen.Count == 0) { chosen = CareerPicker.ConfirmedColors; }
+                if (chosen == null || chosen.Count == 0) { return true; }
+
                 var arr = new Card.ColorE[chosen.Count];
                 for (int i = 0; i < chosen.Count; i++) { arr[i] = (Card.ColorE)(int)chosen[i]; }
                 __result = arr;
+                return false;
             }
-            catch { }
+            catch
+            {
+                return true;
+            }
         }
     }
 }

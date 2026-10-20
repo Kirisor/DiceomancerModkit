@@ -126,6 +126,10 @@ namespace ModKit.Game
         /// <summary>给一个非原版颜色算出圆点色。</summary>
         private static Color Resolve(ColorE colorE)
         {
+            // 先查自定义颜色注册表（(ColorE)6 及以后）：注册过就用作者/平台声明的色。
+            CustomColorCompat.CustomColor custom;
+            if (CustomColorCompat.TryGet(colorE, out custom)) { return custom.Base; }
+
             if (colorE == ColorE.Black)
             {
                 // 原版给 Black 留了真实美术色：WorldManager.GetColorFromEnumColor 对 Black

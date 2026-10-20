@@ -23,6 +23,7 @@ using Card;
 using Career;
 using Combat;
 using GameData;
+using HarmonyLib;
 using ModKit.Api;
 using Relic;
 
@@ -37,6 +38,10 @@ namespace ModKit.Game
 
         /// <summary>各职业的球贴图绝对路径（供职业选择界面显示图标）。</summary>
         internal static readonly System.Collections.Generic.Dictionary<ModKit.Api.ClassSpec, string> SpecOrbSprites =
+            new System.Collections.Generic.Dictionary<ModKit.Api.ClassSpec, string>();
+
+        /// <summary>各职业的 classKey（= 本地化前缀 / Class 集合名 / StartColorESDecks.classKey）。</summary>
+        private static readonly System.Collections.Generic.Dictionary<ModKit.Api.ClassSpec, string> _specKeys =
             new System.Collections.Generic.Dictionary<ModKit.Api.ClassSpec, string>();
 
 /// <summary>本地化表名 —— 职业名与介绍都在这里（ClassIntroCard 写死的）。</summary>
@@ -248,6 +253,7 @@ namespace ModKit.Game
                 else
                 {
                     if (init.allStartDeck == null) { init.allStartDeck = new List<StartColorESDecks>(); }
+                    _specKeys[spec] = classKey;
                     if (!init.allStartDeck.Any(d => d != null && d.classKey == classKey))
                     {
                         init.allStartDeck.Add(new StartColorESDecks
@@ -295,9 +301,62 @@ namespace ModKit.Game
             }
         }
 
-        /// <summary>把 mod 内的短 id 归一化成平台用的完整名（已经是完整名则原样返回）。</summary>
-        private static string Qualify(string modId, string id)
+        // ------------------------------------------------------------------
+        //  开局牌组：缓存 / 重写回 / 直接生成 / 发牌前兜底
+        //
+        //  背景（实机 2026-10-20）：自建面板选完职业后进战斗一张手牌都没有。
+        //  ① 原版只在 `LeaveSubSmallGame` 里生成牌组（SetStartDeckAndRelics），自建面板绕开了它；
+        //  ② 补调 `SetStartDeckAndRelics(true)` 抛 TargetInvocationException——最可能是
+        //     `GetStartDeckByColorE` 在 `allStartDeck` 里匹配不到（这份表随场景重载被换掉），
+        //     于是 `startDeck` 为 null，后续 `startDeck.deck` 空引用；
+        //  ③ 也不能等战斗里再补：`GameManager` 的顺序是
+        //     `GameStartPlayerCardInitial()`（发初始手牌）**先于** `ManaManagerInitialize()`，
+        //     所以补生成必须挂在**发牌之前**，即 `CardManager.GameStartPlayerCardInitial` 的前缀。
+        // ------------------------------------------------------------------
+
+        /// <summary>取该职业的 classKey（装配时记录）。</summary>
+        internal static string GetClassKey(ModKit.Api.ClassSpec spec)
         {
+            string key;
+            return (spec != null && _specKeys.TryGetValue(spec, out key)) ? key : null;
+        }
+
+        /// <summary>
+        /// 确保存档统计里有这个职业并已解锁。
+        /// 原版 `CareerStatisticsPackage.Validate()` 会扫所有 `Class` 集合补条目，
+        /// 但那是"进游戏时"才跑；主界面的升魔盒/进阶在此之前就要用这条数据。
+        /// 缺条目时 `CampaignManager.NewGameLaunchInitialize` 里的
+        /// `classInfos.FirstOrDefault(...).isUnlocked = true` 会直接空引用。
+        /// </summary>
+        internal static void EnsureClassUnlocked(string classKey, IGameLog log)
+        {
+            if (string.IsNullOrEmpty(classKey)) { return; }
+            try
+            {
+                var pkg = CareerManager.Instance == null ? null : CareerManager.Instance.careerStatisticsPackage;
+                if (pkg == null) { return; }
+                if (pkg.classInfos == null) { pkg.classInfos = new List<CareerStatisticsInfoForClass>(); }
+
+                var info = pkg.classInfos.FirstOrDefault(c => c != null && c.className == classKey);
+                if (info == null)
+                {
+                    info = new CareerStatisticsInfoForClass { className = classKey };
+                    pkg.classInfos.Add(info);
+                    if (log != null) { log.Info("职业统计：已补 " + classKey + " 的 classInfos 条目（否则新档开局会空引用）。"); }
+                }
+                if (!info.isUnlocked)
+                {
+                    info.isUnlocked = true;
+                    if (log != null) { log.Info("职业统计：已把 " + classKey + " 置为已解锁。"); }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (log != null) { log.Warn("职业统计：处理 " + classKey + " 失败 —— " + ex.GetType().Name + ": " + ex.Message); }
+            }
+        }
+        /// <summary>把 mod 内的短 id 归一化成平台用的完整名（已经是完整名则原样返回）。</summary>
+        private static string Qualify(string modId, string id)        {
             if (string.IsNullOrEmpty(id)) { return id; }
             return id.Contains(".") ? id : modId + "." + id;
         }

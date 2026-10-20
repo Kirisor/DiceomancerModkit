@@ -247,9 +247,32 @@ namespace ModKit.Game
                 if (!maybeInfo.HasValue) { return null; }
                 CardInfo info = maybeInfo.Value;
 
+                // mod 侧 cardRecolor：把占位色改成自定义色（身份色 / 费用槽）
+                info = CustomColorCompat.ApplyCardRecolor(def.Id, info, _log);
+
+                // 诊断：验证"自定义颜色作为费用"的消费链路（[Diagnostics] CustomColorCostCard）
+                info = CustomColorCompat.ApplyCostTest(def.Id, info, _log);
+
+                bool touchedByRecolor = CustomColorDecl.FindRecolor(def.Id) != null;
+
                 // --- 4. 反射写回私有字段 ---
                 // CardSo.cardInfo 是 private 字段、类型是 struct（值类型）→ 装箱后 SetValue。
                 Reflect.Set(so, "cardInfo", info);
+
+                // 读回断言：重着色过的卡，确认写回 CardSo 的确实是自定义色
+                if (touchedByRecolor)
+                {
+                    try
+                    {
+                        var back = so.CardInfo;
+                        _log.Info("重着色读回：" + def.Id + " → cardColorEs=[" + JoinColors(back.cardColorEs) +
+                                  "] cost=" + JoinCosts(back.cardManaCostColorEArrays) + "（缩放提示：若费用是 6 但界面仍显示虚色，问题在渲染层）");
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Warn("重着色读回失败：" + def.Id + " —— " + ex.GetType().Name + ": " + ex.Message);
+                    }
+                }
 
                 // --- 5. 注册进 GetCardSoByName 的唯一入口 ---
                 RegisterCardSo(so, def.Id, result);
@@ -269,6 +292,29 @@ namespace ModKit.Game
                 result.Errors.Add(def.Id + "：装配异常 —— " + ex.GetType().Name + ": " + ex.Message);
                 return null;
             }
+        }
+
+        private static string JoinColors(ColorE[] arr)
+        {
+            if (arr == null) { return "null"; }
+            var parts = new string[arr.Length];
+            for (int i = 0; i < arr.Length; i++) { parts[i] = ((int)arr[i]).ToString(); }
+            return string.Join("/", parts);
+        }
+
+        private static string JoinCosts(ColorEArray[] arr)
+        {
+            if (arr == null || arr.Length == 0) { return "空"; }
+            var parts = new string[arr.Length];
+            for (int i = 0; i < arr.Length; i++)
+            {
+                var inner = arr[i].colorEs;
+                if (inner == null) { parts[i] = "-"; continue; }
+                var p2 = new string[inner.Length];
+                for (int j = 0; j < inner.Length; j++) { p2[j] = ((int)inner[j]).ToString(); }
+                parts[i] = "[" + string.Join("/", p2) + "]";
+            }
+            return string.Join("", parts);
         }
 
         // ---------------------------------------------------------------------
