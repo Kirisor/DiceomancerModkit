@@ -223,6 +223,15 @@ namespace ModKit.Game
                     ok++;
                 }
 
+                // ⑦ 主菜单三色圆点：原版 `MainMenuCircles.GetColorByColorE` 是穷举 switch，
+                //    只认原版 5 色，其余一律 `throw new ArgumentOutOfRangeException`
+                //    —— **连 Black 都没覆盖**。奶蛙职业（Black/Purple/Void）确认后，
+                //    `SetColorsOnMainMenu` 会在 `BackFromSubSmallGame` 的 DOTween 回调里抛，
+                //    打断 `RefreshPlayButton` / 隐藏小游戏，表现为"回房间后按钮不亮、界面没退"。
+                //    这是独立于"第 6 颗球"的缺陷：与 EnableCustomOrb 无关，装了平台就生效。
+                try { MainMenuCircleColorCompat.Install(harmony, log); }
+                catch (Exception ex) { log.Warn("主菜单圆点接管失败：" + ex.Message); }
+
                 _installed = ok > 0;
                 CareerPicker.Init(_log);
                 _installed = ok > 0;
