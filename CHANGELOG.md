@@ -1,5 +1,37 @@
 # 变更记录
 
+## v0.3.0
+
+自定义颜色：平台把颜色从"游戏硬编码的 6 种"扩展为 **6–15 的开放空间**，颜色内容由 mod 声明。
+
+### 新增
+
+- **颜色声明（mod 侧 `colors.json`）**：`value`（6–15）/ `name` / `desc` / `color` / `icon` /
+  `alias` / `aliases`。平台注册后注入游戏的取色、亮色、法力贴图、`AssetRefSo` 两本字典与
+  `ManaManager.ManaIconDic`（每个战场初始化后重注入），并写入图鉴文案。
+- **颜色别名解析下沉 Core**：`ManaColorNames.Resolve` 认识别名（如 `"Yellow"`），
+  因此卡牌、遗物、卡池、效果参数的 `colors` / `cost` 都可直接写别名，校验器同样认。
+- **卡面流派色独立材质槽**：一张卡可带多个自定义色，不再借用原版 Black 槽。
+- **战役存档编解码**：`CampaignSave.xml` 走 DataContract（枚举按名字写），自定义色会被换成
+  Void 占位并把路径写入 `CampaignSave.colors.json`（sidecar），读档时还原。
+- 法力/费用图标按原版 sprite 的世界尺寸对齐 PPU（此前 72px 贴图会被 `SetNativeSize` 撑大）。
+
+### 修复
+
+- 卡牌转色：`ManaConverter.GetPossibleColorEs` 原本写死 5 色白名单，自定义色卡无法被转换。
+- 法力不足提示：`DitwUtil.GetColorTextFromColorE` 对未定义枚举值抛
+  `ArgumentOutOfRangeException`，现对自定义色返回空串。
+- 费用校验：`ProbeColors` / `TryToPlatformColor` 对自定义色放行，否则带自定义费用的卡
+  会被判"未注册图标键"并整张拒收。
+
+### 已知边界
+
+- `ModKit.Api` 的 `ManaColor` 枚举尚无 6–15 成员（Api 源码缺 `ClassSpec`，暂无法重建）；
+  平台内部以数值强转，作者侧无感知。
+- 自定义色的**球位**不会出现在原版选球界面；职业需由 mod 用 `IModClassProvider` 声明，
+  通过平台自建的选择器进入。
+
+
 ## v0.2.2
 
 ### 修复
