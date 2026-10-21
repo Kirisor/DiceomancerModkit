@@ -1,0 +1,28 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_essence_mud",
+  "name": {
+    "zh-Hans": "泥偶蛙精粹",
+    "en": "Puppet Essence"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "gain_mana",
+      "color": "Black",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "keywords": [
+    "Fragile"
+  ]
+}

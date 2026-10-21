@@ -18,23 +18,15 @@
   ],
   "resolve": "OnCast",
   "artTemplate": "Block",
-  "effects": [],
-  "keywords": [
+  "effects": [
     {
-      "name": "Summon",
-      "number": 4,
-      "toCard": "SmallRock",
-      "effects": [
-        {
-          "builtin": "gain_ability",
-          "name": "Bleed",
-          "amounts": [
-            5
-          ],
-          "target": "RandomOpponent"
-        }
+      "custom": "mf_summon_bloodspawn",
+      "amounts": [
+        4
       ]
-    },
+    }
+  ],
+  "keywords": [
     "Exert"
   ],
   "upgrade": {

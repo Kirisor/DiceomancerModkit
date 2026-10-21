@@ -1,0 +1,29 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_essence_blood",
+  "name": {
+    "zh-Hans": "血蛙卵精粹",
+    "en": "Spawn Essence"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "Bleed",
+      "amounts": [
+        5
+      ],
+      "target": "AllOpponents"
+    }
+  ],
+  "keywords": [
+    "Fragile"
+  ]
+}

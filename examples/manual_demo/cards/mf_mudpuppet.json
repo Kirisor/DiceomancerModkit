@@ -15,20 +15,11 @@
   ],
   "resolve": "OnCast",
   "artTemplate": "Block",
-  "effects": [],
-  "keywords": [
+  "effects": [
     {
-      "name": "Summon",
-      "number": 3,
-      "toCard": "SmallRock",
-      "effects": [
-        {
-          "builtin": "gain_mana",
-          "color": "Black",
-          "amounts": [
-            1
-          ]
-        }
+      "custom": "mf_summon_mudpuppet",
+      "amounts": [
+        3
       ]
     }
   ],

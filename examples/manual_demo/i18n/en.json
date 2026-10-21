@@ -57,7 +57,9 @@
       "manual_demo.mf_glare": "Swarm Glare",
       "manual_demo.mf_mudpuppet": "Mud Puppet",
       "manual_demo.mf_bloodspawn": "Blood Spawn",
-      "manual_demo.mf_mother_law": "Mother's Decree"
+      "manual_demo.mf_mother_law": "Mother's Decree",
+      "manual_demo.mf_essence_mud": "Puppet Essence",
+      "manual_demo.mf_essence_blood": "Spawn Essence"
     },
     "EffectDescription": {
       "Key_mf_chorus_echo": "Deal {Number} damage; if you have 3+ cards in hand, deal 4 more.",

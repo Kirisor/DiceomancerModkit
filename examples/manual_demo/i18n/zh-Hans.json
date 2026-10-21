@@ -61,7 +61,9 @@
       "manual_demo.mf_glare": "蛙群瞪视",
       "manual_demo.mf_mudpuppet": "泥偶蛙",
       "manual_demo.mf_bloodspawn": "血蛙卵",
-      "manual_demo.mf_mother_law": "蛙母的号令"
+      "manual_demo.mf_mother_law": "蛙母的号令",
+      "manual_demo.mf_essence_mud": "泥偶蛙精粹",
+      "manual_demo.mf_essence_blood": "血蛙卵精粹"
     },
     "FlavorText": {
       "manual_demo.starter": "万事开头难。",
