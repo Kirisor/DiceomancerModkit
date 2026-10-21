@@ -72,19 +72,19 @@
     },
     "EffectDescription": {
       "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。",
-      "Key_mf_chorus_echo": "造成{Number}点伤害；若手牌不少于3张，再造成4点。",
-      "Key_mf_swarm_pull": "抽{Number}张牌；若弃牌堆不少于5张，再抽1张。",
-      "Key_mf_chain_finish": "造成{Number}点伤害，加上你弃牌堆张数的四分之一（至多6点）。",
-      "Key_mf_brood_call": "将{Number}张「蝌蚪」加入手牌。",
-      "Key_mf_shield_bash": "造成等于你当前格挡一半的伤害（没有格挡时为{Number}点），然后失去全部格挡。",
-      "Key_mf_bulwark_pray": "治疗相当于你当前格挡三分之一的数值（至少{Number}点）。",
-      "Key_mf_last_bastion": "获得{Number}格挡；若生命不高于一半，额外获得6格挡并治疗4点。",
-      "Key_mf_molt_shell": "失去全部格挡，抽{Number}张牌。",
-      "Key_mf_feast": "抽{Number}张牌，弃1张随机手牌，加1点紫能量。",
-      "Key_mf_glut": "弃{Number}张随机手牌，每弃1张加1点黑能量。",
-      "Key_mf_renew": "治疗{Number}点生命；若手牌不多于2张，改为抽2张牌。",
-      "Key_mf_void_tithe": "失去{Number}点生命，获得8格挡与2点紫能量。",
-      "Key_mf_king_decree": "造成{Number}点伤害（每2张手牌再加1点），并对对手施加2层流血。"
+      "Key_mf_chorus_echo": "造成等同于本效果数值的伤害；若手牌足够多，再造成一次较小伤害。",
+      "Key_mf_swarm_pull": "抽等同于本效果数值的牌；若弃牌堆足够多，再抽一张。",
+      "Key_mf_chain_finish": "造成等同于本效果数值的伤害，弃牌堆越厚伤害越高（至多再加六点）。",
+      "Key_mf_brood_call": "将等同于本效果数值的「蝌蚪」加入手牌。",
+      "Key_mf_shield_bash": "造成等同于你当前格挡一半的伤害（没有格挡时按下限结算），然后失去全部格挡。",
+      "Key_mf_bulwark_pray": "治疗相当于你当前格挡三分之一的数值（不足时按下限治疗）。",
+      "Key_mf_last_bastion": "获得格挡；若你的生命不高于一半，额外获得格挡并治疗。",
+      "Key_mf_molt_shell": "失去全部格挡，抽等同于本效果数值的牌。",
+      "Key_mf_feast": "抽牌，弃若干张随机手牌，并加一点紫能量。",
+      "Key_mf_glut": "弃若干张随机手牌，每弃一张加一点黑能量。",
+      "Key_mf_renew": "治疗；若你手牌很少，改为抽两张牌。",
+      "Key_mf_void_tithe": "失去生命，获得格挡与紫能量。",
+      "Key_mf_king_decree": "造成伤害（手牌越多伤害越高），并对对手施加流血。"
     }
   }
 }

@@ -278,11 +278,27 @@ namespace ModKit.Game
                         }
                         catch (Exception vex)
                         {
-                            result.ReadBackFailed++;
-                            if (result.FailedSamples.Count < 5)
+                            // ★ 含占位符（{{Number}} 之类）的文案：这个重载**不带 Arguments**，
+                            //   SmartFormat 会抛 OperationException。异常本身证明**键已写入**，
+                            //   只是需要调用方提供参数 ⇒ 算读回成功，但要与"真失败"区分开。
+                            bool needsArgs = vex.GetType().Name.IndexOf("Operation", StringComparison.OrdinalIgnoreCase) >= 0
+                                             || (vex.Message ?? "").IndexOf("format", StringComparison.OrdinalIgnoreCase) >= 0;
+                            if (needsArgs)
                             {
-                                result.FailedSamples.Add(table.Key + "." + entry.Key +
-                                    "(读回异常:" + vex.GetType().Name + ")");
+                                result.ReadBackOk++;
+                                if (result.FailedSamples.Count < 5)
+                                {
+                                    result.FailedSamples.Add(table.Key + "." + entry.Key + "(需参数，键已写入)");
+                                }
+                            }
+                            else
+                            {
+                                result.ReadBackFailed++;
+                                if (result.FailedSamples.Count < 5)
+                                {
+                                    result.FailedSamples.Add(table.Key + "." + entry.Key +
+                                        "(读回异常:" + vex.GetType().Name + ")");
+                                }
                             }
                         }
                     }
