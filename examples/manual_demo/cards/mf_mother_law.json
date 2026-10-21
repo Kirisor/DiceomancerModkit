@@ -18,7 +18,12 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "custom": "mf_mother_law"
+      "builtin": "gain_ability",
+      "name": "milkfrog_choice",
+      "target": "Self",
+      "amounts": [
+        1
+      ]
     }
   ],
   "upgrade": {
@@ -31,7 +36,12 @@
         "index": 0,
         "effects": [
           {
-            "custom": "mf_mother_law_full"
+            "builtin": "gain_ability",
+            "name": "milkfrog_choice_full",
+            "target": "Self",
+            "amounts": [
+              1
+            ]
           }
         ]
       }

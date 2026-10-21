@@ -63,8 +63,9 @@ namespace ManualDemo
 
         internal static void ApplyMode(EffectContext ctx, int mode)
         {
-            CardKeywordMilkFrog.SelectionMode = mode;
-            ctx.Log("蛙母的号令：奶蛙拉取改为「" + (mode >= 2 ? "任意卡" : "奶蛙卡") + "」（玩家选择）。");
+            // ★ 模式不再由这里设置：卡片挂的是能力（milkfrog_choice / _full），
+            //   奶蛙关键词按能力判断。能力由游戏管理，战斗结束自动清。
+            ctx.Log("蛙母的号令：本场战斗内奶蛙拉取改为「" + (mode >= 2 ? "任意卡" : "奶蛙卡") + "」（玩家选择）。");
         }
     }
 

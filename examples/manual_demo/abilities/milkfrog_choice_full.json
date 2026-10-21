@@ -1,0 +1,15 @@
+{
+  "$schema": "modkit/ability@1",
+  "id": "milkfrog_choice_full",
+  "name": {
+    "zh-Hans": "蛙母的全权",
+    "en": "Mother's Full Decree"
+  },
+  "type": "Buff",
+  "owner": "Player",
+  "addToPool": false,
+  "isUnique": true,
+  "artTemplate": "Power",
+  "trigger": "BattleStart",
+  "effects": []
+}

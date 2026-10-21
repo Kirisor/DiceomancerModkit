@@ -85,6 +85,14 @@
     },
     "CardRequirementDes": {
       "Key_MilkFrogOnly": "Milk Frog cards"
+    },
+    "Ability": {
+      "milkfrog_choice": "Mother's Choice",
+      "milkfrog_choice_full": "Mother's Full Decree"
+    },
+    "AbilityDescription": {
+      "milkfrog_choice": "When Milk Frog pulls, you choose which Milk Frog cards resolve.",
+      "milkfrog_choice_full": "When Milk Frog pulls, you choose any cards to resolve."
     }
   }
 }

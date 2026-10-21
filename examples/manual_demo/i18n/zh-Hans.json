@@ -109,6 +109,14 @@
       "Key_mf_glare": "对所有敌人施加 {Number} 层易伤；若本卡由「奶蛙」结算，再对所有敌人造成 {Number1} 点伤害。",
       "Key_mf_mother_law": "「奶蛙」不再自动拉取，改为由你选择会被结算的奶蛙卡。",
       "Key_mf_mother_law_full": "「奶蛙」不再自动拉取，改为由你选择任意会被结算的卡。"
+    },
+    "Ability": {
+      "milkfrog_choice": "蛙母的选择",
+      "milkfrog_choice_full": "蛙母的全权"
+    },
+    "AbilityDescription": {
+      "milkfrog_choice": "「奶蛙」拉取时由你选择要结算的奶蛙卡。",
+      "milkfrog_choice_full": "「奶蛙」拉取时由你选择任意要结算的卡。"
     }
   }
 }

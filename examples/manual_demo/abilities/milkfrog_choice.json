@@ -1,0 +1,15 @@
+{
+  "$schema": "modkit/ability@1",
+  "id": "milkfrog_choice",
+  "name": {
+    "zh-Hans": "蛙母的选择",
+    "en": "Mother's Choice"
+  },
+  "type": "Buff",
+  "owner": "Player",
+  "addToPool": false,
+  "isUnique": true,
+  "artTemplate": "Power",
+  "trigger": "BattleStart",
+  "effects": []
+}

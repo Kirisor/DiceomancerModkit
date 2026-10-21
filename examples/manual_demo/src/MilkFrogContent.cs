@@ -32,10 +32,43 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     internal static bool IsCascadeResolve;
 
     /// <summary>
-    /// 拉取模式：0 = 自动（默认）；1 = 玩家从奶蛙卡里选；2 = 玩家从任意卡里选。
-    /// 由「蛙母的号令」设置。
+    /// 当前拉取模式：0 = 自动；1 = 玩家从奶蛙卡里选；2 = 玩家从任意卡里选。
+    /// ★ 由**能力**决定（不再用 mod 静态字段）：
+    ///   「蛙母的号令」挂 <c>milkfrog_choice</c>（选奶蛙卡）或
+    ///   <c>milkfrog_choice_full</c>（选任意卡）；
+    ///   能力由游戏的战斗生命周期管理，战斗结束自动清 —— 与「压制射击 / 战争之王」同构。
     /// </summary>
-    internal static int SelectionMode;
+    internal static int SelectionMode
+    {
+        get
+        {
+            if (HasAbility("milkfrog_choice_full")) { return 2; }
+            if (HasAbility("milkfrog_choice")) { return 1; }
+            return 0;
+        }
+    }
+
+    /// <summary>玩家是否持有某个能力（容忍 mod 前缀写法）。</summary>
+    internal static bool HasAbility(string abilityName)
+    {
+        try
+        {
+            var player = CharacterPlayer.Instance;
+            if (player == null) { return false; }
+            Ability.AbilityBase _;
+            if (player.HasCertainAbility(abilityName, out _)) { return true; }
+            // mod 能力也可能被登记成 "<modId>.<id>"
+            foreach (string prefix in new[] { "manual_demo." })
+            {
+                if (player.HasCertainAbility(prefix + abilityName, out _)) { return true; }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[ModKit] 奶蛙：查询能力 '" + abilityName + "' 失败 —— " + e.Message);
+        }
+        return false;
+    }
 
     /// <summary>连锁开始时刻。兜底用：万一有张被拉进来的卡没跑到钩子，计数不会永久卡住。</summary>
     private static DateTime _cascadeStartedUtc;
@@ -272,33 +305,6 @@ internal static class MilkFrogNumberPatch
         catch (Exception e)
         {
             Debug.LogError("[ModKit] 奶蛙：打补丁失败，数字将不会显示 —— " + e);
-        }
-    }
-
-    /// <summary>
-    /// 战斗结束复位：把「蛙母的号令」的拉取模式清回默认（自动拉取）。
-    /// </summary>
-    /// <remarks>
-    /// 原版「压制射击 / 战争之王」是**挂一个能力**（ApplyPrimAbility）来实现"本场战斗内生效"——
-    /// 能力由游戏的战斗生命周期管理，战斗结束自动清掉。
-    /// 我们的奶蛙选择开关是 mod 静态字段，不会被游戏清，所以必须自己挂生命周期：
-    /// 战斗结束时 <c>BattleManager</c> 会调用 <c>CharacterPlayer.BattleEnd()</c>，在这里复位。
-    /// </remarks>
-    [HarmonyPatch(typeof(Character), nameof(Character.BattleEnd))]
-    internal static class MilkFrogBattleResetPatch
-    {
-        private static void Postfix()
-        {
-            try
-            {
-                CardKeywordMilkFrog.SelectionMode = 0;
-                CardKeywordMilkFrog.CascadeQueue.Clear();
-                Debug.Log("[ModKit] 奶蛙：战斗结束，已复位「蛙母的号令」与连锁队列。");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("[ModKit] 奶蛙：战斗结束复位失败 —— " + e.Message);
-            }
         }
     }
 }
