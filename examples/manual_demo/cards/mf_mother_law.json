@@ -17,18 +17,17 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "custom": "mf_mother_law",
-      "amounts": [
-        1
-      ]
+      "custom": "mf_mother_law"
     }
   ],
   "upgrade": {
-    "effectNumbers": [
+    "replaceEffects": [
       {
         "index": 0,
-        "amounts": [
-          2
+        "effects": [
+          {
+            "custom": "mf_mother_law_full"
+          }
         ]
       }
     ]

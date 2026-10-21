@@ -64,7 +64,7 @@
     "EffectDescription": {
       "Key_mf_chorus_echo": "Deal {Number} damage; if you have 3+ cards in hand, deal 4 more.",
       "Key_mf_swarm_pull": "Draw {Number} card(s); if your discard pile has 5+ cards, draw 1 more.",
-      "Key_mf_chain_finish": "Deal {Number} damage plus a quarter of your discard pile (up to 6).",
+      "Key_mf_chain_finish": "Deal {Number} damage plus a third of your discard pile (up to 10).",
       "Key_mf_brood_call": "Add {Number} Tadpole(s) to your hand.",
       "Key_mf_shield_bash": "Deal half your Block as damage (or {Number} if you have none), then lose all Block.",
       "Key_mf_bulwark_pray": "Heal for a third of your Block (at least {Number}).",
@@ -74,13 +74,14 @@
       "Key_mf_glut": "Discard {Number} random card(s); gain 1 Black mana for each.",
       "Key_mf_renew": "Heal {Number}. If you have 2 or fewer cards, draw 2 instead.",
       "Key_mf_void_tithe": "Lose {Number} health, gain 8 Block and 2 Purple mana.",
-      "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply 2 Bleed to the opponent.",
+      "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply 4 Bleed to the opponent.",
       "Key_mf_grave_swell": "Deal damage equal to {Number}x the size of your discard pile.",
       "Key_mf_bellow": "Gain {Number} temporary Power; if resolved by Milk Frog, gain {Number1} Power.",
-      "Key_mf_bleed_if_cascade": "If resolved by Milk Frog, apply Bleed to the target.",
-      "Key_mf_bleed_always": "Apply Bleed to the target.",
+      "Key_mf_bleed_if_cascade": "If resolved by Milk Frog, apply {Number} Bleed to the target.",
+      "Key_mf_bleed_always": "Apply {Number} Bleed to the target.",
       "Key_mf_glare": "Apply {Number} Vulnerable to all enemies; if resolved by Milk Frog, deal {Number1} damage to all enemies.",
-      "Key_mf_mother_law": "Milk Frog no longer picks automatically — you choose which cards resolve."
+      "Key_mf_mother_law": "Milk Frog no longer picks automatically — you choose which Milk Frog cards resolve.",
+      "Key_mf_mother_law_full": "Milk Frog no longer picks automatically — you choose any cards to resolve."
     },
     "CardRequirementDes": {
       "Key_MilkFrogOnly": "Milk Frog cards"
