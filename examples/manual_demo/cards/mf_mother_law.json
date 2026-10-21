@@ -7,6 +7,7 @@
   },
   "cost": [
     "Green",
+    "Green",
     "Green"
   ],
   "rarity": "Rare",
@@ -21,6 +22,10 @@
     }
   ],
   "upgrade": {
+    "cost": [
+      "Green",
+      "Green"
+    ],
     "replaceEffects": [
       {
         "index": 0,

@@ -26,7 +26,7 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     /// 已被奶蛙排进队列、等待结算的卡（按**卡实例**记，不再用计数器）。
     /// 用集合而不是计数：任何一张没能结算时，也只影响它自己，不会让后续所有奶蛙静默失效。
     /// </summary>
-    private static readonly HashSet<CardBase> CascadeQueue = new HashSet<CardBase>();
+    internal static readonly HashSet<CardBase> CascadeQueue = new HashSet<CardBase>();
 
     /// <summary>当前这次卡牌结算是否来自「奶蛙连锁」（供自定义效果判断「被奶蛙时」）。</summary>
     internal static bool IsCascadeResolve;
@@ -272,6 +272,33 @@ internal static class MilkFrogNumberPatch
         catch (Exception e)
         {
             Debug.LogError("[ModKit] 奶蛙：打补丁失败，数字将不会显示 —— " + e);
+        }
+    }
+
+    /// <summary>
+    /// 战斗结束复位：把「蛙母的号令」的拉取模式清回默认（自动拉取）。
+    /// </summary>
+    /// <remarks>
+    /// 原版「压制射击 / 战争之王」是**挂一个能力**（ApplyPrimAbility）来实现"本场战斗内生效"——
+    /// 能力由游戏的战斗生命周期管理，战斗结束自动清掉。
+    /// 我们的奶蛙选择开关是 mod 静态字段，不会被游戏清，所以必须自己挂生命周期：
+    /// 战斗结束时 <c>BattleManager</c> 会调用 <c>CharacterPlayer.BattleEnd()</c>，在这里复位。
+    /// </remarks>
+    [HarmonyPatch(typeof(Character), nameof(Character.BattleEnd))]
+    internal static class MilkFrogBattleResetPatch
+    {
+        private static void Postfix()
+        {
+            try
+            {
+                CardKeywordMilkFrog.SelectionMode = 0;
+                CardKeywordMilkFrog.CascadeQueue.Clear();
+                Debug.Log("[ModKit] 奶蛙：战斗结束，已复位「蛙母的号令」与连锁队列。");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[ModKit] 奶蛙：战斗结束复位失败 —— " + e.Message);
+            }
         }
     }
 }
