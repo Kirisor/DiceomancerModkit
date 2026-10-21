@@ -75,11 +75,11 @@
       "Key_mf_renew": "Heal {Number}. If you have 2 or fewer cards, draw 2 instead.",
       "Key_mf_void_tithe": "Lose {Number} health, gain 8 Block and 2 Purple mana.",
       "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply 2 Bleed to the opponent.",
-      "Key_mf_grave_swell": "Deal damage equal to the size of your discard pile.",
-      "Key_mf_bellow": "Gain temporary Power; if resolved by Milk Frog, gain one less Power.",
+      "Key_mf_grave_swell": "Deal damage equal to {Number}x the size of your discard pile.",
+      "Key_mf_bellow": "Gain {Number} temporary Power; if resolved by Milk Frog, gain {Number1} Power.",
       "Key_mf_bleed_if_cascade": "If resolved by Milk Frog, apply Bleed to the target.",
       "Key_mf_bleed_always": "Apply Bleed to the target.",
-      "Key_mf_glare": "Apply Vulnerable to all enemies; if resolved by Milk Frog, also damage all enemies.",
+      "Key_mf_glare": "Apply {Number} Vulnerable to all enemies; if resolved by Milk Frog, deal {Number1} damage to all enemies.",
       "Key_mf_mother_law": "Milk Frog no longer picks automatically — you choose which cards resolve."
     },
     "CardRequirementDes": {

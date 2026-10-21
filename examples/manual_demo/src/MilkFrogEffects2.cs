@@ -41,8 +41,8 @@ namespace ManualDemo
 
             if (CardKeywordMilkFrog.IsCascadeResolve)
             {
-                int dmg = Math.Max(1, layers / 2);
-                ctx.DealDamage(dmg, DamageMode.Direct, CombatantSelector.AllOpponents);
+                int dmg = ctx.AmountAt(1);           // 第二个数字 = 被奶蛙时的群伤
+                if (dmg > 0) { ctx.DealDamage(dmg, DamageMode.Direct, CombatantSelector.AllOpponents); }
             }
         }
     }

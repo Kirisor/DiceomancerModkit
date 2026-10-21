@@ -22,8 +22,11 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     /// <summary>关键词 id。游戏侧名字可能是 <c>milk_frog</c>，平台加前缀后是 <c>manual_demo.milk_frog</c>。</summary>
     internal const string MilkFrogLeaf = "milk_frog";
 
-    /// <summary>本次「奶蛙连锁」里还有几张没结算完；&gt; 0 表示当前这次结算来自连锁，不再扩散。</summary>
-    private static int _cascadeRemaining;
+    /// <summary>
+    /// 已被奶蛙排进队列、等待结算的卡（按**卡实例**记，不再用计数器）。
+    /// 用集合而不是计数：任何一张没能结算时，也只影响它自己，不会让后续所有奶蛙静默失效。
+    /// </summary>
+    private static readonly HashSet<CardBase> CascadeQueue = new HashSet<CardBase>();
 
     /// <summary>当前这次卡牌结算是否来自「奶蛙连锁」（供自定义效果判断「被奶蛙时」）。</summary>
     internal static bool IsCascadeResolve;
@@ -55,7 +58,7 @@ public sealed class CardKeywordMilkFrog : CardKeyword
 
     public override UniTask CardResolvePhaseBeforeEffect(CardBase card)
     {
-        IsCascadeResolve = _cascadeRemaining > 0 && !IsCascadeStale();
+        IsCascadeResolve = CascadeQueue.Remove(card);
         return UniTask.CompletedTask;
     }
 
@@ -78,22 +81,6 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     {
         if (card == null) { return; }
 
-        // 我是被这次连锁拉进来的那一张：只把计数减一，不再拉人。
-        if (_cascadeRemaining > 0)
-        {
-            if (IsCascadeStale())
-            {
-                _cascadeRemaining = 0;   // 上一次连锁没走完（异常/中断），当作已结束
-            }
-            else
-            {
-                _cascadeRemaining--;
-                return;
-            }
-        }
-
-        // 从上往下打出来的那一张 = 连锁的起点。
-        _cascadeRemaining = 0;
 
         CardManager manager = CardManager.Instance;
         if (manager == null) { return; }
@@ -114,8 +101,8 @@ public sealed class CardKeywordMilkFrog : CardKeyword
 
         if (found.Count == 0) { return; }
 
-        _cascadeRemaining = found.Count;
-        _cascadeStartedUtc = DateTime.UtcNow;
+        CascadeQueue.Clear();
+        foreach (CardBase other in found) { CascadeQueue.Add(other); }
 
         string names = "";
         foreach (CardBase other in found)
@@ -198,8 +185,8 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     private static UniTask ResolveChosen(CardBase[] cards)
     {
         if (cards == null || cards.Length == 0) { return UniTask.CompletedTask; }
-        _cascadeRemaining = cards.Length;
-        _cascadeStartedUtc = DateTime.UtcNow;
+        CascadeQueue.Clear();
+        foreach (CardBase c in cards) { if (c != null) { CascadeQueue.Add(c); } }
         string names = "";
         foreach (CardBase c in cards)
         {

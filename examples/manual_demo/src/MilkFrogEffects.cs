@@ -1,14 +1,5 @@
 // =============================================================================
-//  奶蛙职业 · 专属效果（13 个）—— 每个效果**只接收 1 个数字**
-//
-//  ★ 为什么要"只 1 个数字"（实机 2026-10-21 定位）：
-//    游戏给 SpecialEffect 家族分配数字槽用的是
-//    `EffectUtils.GetEffectRNumberCountByName("SpecialEffect")` 的**默认值 1**
-//    （与 EffectInfo.effectNumberInfos.Count 不一致时，
-//     GenerateEffectFromEffectInfo 里 `if (numbers.Length == count)` 不成立 → rNumbers 为空）
-//    ⇒ 描述模板里的 {Number} 取不到值 → OperationException。
-//    原版同类卡（拾荒 Scavage → SpecialEffect "GraveCardToHand"）正是 1 个数字，照此办理：
-//    主数值走 {Number}，其余参数写成 C# 常量。
+//  奶蛙职业 · 专属效果（13 个）
 // =============================================================================
 
 using System;
@@ -169,15 +160,14 @@ namespace ManualDemo
         }
     }
 
-    /// <summary>蛙王号令：造成 Number 伤害（每 2 张手牌 +1），并给对手挂 2 层流血。</summary>
+    /// <summary>蛙王号令：造成 Number 伤害（每张手牌 +2），并给对手挂 2 层流血。</summary>
     [ModEffect("mf_king_decree")]
     public sealed class MfKingDecree : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
-            // ★ 负伤(Injure) 是玩家专属状态；敌人用「流血」能力(Bleed)。
-            ctx.GiveAbility("Bleed", 2, CombatantSelector.Opponent);
-            ctx.DealDamage(ctx.Amount + ctx.HandCount / 2, DamageMode.Direct);
+            ctx.GiveAbility("Bleed", 2+ ctx.HandCount * 2, CombatantSelector.Opponent);
+            ctx.DealDamage(ctx.Amount + ctx.HandCount * 2, DamageMode.Direct,CombatantSelector.Opponent);
         }
     }
 
@@ -195,18 +185,17 @@ namespace ManualDemo
         }
     }
 
-    /// <summary>鼓气长鸣：获得 Amount 层「临时力量」；若本卡是被奶蛙拉起来结算的，再获得 Amount-1 层「力量」。</summary>
+    /// <summary>鼓气长鸣：获得 Amount 层「临时力量」；若本卡由奶蛙结算，再获得 Amount1 层「力量」。</summary>
     [ModEffect("mf_bellow")]
     public sealed class MfBellow : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
-            int temp = Math.Max(1, ctx.Amount);
-            ctx.GiveAbility("Excitement", temp);
+            ctx.GiveAbility("Excitement", Math.Max(1, ctx.Amount));
 
             if (CardKeywordMilkFrog.IsCascadeResolve)
             {
-                int power = temp - 1;
+                int power = ctx.AmountAt(1);          // 第二个数字 = 被奶蛙时的力量层数
                 if (power > 0) { ctx.GiveAbility("Power", power); }
             }
         }

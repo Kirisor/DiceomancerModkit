@@ -18,7 +18,8 @@
     {
       "custom": "mf_bellow",
       "amounts": [
-        3
+        3,
+        2
       ]
     }
   ],
@@ -34,7 +35,8 @@
       {
         "index": 0,
         "amounts": [
-          4
+          4,
+          3
         ]
       }
     ]

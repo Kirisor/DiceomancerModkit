@@ -24,6 +24,7 @@
       "name": "Summon",
       "number": 4,
       "toCard": "mf_essence_blood",
+      "summon": "FireElement",
       "effects": [
         {
           "builtin": "gain_ability",

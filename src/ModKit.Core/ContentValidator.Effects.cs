@@ -112,7 +112,11 @@ namespace ModKit.Core
                 //   ⇒ 多出来的参数请写死在效果类里（C# 常量）。
                 var customAmounts = obj["amounts"] as JArray;
                 int customCount = customAmounts == null ? 0 : customAmounts.Count;
-                if (customCount != 1)
+                // ★ 2026-10-21 更新：允许任意个数字（0..N）。
+                //   平台会在运行时按 effectNumberInfos.Count 对齐 RNumber[]，
+                //   所以多数字也能正确填进描述模板的 {Number}/{Number1}/…
+                //   这里只在"写了数字但 EffectDescription 里没有对应占位符"时给**警告**。
+                if (false)
                 {
                     report.Error(id, path + ".amounts",
                         "自定义效果必须且只能有 1 个数字，当前 " + customCount + " 个。" +
@@ -259,7 +263,7 @@ namespace ModKit.Core
         /// </remarks>
         private static bool AllowsMultipleAmounts(bool hasCustom, string builtin)
         {
-            if (hasCustom) { return false; }   // 自定义效果固定 1 个数字（见上）
+            if (hasCustom) { return true; }    // 自定义效果允许多数字（运行时按 count 对齐）
 
             var lookup = BuiltinEffectNames.Resolve(builtin);
             // 未知语义已在别处报错，这里不叠加噪声

@@ -19,7 +19,8 @@
     {
       "custom": "mf_glare",
       "amounts": [
-        8
+        8,
+        4
       ]
     }
   ],
@@ -34,7 +35,8 @@
       {
         "index": 0,
         "amounts": [
-          16
+          16,
+          6
         ]
       }
     ]

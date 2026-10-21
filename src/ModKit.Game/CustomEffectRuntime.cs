@@ -26,6 +26,8 @@ using Card;
 using Combat;
 using Command;
 using Effects;
+using RollNumber;
+using HarmonyLib;
 using GameData;
 using Keyword;
 using Utilities;
@@ -610,4 +612,45 @@ namespace ModKit.Game
             }
         }
     }
+
+    /// <summary>
+    /// 对齐"效果数字槽数量"与生成效果时传入的 <c>RNumber[]</c>。
+    /// </summary>
+    /// <remarks>
+    /// ★ 游戏 `EffectUtils.GenerateEffectFromEffectInfo` 里有
+    /// <c>if (numbers.Length == count)</c> 才赋值；不等时 rNumbers 留空
+    /// ⇒ 描述模板里的 <c>{Number}</c> 全部取不到值 ⇒ SmartFormat 弹框。
+    /// 自定义效果（SpecialEffect 家族）的"应有多少个数字"没有登记处，
+    /// 因此这里按 **effectInfo.effectNumberInfos.Count** 补齐/截断，
+    /// 补齐值沿用最后一个数字（与作者在 amounts 里写的顺序一致）。
+    /// </remarks>
+    [HarmonyPatch(typeof(EffectUtils), "GenerateEffectFromEffectInfo")]
+    internal static class EffectNumberCountGuard
+    {
+        private static void Prefix(ref RNumber[] numbers, EffectInfo effectInfo)
+        {
+            try
+            {
+                int want = effectInfo == null || effectInfo.effectNumberInfos == null
+                    ? 0 : effectInfo.effectNumberInfos.Count;
+                if (numbers == null)
+                {
+                    numbers = new RNumber[want];
+                    return;
+                }
+                if (numbers.Length == want) { return; }
+
+                var fixedArr = new RNumber[want];
+                int copy = numbers.Length < want ? numbers.Length : want;
+                for (int i = 0; i < copy; i++) { fixedArr[i] = numbers[i]; }
+                for (int i = copy; i < want; i++)
+                {
+                    fixedArr[i] = numbers.Length > 0 ? numbers[numbers.Length - 1] : null;
+                }
+                numbers = fixedArr;
+            }
+            catch { }
+        }
+    }
+
 }

@@ -102,11 +102,11 @@
       "Key_mf_renew": "治疗{Number}点生命；若手牌不多于2张，改为抽2张牌。",
       "Key_mf_void_tithe": "失去{Number}点生命，获得8格挡与2点紫能量。",
       "Key_mf_king_decree": "造成{Number}点伤害并对对手施加2层流血（每张手牌再加2点）。",
-      "Key_mf_grave_swell": "造成等同于你弃牌堆张数的伤害。",
-      "Key_mf_bellow": "获得若干层临时力量；若本卡由「奶蛙」结算，再获得少一层的力量。",
+      "Key_mf_grave_swell": "造成 {Number} 倍你弃牌堆张数的伤害。",
+      "Key_mf_bellow": "获得 {Number} 层临时力量；若本卡由「奶蛙」结算，再获得 {Number1} 层力量。",
       "Key_mf_bleed_if_cascade": "若本卡由「奶蛙」结算，对目标敌人施加若干层流血。",
       "Key_mf_bleed_always": "对目标敌人施加若干层流血。",
-      "Key_mf_glare": "对所有敌人施加若干层易伤；若本卡由「奶蛙」结算，再对所有敌人造成伤害。",
+      "Key_mf_glare": "对所有敌人施加 {Number} 层易伤；若本卡由「奶蛙」结算，再对所有敌人造成 {Number1} 点伤害。",
       "Key_mf_mother_law": "「奶蛙」不再自动拉取，改为由你选择会被结算的卡。"
     }
   }
