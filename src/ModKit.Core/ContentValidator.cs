@@ -631,10 +631,11 @@ namespace ModKit.Core
                     }
                     else if (IsFormatTemplateTable(table.Name))
                     {
-                        // ★ P3：这张表的值会被游戏当**格式化模板**渲染。
-                        //   模板表中**白名单占位符是合法的**（EffectDescription 就靠 {Number} 显示数值），
-                        //   其余花括号仍判错 —— 见 ContentValidator.Text.cs 的 CheckPlaceholders。
-                        CheckPlaceholders((string)entry.Value,
+                        // ★ P3：这张表的值会被游戏当**格式化模板**渲染 ⇒ 花括号会在战斗中弹异常框。
+                        //   P4（2026-10-21）曾放开白名单占位符，实机证明自定义效果的数字槽与模板
+                        //   占位符对不上（OperationException: Could not evaluate the selector 'Number'），
+                        //   因此恢复**严格禁止**：作者要引用数值就用文字描述。
+                        CheckNoFormatBraces((string)entry.Value,
                             "tables." + table.Name + "." + entry.Name, report, null);
                     }
                 }
