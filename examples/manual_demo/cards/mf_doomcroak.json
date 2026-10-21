@@ -1,0 +1,64 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_doomcroak",
+  "name": {
+    "zh-Hans": "厄运蛙鸣",
+    "en": "Doom Croak"
+  },
+  "cost": [
+    "Black"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "Weak",
+      "amounts": [
+        8
+      ],
+      "target": "Opponent"
+    },
+    {
+      "builtin": "gain_ability",
+      "name": "DicePenalty",
+      "amounts": [
+        8
+      ],
+      "target": "Opponent"
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 1
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          10
+        ]
+      },
+      {
+        "index": 1,
+        "amounts": [
+          10
+        ]
+      }
+    ],
+    "cost": [
+      [
+        "Green",
+        "Black"
+      ]
+    ]
+  }
+}

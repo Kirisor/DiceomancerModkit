@@ -1,0 +1,42 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_bellow",
+  "name": {
+    "zh-Hans": "鼓气长鸣",
+    "en": "Bellow"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "custom": "mf_bellow",
+      "amounts": [
+        3
+      ]
+    }
+  ],
+  "keywords": [
+    "Exert",
+    {
+      "name": "milk_frog",
+      "number": 1
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          4
+        ]
+      }
+    ]
+  }
+}

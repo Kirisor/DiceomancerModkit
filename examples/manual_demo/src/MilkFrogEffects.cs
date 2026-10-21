@@ -11,6 +11,7 @@
 //    主数值走 {Number}，其余参数写成 C# 常量。
 // =============================================================================
 
+using System;
 using ModKit.Api;
 
 namespace ManualDemo
@@ -177,6 +178,37 @@ namespace ManualDemo
             // ★ 负伤(Injure) 是玩家专属状态；敌人用「流血」能力(Bleed)。
             ctx.GiveAbility("Bleed", 2, CombatantSelector.Opponent);
             ctx.DealDamage(ctx.Amount + ctx.HandCount / 2, DamageMode.Direct);
+        }
+    }
+
+    /// <summary>腐泥翻涌：造成 (弃牌堆张数 × Amount) 点伤害。</summary>
+    /// <remarks>奶蛙把"耗竭"当资源：打得越快，弃牌堆越厚，这张越强。</remarks>
+    [ModEffect("mf_grave_swell")]
+    public sealed class MfGraveSwell : SyncCardEffect
+    {
+        public override void Apply(EffectContext ctx)
+        {
+            int multiplier = Math.Max(1, ctx.Amount);
+            int dmg = ctx.GraveCount * multiplier;
+            if (dmg <= 0) { ctx.Log("腐泥翻涌：弃牌堆为空，没有造成伤害。"); return; }
+            ctx.DealDamage(dmg, DamageMode.Direct);
+        }
+    }
+
+    /// <summary>鼓气长鸣：获得 Amount 层「临时力量」；若本卡是被奶蛙拉起来结算的，再获得 Amount-1 层「力量」。</summary>
+    [ModEffect("mf_bellow")]
+    public sealed class MfBellow : SyncCardEffect
+    {
+        public override void Apply(EffectContext ctx)
+        {
+            int temp = Math.Max(1, ctx.Amount);
+            ctx.GiveAbility("Excitement", temp);
+
+            if (CardKeywordMilkFrog.IsCascadeResolve)
+            {
+                int power = temp - 1;
+                if (power > 0) { ctx.GiveAbility("Power", power); }
+            }
         }
     }
 }

@@ -1,0 +1,35 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mire_swell",
+  "name": {
+    "zh-Hans": "腐泥翻涌",
+    "en": "Mire Swell"
+  },
+  "cost": [
+    "Green"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "custom": "mf_grave_swell",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

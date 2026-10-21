@@ -24,6 +24,9 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     /// <summary>本次「奶蛙连锁」里还有几张没结算完；&gt; 0 表示当前这次结算来自连锁，不再扩散。</summary>
     private static int _cascadeRemaining;
 
+    /// <summary>当前这次卡牌结算是否来自「奶蛙连锁」（供自定义效果判断「被奶蛙时」）。</summary>
+    internal static bool IsCascadeResolve;
+
     /// <summary>连锁开始时刻。兜底用：万一有张被拉进来的卡没跑到钩子，计数不会永久卡住。</summary>
     private static DateTime _cascadeStartedUtc;
 
@@ -43,11 +46,19 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         return string.Equals(leaf, MilkFrogLeaf, StringComparison.OrdinalIgnoreCase);
     }
 
+    public override UniTask CardResolvePhaseBeforeEffect(CardBase card)
+    {
+        IsCascadeResolve = _cascadeRemaining > 0 && !IsCascadeStale();
+        return UniTask.CompletedTask;
+    }
+
     public override UniTask CardResolvePhaseAfterEffect(CardBase card)
     {
+        bool wasCascade = IsCascadeResolve;
+        IsCascadeResolve = false;
         try
         {
-            PullOthers(card);
+            if (!wasCascade) { PullOthers(card); }
         }
         catch (Exception e)
         {

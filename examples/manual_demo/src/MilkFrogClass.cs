@@ -34,10 +34,10 @@ public sealed class MilkFrogClass : IModClassProvider
             StartDeck = new List<string>
             {
                 // 4 种初始卡 × 数量，共 10 张
-                "mf_strike", "mf_strike", "mf_strike",   // 蛙苗击
-                "mf_skin", "mf_skin", "mf_skin",         // 蛙苗皮
-                "mf_call", "mf_call",                    // 蛙苗唤
-                "mf_hop", "mf_hop"                       // 蛙苗跃
+                "milkfrogstrike", "milkfrogstrike", "milkfrogstrike", "milkfrogstrike",    // 奶蛙打击
+                "milkfrogblock", "milkfrogblock", "milkfrogblock",  "milkfrogblock", // 奶蛙格挡
+                "milkfroglaugh", // 奶蛙大笑
+		"milkfroglaugh"   
             },
 
             // ★ 至少 2 件：职业介绍卡硬取 relicSos[1] 做护符预览，少于 2 件会在开局界面抛异常
@@ -51,8 +51,9 @@ public sealed class MilkFrogClass : IModClassProvider
             {
                 // 36 张奶蛙专属卡全部进战役卡池（含初始 4 张）
                 "mf_strike", "mf_skin", "mf_call", "mf_hop",
+                "mf_mire_swell", "mf_bellow", "mf_bloodkiss", "mf_doomcroak",
                 // 普通
-                "mf_drum", "mf_lily", "mf_gnat", "mf_rhythm", "mf_mud",
+                "mf_drum", "mf_lily", "mf_gnat", "mf_rhythm", "mf_mud","milkfroglaugh",
                 "mf_chain_start", "mf_tongue", "mf_sun", "mf_pond", "mf_spring",
                 // 稀有
                 "mf_bulwark", "mf_leap_chain", "mf_spore", "mf_heal_mud", "mf_mirror",

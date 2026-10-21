@@ -7,7 +7,7 @@
       "manual_demo.manual_strike": "手册·打击",
       "manual_demo.manual_seek": "手册·检索",
       "manual_demo.manual_custom": "手册·自写效果",
-      "manual_demo.manual_art": "奶蛙剑",
+      "manual_demo.manual_art": "奶蛙巴掌",
       "manual_demo.milk_frog": "奶蛙盾",
       "manual_demo.frog_blessing": "蛙之祝福",
       "manual_demo.manual_free": "奶蛙大笑",
@@ -47,7 +47,15 @@
       "manual_demo.mf_lastcroak": "临终高鸣",
       "manual_demo.mf_ancestral": "祖池",
       "manual_demo.mf_crown": "连锁王冠",
-      "manual_demo.mf_tadpole_token": "蝌蚪"
+      "manual_demo.mf_tadpole_token": "蝌蚪",
+      "manual_demo.milkfrogstrike": "奶蛙打击",
+      "manual_demo.milkfroglaugh": "奶蛙大笑",
+      "manual_demo.milkfrogblock": "奶蛙格挡",
+      "manual_demo.naifrogseek": "奶蛙思考",
+      "manual_demo.mf_mire_swell": "腐泥翻涌",
+      "manual_demo.mf_bellow": "鼓气长鸣",
+      "manual_demo.mf_bloodkiss": "血蛙之吻",
+      "manual_demo.mf_doomcroak": "厄运蛙鸣"
     },
     "FlavorText": {
       "manual_demo.starter": "万事开头难。",
@@ -84,7 +92,9 @@
       "Key_mf_glut": "弃{Number}张随机手牌，每弃1张加1点黑能量。",
       "Key_mf_renew": "治疗{Number}点生命；若手牌不多于2张，改为抽2张牌。",
       "Key_mf_void_tithe": "失去{Number}点生命，获得8格挡与2点紫能量。",
-      "Key_mf_king_decree": "造成{Number}点伤害（每2张手牌再加1点），并对对手施加2层流血。"
+      "Key_mf_king_decree": "造成{Number}点伤害并对对手施加2层流血（每张手牌再加2点）。",
+      "Key_mf_grave_swell": "造成等同于你弃牌堆张数的伤害。",
+      "Key_mf_bellow": "获得若干层临时力量；若本卡由「奶蛙」结算，再获得少一层的力量。"
     }
   }
 }
