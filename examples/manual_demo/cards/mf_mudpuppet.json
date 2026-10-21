@@ -15,15 +15,24 @@
   ],
   "resolve": "OnCast",
   "artTemplate": "Block",
-  "effects": [
-    {
-      "custom": "mf_summon_mudpuppet",
-      "amounts": [
-        3
-      ]
-    }
-  ],
+  "effects": [],
   "upgrade": {
     "cost": []
-  }
+  },
+  "keywords": [
+    {
+      "name": "Summon",
+      "number": 3,
+      "toCard": "mf_essence_mud",
+      "effects": [
+        {
+          "builtin": "gain_mana",
+          "color": "Black",
+          "amounts": [
+            1
+          ]
+        }
+      ]
+    }
+  ]
 }

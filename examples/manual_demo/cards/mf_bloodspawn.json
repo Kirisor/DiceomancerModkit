@@ -18,15 +18,23 @@
   ],
   "resolve": "OnCast",
   "artTemplate": "Block",
-  "effects": [
-    {
-      "custom": "mf_summon_bloodspawn",
-      "amounts": [
-        4
-      ]
-    }
-  ],
+  "effects": [],
   "keywords": [
+    {
+      "name": "Summon",
+      "number": 4,
+      "toCard": "mf_essence_blood",
+      "effects": [
+        {
+          "builtin": "gain_ability",
+          "name": "Bleed",
+          "amounts": [
+            5
+          ],
+          "target": "RandomOpponent"
+        }
+      ]
+    },
     "Exert"
   ],
   "upgrade": {
