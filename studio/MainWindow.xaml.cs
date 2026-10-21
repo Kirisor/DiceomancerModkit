@@ -977,8 +977,24 @@ namespace ModKit.Studio
                     }
                     r["artTemplate"] = art;
                 }
-                var artFile = CardArtFileBox.Text.Trim();
-                if (artFile.Length == 0) { r.Remove("art"); } else { r["art"] = artFile; }
+                var artFile = NormalizeArtPath(CardArtFileBox.Text);
+                if (artFile == null)
+                {
+                    r.Remove("art");
+                }
+                else
+                {
+                    // ★ 实机教训：存档里必须是**相对 mod 目录的完整文件名（带 .png）**，
+                    //   平台 Loader 按相对路径查文件；写成裸名（如 "color6"）会找不到 → 整张卡被拒。
+                    var artFull = System.IO.Path.Combine(_mod == null ? "" : _mod.Dir,
+                        artFile.Replace('/', System.IO.Path.DirectorySeparatorChar));
+                    if (_mod != null && !File.Exists(artFull))
+                    {
+                        Status("art 文件不存在：" + artFile + "（应放在 mod 的 art/ 目录下）");
+                        return false;
+                    }
+                    r["art"] = artFile;
+                }
                 if (!ApplyJson(KeywordsBox, r, "keywords", true)) { return false; }
                 if (!ApplyJson(EffectsBox, r, "effects", true)) { return false; }
                 return ApplyJson(UpgradeBox, r, "upgrade", false);
@@ -1453,7 +1469,26 @@ namespace ModKit.Studio
             catch (Exception ex) { Status("删除失败：" + ex.Message); }
         }
 
-        /// <summary>扫描本 mod 的 art/ 目录，供美术模板下拉选择（不含扩展名）。</summary>
+        /// <summary>
+        /// 把用户填的卡面图名字规范成**相对 mod 目录的路径**（统一带 .png）。
+        /// </summary>
+        /// <remarks>
+        /// 接受 <c>color6</c> / <c>color6.png</c> / <c>art/color6.png</c> 三种写法，
+        /// 都归一化成 <c>art/color6.png</c>；返回 null = 没填。
+        /// 平台 Loader 按相对路径查文件，裸名会导致「声明了 art 却找不到文件」→ 整张卡被拒。
+        /// </remarks>
+        private static string NormalizeArtPath(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) { return null; }
+            var p = raw.Trim().Replace('\\', '/');
+            while (p.StartsWith("./")) { p = p.Substring(2); }
+            if (p.Length == 0) { return null; }
+            if (!System.IO.Path.HasExtension(p)) { p += ".png"; }
+            if (p.IndexOf('/') < 0) { p = "art/" + p; }
+            return p;
+        }
+
+        /// <summary>扫描本 mod 的 art/ 目录，供美术模板下拉选择（返回相对路径，带扩展名）。</summary>
         private void RefreshArtSources()
         {
             if (_mod == null) { return; }
@@ -1462,7 +1497,9 @@ namespace ModKit.Studio
             try
             {
                 names = Directory.Exists(dir)
-                    ? Directory.GetFiles(dir, "*.png").Select(x => System.IO.Path.GetFileNameWithoutExtension(x)).OrderBy(x => x, StringComparer.Ordinal).ToArray()
+                    ? Directory.GetFiles(dir, "*.png", SearchOption.AllDirectories)
+                        .Select(x => "art/" + System.IO.Path.GetRelativePath(dir, x).Replace(System.IO.Path.DirectorySeparatorChar, '/'))
+                        .OrderBy(x => x, StringComparer.Ordinal).ToArray()
                     : new string[0];
             }
             catch { names = new string[0]; }
