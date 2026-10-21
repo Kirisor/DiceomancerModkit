@@ -18,8 +18,7 @@
     {
       "custom": "mf_swarm_pull",
       "amounts": [
-        2,
-        5
+        2
       ]
     }
   ],
@@ -35,8 +34,7 @@
       {
         "index": 0,
         "amounts": [
-          3,
-          7
+          3
         ]
       }
     ]

@@ -102,6 +102,25 @@ namespace ModKit.Core
 
             if (hasCustom)
             {
+                // ★ 硬约束（2026-10-21 实机两次踩中）：
+                //   游戏给 SpecialEffect 家族分配数字槽走
+                //   `EffectUtils.GetEffectRNumberCountByName("SpecialEffect")` 的默认值 **1**；
+                //   若 effectNumberInfos 不是 1 个，GenerateEffectFromEffectInfo 里
+                //   `numbers.Length == count` 不成立 ⇒ rNumbers 为空 ⇒ 描述模板的 {Number} 取不到值
+                //   （OperationException: Could not evaluate the selector 'Number'）。
+                //   原版同类卡（拾荒 Scavage → SpecialEffect "GraveCardToHand"）也只有 1 个数字。
+                //   ⇒ 多出来的参数请写死在效果类里（C# 常量）。
+                var customAmounts = obj["amounts"] as JArray;
+                int customCount = customAmounts == null ? 0 : customAmounts.Count;
+                if (customCount != 1)
+                {
+                    report.Error(id, path + ".amounts",
+                        "自定义效果必须且只能有 1 个数字，当前 " + customCount + " 个。" +
+                        "游戏给 SpecialEffect 只分配 1 个数字槽，多写的数字不会被使用，" +
+                        "而且会导致描述模板里的 {Number} 取不到值（战斗/卡面渲染抛 SmartFormat 异常）。" +
+                        "其余参数请写成效果类里的常量。");
+                }
+
                 // ★ 2026-10-13 修复假阳性：`KnownCustomEffectIds` 是"**代码扫描**"类信息，
                 //   能力表（capabilities.json）里**没有**它 ⇒ lint 侧永远是空表。
                 //   Tools\Capabilities.cs 的注释本来就写明"空表 → 只给警告"，但校验器一直是无条件报错，
@@ -240,7 +259,7 @@ namespace ModKit.Core
         /// </remarks>
         private static bool AllowsMultipleAmounts(bool hasCustom, string builtin)
         {
-            if (hasCustom) { return true; }
+            if (hasCustom) { return false; }   // 自定义效果固定 1 个数字（见上）
 
             var lookup = BuiltinEffectNames.Resolve(builtin);
             // 未知语义已在别处报错，这里不叠加噪声

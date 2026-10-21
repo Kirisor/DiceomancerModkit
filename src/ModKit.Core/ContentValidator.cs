@@ -631,11 +631,13 @@ namespace ModKit.Core
                     }
                     else if (IsFormatTemplateTable(table.Name))
                     {
-                        // ★ P3：这张表的值会被游戏当**格式化模板**渲染 ⇒ 花括号会在战斗中弹异常框。
-                        //   P4（2026-10-21）曾放开白名单占位符，实机证明自定义效果的数字槽与模板
-                        //   占位符对不上（OperationException: Could not evaluate the selector 'Number'），
-                        //   因此恢复**严格禁止**：作者要引用数值就用文字描述。
-                        CheckNoFormatBraces((string)entry.Value,
+                        // ★ P3：模板表的值会被游戏当格式化模板渲染。
+                        //   放行**白名单占位符**（与原版 EffectDescription 同款写法，如 {Number}），
+                        //   其余花括号仍判错 —— 见 ContentValidator.Text.cs 的 CheckPlaceholders。
+                        //   ★ 前提：自定义效果必须只有 1 个数字（游戏给 SpecialEffect 只分配 1 个数字槽），
+                        //   否则 rNumbers 为空、{Number} 取不到值（2026-10-21 实机两次踩中）。
+                        //   该前提由 CheckCustomEffectNumberCount 强制。
+                        CheckPlaceholders((string)entry.Value,
                             "tables." + table.Name + "." + entry.Name, report, null);
                     }
                 }

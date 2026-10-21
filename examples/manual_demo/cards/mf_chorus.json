@@ -19,9 +19,7 @@
     {
       "custom": "mf_chorus_echo",
       "amounts": [
-        5,
-        3,
-        4
+        5
       ]
     }
   ],
@@ -37,9 +35,7 @@
       {
         "index": 0,
         "amounts": [
-          7,
-          5,
-          6
+          7
         ]
       }
     ]

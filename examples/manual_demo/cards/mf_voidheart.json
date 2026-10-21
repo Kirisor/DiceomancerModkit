@@ -19,9 +19,7 @@
     {
       "custom": "mf_void_tithe",
       "amounts": [
-        3,
-        8,
-        2
+        3
       ]
     }
   ],
@@ -33,9 +31,7 @@
       {
         "index": 0,
         "amounts": [
-          5,
-          12,
-          3
+          5
         ]
       }
     ]

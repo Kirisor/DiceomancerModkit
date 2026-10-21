@@ -19,8 +19,7 @@
     {
       "custom": "mf_feast",
       "amounts": [
-        2,
-        1
+        2
       ]
     },
     {
@@ -38,8 +37,7 @@
       {
         "index": 0,
         "amounts": [
-          3,
-          2
+          3
         ]
       }
     ]
