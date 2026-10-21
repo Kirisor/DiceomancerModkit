@@ -1,0 +1,42 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mirror",
+  "name": {
+    "zh-Hans": "镜池",
+    "en": "Mirror Pond"
+  },
+  "cost": [
+    "Purple",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Purple"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        2
+      ]
+    },
+    {
+      "builtin": "block",
+      "amounts": [
+        4
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

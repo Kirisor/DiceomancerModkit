@@ -1,0 +1,46 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_voidpulse",
+  "name": {
+    "zh-Hans": "虚脉",
+    "en": "Void Pulse"
+  },
+  "cost": [
+    [
+      "Purple",
+      "Void"
+    ]
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Purple"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        10
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "discard_random",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          13
+        ]
+      }
+    ]
+  }
+}

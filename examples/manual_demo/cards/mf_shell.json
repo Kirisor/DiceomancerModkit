@@ -1,0 +1,40 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_shell",
+  "name": {
+    "zh-Hans": "壳之升华",
+    "en": "Shell Ascension"
+  },
+  "cost": [
+    "Void",
+    "Void",
+    "Void"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        20
+      ]
+    }
+  ],
+  "keywords": [
+    "manual_bulwark"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          26
+        ]
+      }
+    ]
+  }
+}

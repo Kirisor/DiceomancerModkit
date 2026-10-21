@@ -1,0 +1,35 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_lily",
+  "name": {
+    "zh-Hans": "荷叶护",
+    "en": "Lily Guard"
+  },
+  "cost": [
+    "Green"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        5
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          8
+        ]
+      }
+    ]
+  }
+}

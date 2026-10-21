@@ -1,0 +1,44 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_voidheart",
+  "name": {
+    "zh-Hans": "虚空之心",
+    "en": "Void Heart"
+  },
+  "cost": [
+    "Purple",
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Purple"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "gain_mana",
+      "color": "Purple",
+      "amounts": [
+        2
+      ]
+    },
+    {
+      "builtin": "gain_mana",
+      "color": "Black",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          1
+        ]
+      }
+    ]
+  }
+}

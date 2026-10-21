@@ -1,0 +1,36 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_blackvein",
+  "name": {
+    "zh-Hans": "黑脉",
+    "en": "Black Vein"
+  },
+  "cost": [
+    "Black"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "gain_mana",
+      "color": "Black",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          1
+        ]
+      }
+    ]
+  }
+}

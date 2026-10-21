@@ -1,0 +1,40 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_leap_chain",
+  "name": {
+    "zh-Hans": "连环跃",
+    "en": "Chained Leap"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        6
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          9
+        ]
+      }
+    ]
+  }
+}

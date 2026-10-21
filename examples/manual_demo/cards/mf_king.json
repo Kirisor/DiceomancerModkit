@@ -1,0 +1,47 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_king",
+  "name": {
+    "zh-Hans": "蛙王轰鸣",
+    "en": "King's Roar"
+  },
+  "cost": [
+    "Void",
+    "Void",
+    "Void"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        20
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "lose_life",
+      "amounts": [
+        3
+      ],
+      "target": "Self",
+      "mode": "Direct"
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          26
+        ]
+      }
+    ]
+  }
+}

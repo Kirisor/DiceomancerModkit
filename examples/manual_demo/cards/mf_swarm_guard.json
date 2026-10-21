@@ -1,0 +1,42 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_swarm_guard",
+  "name": {
+    "zh-Hans": "群护",
+    "en": "Swarm Guard"
+  },
+  "cost": [
+    "Green",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        5
+      ]
+    },
+    {
+      "builtin": "heal",
+      "amounts": [
+        3
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          7
+        ]
+      }
+    ]
+  }
+}

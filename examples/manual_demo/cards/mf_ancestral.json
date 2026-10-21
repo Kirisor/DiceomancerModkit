@@ -1,0 +1,42 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_ancestral",
+  "name": {
+    "zh-Hans": "祖池",
+    "en": "Ancestral Pool"
+  },
+  "cost": [
+    "Green",
+    "Void"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "heal",
+      "amounts": [
+        10
+      ]
+    },
+    {
+      "builtin": "draw",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          13
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_rhythm",
+  "name": {
+    "zh-Hans": "蛙鸣节拍",
+    "en": "Croak Rhythm"
+  },
+  "cost": [
+    "Purple"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Purple"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    },
+    {
+      "builtin": "gain_mana",
+      "color": "Purple",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_call",
+  "name": {
+    "zh-Hans": "蛙苗唤",
+    "en": "Tadpole Call"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    },
+    {
+      "builtin": "gain_mana",
+      "color": "Green",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

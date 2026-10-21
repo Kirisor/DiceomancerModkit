@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_chain_start",
+  "name": {
+    "zh-Hans": "连锁起手",
+    "en": "Chain Opener"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          1
+        ]
+      }
+    ]
+  }
+}

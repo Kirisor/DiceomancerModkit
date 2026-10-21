@@ -1,0 +1,41 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_hop",
+  "name": {
+    "zh-Hans": "蛙苗跃",
+    "en": "Tadpole Hop"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "block",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          3
+        ]
+      }
+    ]
+  }
+}

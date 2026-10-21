@@ -1,0 +1,33 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_sun",
+  "name": {
+    "zh-Hans": "晒背",
+    "en": "Sun Bask"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "heal",
+      "amounts": [
+        3
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          5
+        ]
+      }
+    ]
+  }
+}

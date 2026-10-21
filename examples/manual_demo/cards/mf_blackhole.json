@@ -1,0 +1,45 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_blackhole",
+  "name": {
+    "zh-Hans": "黑洞蛙鸣",
+    "en": "Black Hole Croak"
+  },
+  "cost": [
+    "Black",
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        12
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "gain_mana",
+      "color": "Black",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          15
+        ]
+      }
+    ]
+  }
+}

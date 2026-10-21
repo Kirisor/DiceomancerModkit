@@ -1,0 +1,35 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_skin",
+  "name": {
+    "zh-Hans": "蛙苗皮",
+    "en": "Tadpole Skin"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        4
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          6
+        ]
+      }
+    ]
+  }
+}

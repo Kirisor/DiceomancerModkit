@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_drum",
+  "name": {
+    "zh-Hans": "蛙鼓",
+    "en": "Frog Drum"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          1
+        ]
+      }
+    ]
+  }
+}

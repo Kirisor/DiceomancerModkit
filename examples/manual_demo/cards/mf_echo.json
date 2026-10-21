@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_echo",
+  "name": {
+    "zh-Hans": "回声召唤",
+    "en": "Echo Summon"
+  },
+  "cost": [
+    "Purple"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Purple"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          3
+        ]
+      }
+    ]
+  }
+}

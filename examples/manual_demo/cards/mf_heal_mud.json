@@ -1,0 +1,35 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_heal_mud",
+  "name": {
+    "zh-Hans": "疗泥",
+    "en": "Healing Mud"
+  },
+  "cost": [
+    "Green"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "heal",
+      "amounts": [
+        8
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          11
+        ]
+      }
+    ]
+  }
+}

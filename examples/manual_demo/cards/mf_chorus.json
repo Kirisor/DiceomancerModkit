@@ -1,0 +1,39 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_chorus",
+  "name": {
+    "zh-Hans": "蛙群合唱",
+    "en": "Frog Chorus"
+  },
+  "cost": [
+    "Void",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        4
+      ]
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          6
+        ]
+      }
+    ]
+  }
+}

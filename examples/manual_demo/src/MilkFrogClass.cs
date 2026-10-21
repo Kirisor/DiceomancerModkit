@@ -33,10 +33,11 @@ public sealed class MilkFrogClass : IModClassProvider
             // 卡 id 写 mod 内的短名即可（平台会归一化成 manual_demo.<id>）；重复出现 = 多份
             StartDeck = new List<string>
             {
-                "milk_frog", "milk_frog", "milk_frog", "milk_frog",   // 奶蛙肚皮 ×4
-                "manual_art", "manual_art", "manual_art", "manual_art", // 奶蛙巴掌 ×4
-                "manual_free",                           // 奶蛙大笑
-                "manual_seek"                            // 手册·检索（过牌）
+                // 4 种初始卡 × 数量，共 10 张
+                "mf_strike", "mf_strike", "mf_strike",   // 蛙苗击
+                "mf_skin", "mf_skin", "mf_skin",         // 蛙苗皮
+                "mf_call", "mf_call",                    // 蛙苗唤
+                "mf_hop", "mf_hop"                       // 蛙苗跃
             },
 
             // ★ 至少 2 件：职业介绍卡硬取 relicSos[1] 做护符预览，少于 2 件会在开局界面抛异常
@@ -48,16 +49,18 @@ public sealed class MilkFrogClass : IModClassProvider
             //   ⚠️ 必须与 mod.json 的 cards 清单一致：引用了不存在的卡会在装配期报错。
             PoolCards = new List<string>
             {
-                // 初始牌组（也属于卡池）
-                "milk_frog", "manual_art", "manual_free", "manual_seek",
-                // 链式引擎（低费 / 无费，带「奶蛙」）
-                "frog_call", "frog_song", "frog_totem",
-                // 中期主力（2 费，带 2 点连锁）
-                "frog_chorus", "frog_tide", "frog_guard",
-                // 朴素强度牌（不带连锁，保证不卡手）
-                "frog_skin", "frog_leap",
-                // 稀有（过牌 / 终结技）
-                "frog_blessing", "frog_king"
+                // 36 张奶蛙专属卡全部进战役卡池（含初始 4 张）
+                "mf_strike", "mf_skin", "mf_call", "mf_hop",
+                // 普通
+                "mf_drum", "mf_lily", "mf_gnat", "mf_rhythm", "mf_mud",
+                "mf_chain_start", "mf_tongue", "mf_sun", "mf_pond", "mf_spring",
+                // 稀有
+                "mf_bulwark", "mf_leap_chain", "mf_spore", "mf_heal_mud", "mf_mirror",
+                "mf_blackvein", "mf_voidpulse", "mf_chorus", "mf_ironthroat",
+                "mf_swarm_guard", "mf_echo", "mf_molt",
+                // 传说
+                "mf_king", "mf_avalanche", "mf_eternal", "mf_blackhole", "mf_shell",
+                "mf_army", "mf_voidheart", "mf_lastcroak", "mf_ancestral", "mf_crown"
             }
         };
     }

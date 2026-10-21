@@ -1,0 +1,41 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mud",
+  "name": {
+    "zh-Hans": "泥甲",
+    "en": "Mud Armor"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        3
+      ]
+    },
+    {
+      "builtin": "heal",
+      "amounts": [
+        2
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          5
+        ]
+      }
+    ]
+  }
+}

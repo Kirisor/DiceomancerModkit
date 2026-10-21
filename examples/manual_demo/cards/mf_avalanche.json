@@ -1,0 +1,41 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_avalanche",
+  "name": {
+    "zh-Hans": "连锁雪崩",
+    "en": "Chain Avalanche"
+  },
+  "cost": [
+    "Purple",
+    "Purple"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        14
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          18
+        ]
+      }
+    ]
+  }
+}

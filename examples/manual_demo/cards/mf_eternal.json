@@ -1,0 +1,42 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_eternal",
+  "name": {
+    "zh-Hans": "永池",
+    "en": "Eternal Pond"
+  },
+  "cost": [
+    "Green",
+    "Green"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "heal",
+      "amounts": [
+        12
+      ]
+    },
+    {
+      "builtin": "block",
+      "amounts": [
+        10
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          15
+        ]
+      }
+    ]
+  }
+}

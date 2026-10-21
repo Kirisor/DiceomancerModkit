@@ -1,0 +1,44 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_ironthroat",
+  "name": {
+    "zh-Hans": "铁喉",
+    "en": "Iron Throat"
+  },
+  "cost": [
+    "Black",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        8
+      ]
+    },
+    {
+      "builtin": "apply_state",
+      "name": "Injure",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent"
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          10
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_army",
+  "name": {
+    "zh-Hans": "蝌蚪大军",
+    "en": "Tadpole Army"
+  },
+  "cost": [
+    "Green",
+    "Purple"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        8
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "block",
+      "amounts": [
+        8
+      ]
+    }
+  ],
+  "keywords": [
+    "milk_frog"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          11
+        ]
+      }
+    ]
+  }
+}

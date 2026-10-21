@@ -1,0 +1,39 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_bulwark",
+  "name": {
+    "zh-Hans": "坚壁蛙皮",
+    "en": "Bulwark Skin"
+  },
+  "cost": [
+    "Void",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        6
+      ]
+    }
+  ],
+  "keywords": [
+    "manual_bulwark"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          9
+        ]
+      }
+    ]
+  }
+}
