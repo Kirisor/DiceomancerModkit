@@ -16,13 +16,15 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "builtin": "draw",
+      "custom": "mf_swarm_pull",
       "amounts": [
-        2
+        2,
+        5
       ]
     }
   ],
   "keywords": [
+    "Limited",
     "milk_frog"
   ],
   "upgrade": {

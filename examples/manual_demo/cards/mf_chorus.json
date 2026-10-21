@@ -17,13 +17,16 @@
   "artTemplate": "Block",
   "effects": [
     {
-      "builtin": "block",
+      "custom": "mf_chorus_echo",
       "amounts": [
+        5,
+        3,
         4
       ]
     }
   ],
   "keywords": [
+    "Limited",
     "milk_frog"
   ],
   "upgrade": {
@@ -31,7 +34,7 @@
       {
         "index": 0,
         "amounts": [
-          6
+          7
         ]
       }
     ]

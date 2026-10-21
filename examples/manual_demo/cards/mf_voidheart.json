@@ -17,26 +17,23 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "builtin": "gain_mana",
-      "color": "Purple",
+      "custom": "mf_void_tithe",
       "amounts": [
-        2
-      ]
-    },
-    {
-      "builtin": "gain_mana",
-      "color": "Black",
-      "amounts": [
+        3,
+        8,
         2
       ]
     }
+  ],
+  "keywords": [
+    "Limited"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          1
+          10
         ]
       }
     ]

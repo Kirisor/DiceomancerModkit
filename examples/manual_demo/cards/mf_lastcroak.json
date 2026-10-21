@@ -30,6 +30,9 @@
       "mode": "Direct"
     }
   ],
+  "keywords": [
+    "Exert"
+  ],
   "upgrade": {
     "effectNumbers": [
       {

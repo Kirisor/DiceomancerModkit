@@ -17,17 +17,21 @@
   "artTemplate": "Block",
   "effects": [
     {
+      "custom": "mf_feast",
+      "amounts": [
+        2,
+        1
+      ]
+    },
+    {
       "builtin": "heal",
       "amounts": [
         10
       ]
-    },
-    {
-      "builtin": "draw",
-      "amounts": [
-        2
-      ]
     }
+  ],
+  "keywords": [
+    "Perishable"
   ],
   "upgrade": {
     "effectNumbers": [

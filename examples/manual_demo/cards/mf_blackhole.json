@@ -17,27 +17,29 @@
   "artTemplate": "GoodStrike",
   "effects": [
     {
-      "builtin": "deal_damage",
-      "amounts": [
-        12
-      ],
-      "target": "Opponent",
-      "mode": "Direct"
-    },
-    {
-      "builtin": "gain_mana",
-      "color": "Black",
+      "custom": "mf_glut",
       "amounts": [
         2
       ]
+    },
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        10
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
     }
+  ],
+  "keywords": [
+    "Exert"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          15
+          13
         ]
       }
     ]

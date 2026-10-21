@@ -18,28 +18,22 @@
   "artTemplate": "GoodStrike",
   "effects": [
     {
-      "builtin": "deal_damage",
+      "custom": "mf_king_decree",
       "amounts": [
-        20
-      ],
-      "target": "Opponent",
-      "mode": "Direct"
-    },
-    {
-      "builtin": "lose_life",
-      "amounts": [
-        3
-      ],
-      "target": "Self",
-      "mode": "Direct"
+        12,
+        2
+      ]
     }
+  ],
+  "keywords": [
+    "Limited"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          26
+          17
         ]
       }
     ]
