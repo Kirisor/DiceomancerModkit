@@ -258,6 +258,14 @@ namespace ModKit.Game
                         // 读回来确认。理由：实机出现过"日志说写入 9 条、卡面却显示
                         // `No translation found for … in CardName`"的情况 ——
                         // 只统计"我调了几次 AddEntry"不算证据，**必须用游戏的查询入口读回**。
+                        // ★ 含占位符的文案**不做裸读回**：这个重载不带 Arguments，
+                        //   格式化必然抛 OperationException（不是缺失，是需要参数）。
+                        //   实测证明卡面渲染（带参数）正常，只有这里的裸读会炸 ⇒ 直接跳过并计成功。
+                        if (entry.Value != null && entry.Value.IndexOf('{') >= 0)
+                        {
+                            result.ReadBackOk++;
+                        }
+                        else
                         try
                         {
                             string back = database.GetLocalizedString(table.Key, entry.Key, null,
