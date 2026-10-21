@@ -84,7 +84,7 @@
       "Key_mf_glut": "弃{Number}张随机手牌，每弃1张加1点黑能量。",
       "Key_mf_renew": "治疗{Number}点生命；若你手牌不多于2张，改为抽2张牌。",
       "Key_mf_void_tithe": "失去{Number}点生命，获得{Number1}格挡与{Number2}点紫能量。",
-      "Key_mf_king_decree": "造成{Number}点伤害（每2张手牌再加1点），并对对手施加{Number1}层负伤。"
+      "Key_mf_king_decree": "造成{Number}点伤害（每2张手牌再加1点），并对对手施加{Number1}层流血。"
     }
   }
 }

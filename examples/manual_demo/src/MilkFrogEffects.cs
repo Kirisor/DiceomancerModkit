@@ -186,13 +186,14 @@ namespace ManualDemo
         }
     }
 
-    /// <summary>蛙王号令：给对手挂 Injure，并按手牌数造成伤害（每 2 张 +1）。</summary>
+    /// <summary>蛙王号令：给对手挂「流血」能力，并按手牌数造成伤害（每 2 张 +1）。</summary>
     [ModEffect("mf_king_decree")]
     public sealed class MfKingDecree : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
-            ctx.AddState("Injure", System.Math.Max(1, ctx.AmountAt(1)), CombatantSelector.Opponent);
+            // ★ 负伤(Injure) 是玩家专属状态，敌人用的是「流血」(Bleed) 能力。
+            ctx.GiveAbility("Bleed", System.Math.Max(1, ctx.AmountAt(1)), CombatantSelector.Opponent);
             ctx.DealDamage(ctx.Amount + ctx.HandCount / 2, DamageMode.Direct);
         }
     }

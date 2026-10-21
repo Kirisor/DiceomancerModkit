@@ -56,7 +56,7 @@
       "Key_mf_glut": "Discard {Number} random card(s); gain 1 Black mana for each.",
       "Key_mf_renew": "Heal {Number}. If you have 2 or fewer cards in hand, draw 2 instead.",
       "Key_mf_void_tithe": "Lose {Number} health, gain {Number1} Block and {Number2} Purple mana.",
-      "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply {Number1} Injure to the opponent."
+      "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply {Number1} Bleed to the opponent."
     }
   }
 }
