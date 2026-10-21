@@ -258,6 +258,9 @@ namespace ModKit.Game
             try { AbilityNameDump.Run(log); } catch (Exception ex) { log.Warn("能力中文名导出失败：" + ex.Message); }
             // 游戏本地化表整表导出（触发点/稀有度/时机等中文原文）
             try { LocalizedTextDump.Run(log); } catch (Exception ex) { log.Warn("本地化文本导出失败：" + ex.Message); }
+            // 卡牌效果使用导出（原版每张卡的 effectName/数值个数/关键词）——
+            // 现有 cards.json 只有卡面与元数据，没有 effects，设计基准只能靠这份。
+            try { EffectUsageDump.Run(log); } catch (Exception ex) { log.Warn("效果使用导出失败：" + ex.Message); }
 
             // ---- ①.5 读取 mod 声明的自定义颜色（colors.json）----
             // 必须在能力探测与装配之前：颜色得先进入游戏的色表/图标表，
