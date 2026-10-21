@@ -100,9 +100,58 @@ namespace ModKit.Core
 
             var obj = (JObject)up;
             CheckUpgradeIndexes(obj, "effectNumbers", effectCount, report, id);
+            CheckUpgradeNumberCounts(obj, report, id);
             CheckUpgradeIndexes(obj, "replaceEffects", effectCount, report, id);
             CheckUpgradeIndexes(obj, "insertEffects", effectCount, report, id);
             CheckUpgradeKeywordRefs(obj, "addKeywords", caps, report, id);
+        }
+
+        /// <summary>
+        /// 校验 <c>upgrade.effectNumbers[i].amounts</c> 的长度必须与目标效果一致。
+        /// </summary>
+        /// <remarks>
+        /// ★ 实机 2026-10-21 的报错：自定义效果「蛙王号令」原效果有 2 个数字
+        /// （伤害 12 / 流血 2），升级却只给了 1 个 → 升级后该效果的数字槽变 1 个，
+        /// 而 <c>EffectDescription</c> 模板里还有 <c>{Number1}</c>
+        /// ⇒ 战斗/卡面渲染时抛
+        /// <c>OperationException: Error parsing format string: Could not evaluate the selector</c>。
+        /// 游戏侧不会校验这个长度差，平台必须拦。
+        /// </remarks>
+        private static void CheckUpgradeNumberCounts(JObject root, ValidationReport report, string id)
+        {
+            var up = root["upgrade"] as JObject;
+            if (up == null) { return; }
+
+            var nums = up["effectNumbers"] as JArray;
+            var effects = root["effects"] as JArray;
+            if (nums == null || effects == null) { return; }
+
+            for (int i = 0; i < nums.Count; i++)
+            {
+                var item = nums[i] as JObject;
+                if (item == null) { continue; }
+
+                int index = -1;
+                var idxToken = item["index"];
+                if (idxToken != null) { try { index = (int)idxToken; } catch { continue; } }
+                if (index < 0 || index >= effects.Count) { continue; }
+
+                var target = effects[index] as JObject;
+                if (target == null) { continue; }
+
+                int want = (target["amounts"] as JArray) == null ? 0 : ((JArray)target["amounts"]).Count;
+                var gotToken = item["amounts"] as JArray;
+                int got = gotToken == null ? 0 : gotToken.Count;
+
+                if (want != got)
+                {
+                    report.Error(id, "upgrade.effectNumbers[" + i + "].amounts",
+                        "数字个数必须是 " + want + " 个（与 effects[" + index + "].amounts 一致），当前 " +
+                        got + " 个。升级会用这份数组**整份替换**该效果的数字槽：" +
+                        "少了，描述模板里的 {Number…} 占位符取不到值，" +
+                        "战斗/卡面渲染会抛 SmartFormat 解析异常（实机 2026-10-21 复现）。");
+                }
+            }
         }
 
         /// <summary>
