@@ -1,0 +1,36 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mother_law",
+  "name": {
+    "zh-Hans": "蛙母的号令",
+    "en": "Mother's Decree"
+  },
+  "cost": [
+    "Green",
+    "Green"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "custom": "mf_mother_law",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

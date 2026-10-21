@@ -1,0 +1,46 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_pond_call",
+  "name": {
+    "zh-Hans": "池塘呼朋",
+    "en": "Pond Call"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "gain_mana",
+      "color": "Green",
+      "amounts": [
+        1
+      ]
+    },
+    {
+      "builtin": "improvise_card",
+      "amounts": [
+        1
+      ],
+      "pool": {
+        "career": true,
+        "describeKey": "Key_MilkFrogOnly",
+        "require": {
+          "keyword": "milk_frog"
+        }
+      }
+    }
+  ],
+  "keywords": [
+    "Exert"
+  ],
+  "upgrade": {
+    "cost": []
+  }
+}

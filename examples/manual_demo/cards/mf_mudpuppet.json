@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mudpuppet",
+  "name": {
+    "zh-Hans": "泥偶蛙",
+    "en": "Mud Puppet"
+  },
+  "cost": [
+    "Green"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [],
+  "keywords": [
+    {
+      "name": "Summon",
+      "number": 3,
+      "toCard": "SmallRock",
+      "effects": [
+        {
+          "builtin": "gain_mana",
+          "color": "Black",
+          "amounts": [
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "upgrade": {
+    "cost": []
+  }
+}

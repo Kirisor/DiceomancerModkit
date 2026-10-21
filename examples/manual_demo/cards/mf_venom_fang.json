@@ -1,0 +1,58 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_venom_fang",
+  "name": {
+    "zh-Hans": "蛙毒牙",
+    "en": "Venom Fang"
+  },
+  "cost": [
+    [
+      "Green",
+      "Black"
+    ]
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "lose_life",
+      "amounts": [
+        6
+      ],
+      "target": "Opponent",
+      "mode": "LoseLife"
+    },
+    {
+      "custom": "mf_bleed_if_cascade",
+      "amounts": [
+        5
+      ]
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 1
+    }
+  ],
+  "upgrade": {
+    "replaceEffects": [
+      {
+        "index": 1,
+        "effects": [
+          {
+            "custom": "mf_bleed_always",
+            "amounts": [
+              5
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

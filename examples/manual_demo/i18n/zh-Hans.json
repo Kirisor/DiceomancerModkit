@@ -55,7 +55,13 @@
       "manual_demo.mf_mire_swell": "腐泥翻涌",
       "manual_demo.mf_bellow": "鼓气长鸣",
       "manual_demo.mf_bloodkiss": "血蛙之吻",
-      "manual_demo.mf_doomcroak": "厄运蛙鸣"
+      "manual_demo.mf_doomcroak": "厄运蛙鸣",
+      "manual_demo.mf_venom_fang": "蛙毒牙",
+      "manual_demo.mf_pond_call": "池塘呼朋",
+      "manual_demo.mf_glare": "蛙群瞪视",
+      "manual_demo.mf_mudpuppet": "泥偶蛙",
+      "manual_demo.mf_bloodspawn": "血蛙卵",
+      "manual_demo.mf_mother_law": "蛙母的号令"
     },
     "FlavorText": {
       "manual_demo.starter": "万事开头难。",
@@ -72,7 +78,8 @@
       "milk_frogDescription": "本卡结算完成后，仍在抽牌堆与弃牌堆里的「奶蛙」也会各结算一次；张数至多等于本关键词的数值，且它们不会再带动别的奶蛙。"
     },
     "CardRequirementDes": {
-      "manual_demo.req_blue": "绿色牌"
+      "manual_demo.req_blue": "绿色牌",
+      "Key_MilkFrogOnly": "奶蛙卡"
     },
     "Relic": {
       "manual_demo.manual_relic_turn_draw": "手册·回合抽牌",
@@ -94,7 +101,11 @@
       "Key_mf_void_tithe": "失去{Number}点生命，获得8格挡与2点紫能量。",
       "Key_mf_king_decree": "造成{Number}点伤害并对对手施加2层流血（每张手牌再加2点）。",
       "Key_mf_grave_swell": "造成等同于你弃牌堆张数的伤害。",
-      "Key_mf_bellow": "获得若干层临时力量；若本卡由「奶蛙」结算，再获得少一层的力量。"
+      "Key_mf_bellow": "获得若干层临时力量；若本卡由「奶蛙」结算，再获得少一层的力量。",
+      "Key_mf_bleed_if_cascade": "若本卡由「奶蛙」结算，对目标敌人施加若干层流血。",
+      "Key_mf_bleed_always": "对目标敌人施加若干层流血。",
+      "Key_mf_glare": "对所有敌人施加若干层易伤；若本卡由「奶蛙」结算，再对所有敌人造成伤害。",
+      "Key_mf_mother_law": "「奶蛙」不再自动拉取，改为由你选择会被结算的卡。"
     }
   }
 }

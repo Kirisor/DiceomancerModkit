@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using Card;
 using Combat;
@@ -26,6 +27,12 @@ public sealed class CardKeywordMilkFrog : CardKeyword
 
     /// <summary>当前这次卡牌结算是否来自「奶蛙连锁」（供自定义效果判断「被奶蛙时」）。</summary>
     internal static bool IsCascadeResolve;
+
+    /// <summary>
+    /// 拉取模式：0 = 自动（默认）；1 = 玩家从奶蛙卡里选；2 = 玩家从任意卡里选。
+    /// 由「蛙母的号令」设置。
+    /// </summary>
+    internal static int SelectionMode;
 
     /// <summary>连锁开始时刻。兜底用：万一有张被拉进来的卡没跑到钩子，计数不会永久卡住。</summary>
     private static DateTime _cascadeStartedUtc;
@@ -97,6 +104,14 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         List<CardBase> found = new List<CardBase>();
         Collect(manager.GetCardLibrary(), card, limit, found);
         Collect(manager.GetCardGrave(), card, limit, found);
+
+        // 蛙母的号令：改成玩家选择（候选来自抽牌堆 + 弃牌堆）
+        if (SelectionMode > 0)
+        {
+            TryPromptSelection(manager, card, limit);
+            return;
+        }
+
         if (found.Count == 0) { return; }
 
         _cascadeRemaining = found.Count;
@@ -145,6 +160,70 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     private static bool IsCascadeStale()
     {
         return (DateTime.UtcNow - _cascadeStartedUtc).TotalSeconds > 20.0;
+    }
+
+    /// <summary>
+    /// 「蛙母的号令」形态：把候选卡摆给玩家挑，挑中的按奶蛙连锁再结算一次。
+    /// </summary>
+    private static void TryPromptSelection(CardManager manager, CardBase self, int limit)
+    {
+        try
+        {
+            List<CardBase> candidates = new List<CardBase>();
+            CollectCandidates(manager.GetCardLibrary(), self, candidates);
+            CollectCandidates(manager.GetCardGrave(), self, candidates);
+            if (candidates.Count == 0)
+            {
+                Debug.Log("[ModKit] 蛙母的号令：牌库与弃牌堆里没有可选的卡。");
+                return;
+            }
+
+            PickCardManager.PickCardConfigure cfg = new PickCardManager.PickCardConfigure(
+                PickCardManager.PickCardPoolType.DefiniteCardList,
+                null,
+                PickCardManager.PickCardCountMode.Upto,
+                Math.Min(limit, candidates.Count),
+                candidates.ToArray());
+            cfg.actionNameKeyword = "Key_Kick";
+            cfg.titleKeyword = "Title_Kick";
+            cfg.PickCardsArraySubmitAction = cards => ResolveChosen(cards);
+            new SubCommandPickCardAndAction(cfg);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[ModKit] 蛙母的号令：弹出选择失败，回退为自动 —— " + e);
+        }
+    }
+
+    private static UniTask ResolveChosen(CardBase[] cards)
+    {
+        if (cards == null || cards.Length == 0) { return UniTask.CompletedTask; }
+        _cascadeRemaining = cards.Length;
+        _cascadeStartedUtc = DateTime.UtcNow;
+        string names = "";
+        foreach (CardBase c in cards)
+        {
+            if (c == null) { continue; }
+            if (names.Length > 0) { names += "、"; }
+            names += c.CardName;
+            new CommandResolveCard(c, CardResolveSource.AutoPlay);
+        }
+        Debug.Log("[ModKit] 蛙母的号令：玩家选择了 " + cards.Length + " 张（" + names + "）。");
+        PlayCascadeSound();
+        return UniTask.CompletedTask;
+    }
+
+    private static void CollectCandidates(CardBase[] pile, CardBase self, List<CardBase> found)
+    {
+        if (pile == null) { return; }
+        foreach (CardBase other in pile)
+        {
+            if (other == null || other == self) { continue; }
+            if (found.Contains(other)) { continue; }
+            // mode 1：只允许奶蛙卡；mode 2：任意卡
+            if (SelectionMode < 2 && !HasMilkFrog(other)) { continue; }
+            found.Add(other);
+        }
     }
 
     private static void Collect(CardBase[] pile, CardBase self, int limit, List<CardBase> found)

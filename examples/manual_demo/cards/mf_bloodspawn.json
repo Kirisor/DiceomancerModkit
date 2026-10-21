@@ -1,0 +1,45 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_bloodspawn",
+  "name": {
+    "zh-Hans": "血蛙卵",
+    "en": "Blood Spawn"
+  },
+  "cost": [
+    [
+      "Green",
+      "Black"
+    ]
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [],
+  "keywords": [
+    {
+      "name": "Summon",
+      "number": 4,
+      "toCard": "SmallRock",
+      "effects": [
+        {
+          "builtin": "gain_ability",
+          "name": "Bleed",
+          "amounts": [
+            5
+          ],
+          "target": "RandomOpponent"
+        }
+      ]
+    },
+    "Exert"
+  ],
+  "upgrade": {
+    "removeKeywords": [
+      "Exert"
+    ]
+  }
+}

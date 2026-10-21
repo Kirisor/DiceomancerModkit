@@ -52,6 +52,8 @@ public sealed class MilkFrogClass : IModClassProvider
                 // 36 张奶蛙专属卡全部进战役卡池（含初始 4 张）
                 "mf_strike", "mf_skin", "mf_call", "mf_hop",
                 "mf_mire_swell", "mf_bellow", "mf_bloodkiss", "mf_doomcroak",
+                "mf_venom_fang", "mf_pond_call", "mf_glare",
+                "mf_mudpuppet", "mf_bloodspawn", "mf_mother_law",
                 // 普通
                 "mf_drum", "mf_lily", "mf_gnat", "mf_rhythm", "mf_mud","milkfroglaugh",
                 "mf_chain_start", "mf_tongue", "mf_sun", "mf_pond", "mf_spring",

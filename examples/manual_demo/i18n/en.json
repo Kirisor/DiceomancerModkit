@@ -51,7 +51,13 @@
       "manual_demo.mf_mire_swell": "Mire Swell",
       "manual_demo.mf_bellow": "Bellow",
       "manual_demo.mf_bloodkiss": "Blood Kiss",
-      "manual_demo.mf_doomcroak": "Doom Croak"
+      "manual_demo.mf_doomcroak": "Doom Croak",
+      "manual_demo.mf_venom_fang": "Venom Fang",
+      "manual_demo.mf_pond_call": "Pond Call",
+      "manual_demo.mf_glare": "Swarm Glare",
+      "manual_demo.mf_mudpuppet": "Mud Puppet",
+      "manual_demo.mf_bloodspawn": "Blood Spawn",
+      "manual_demo.mf_mother_law": "Mother's Decree"
     },
     "EffectDescription": {
       "Key_mf_chorus_echo": "Deal {Number} damage; if you have 3+ cards in hand, deal 4 more.",
@@ -68,7 +74,14 @@
       "Key_mf_void_tithe": "Lose {Number} health, gain 8 Block and 2 Purple mana.",
       "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply 2 Bleed to the opponent.",
       "Key_mf_grave_swell": "Deal damage equal to the size of your discard pile.",
-      "Key_mf_bellow": "Gain temporary Power; if resolved by Milk Frog, gain one less Power."
+      "Key_mf_bellow": "Gain temporary Power; if resolved by Milk Frog, gain one less Power.",
+      "Key_mf_bleed_if_cascade": "If resolved by Milk Frog, apply Bleed to the target.",
+      "Key_mf_bleed_always": "Apply Bleed to the target.",
+      "Key_mf_glare": "Apply Vulnerable to all enemies; if resolved by Milk Frog, also damage all enemies.",
+      "Key_mf_mother_law": "Milk Frog no longer picks automatically — you choose which cards resolve."
+    },
+    "CardRequirementDes": {
+      "Key_MilkFrogOnly": "Milk Frog cards"
     }
   }
 }

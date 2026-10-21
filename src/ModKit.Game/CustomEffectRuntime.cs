@@ -504,7 +504,17 @@ namespace ModKit.Game
                     return list;
                 }
                 if (owner == null) { return list; }
-                var arr = owner.GetDefaultCharactersByTarget(EffectTargetEnum.TargetOpponent);
+
+                // 选择器 → 游戏的 EffectTargetEnum（群攻/全体/随机都用游戏自己的解析）
+                EffectTargetEnum targetEnum;
+                switch (selector)
+                {
+                    case CombatantSelector.AllOpponents: targetEnum = EffectTargetEnum.AllOpponents; break;
+                    case CombatantSelector.All: targetEnum = EffectTargetEnum.All; break;
+                    case CombatantSelector.RandomOpponent: targetEnum = EffectTargetEnum.RandomOpponent; break;
+                    default: targetEnum = EffectTargetEnum.TargetOpponent; break;
+                }
+                var arr = owner.GetDefaultCharactersByTarget(targetEnum);
                 if (arr != null) { foreach (var c in arr) { if (c != null) { list.Add(c); } } }
             }
             catch (Exception ex) { WarnOnce("Resolve(" + selector + "): " + ex.GetType().Name); }
