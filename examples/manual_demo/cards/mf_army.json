@@ -17,25 +17,29 @@
   "artTemplate": "GoodStrike",
   "effects": [
     {
-      "custom": "mf_brood_call",
+      "builtin": "deal_damage",
       "amounts": [
-        2
+        8
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "block",
+      "amounts": [
+        8
       ]
     }
   ],
   "keywords": [
-    "Exert",
-    {
-      "name": "milk_frog",
-      "number": 3
-    }
+    "milk_frog"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          3
+          11
         ]
       }
     ]

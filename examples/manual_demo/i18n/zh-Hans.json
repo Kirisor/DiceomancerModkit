@@ -46,8 +46,7 @@
       "manual_demo.mf_voidheart": "虚空之心",
       "manual_demo.mf_lastcroak": "临终高鸣",
       "manual_demo.mf_ancestral": "祖池",
-      "manual_demo.mf_crown": "连锁王冠",
-      "manual_demo.mf_tadpole_token": "蝌蚪"
+      "manual_demo.mf_crown": "连锁王冠"
     },
     "FlavorText": {
       "manual_demo.starter": "万事开头难。",
@@ -71,20 +70,7 @@
       "manual_demo.manual_relic_battle_start": "手册·开场能力"
     },
     "EffectDescription": {
-      "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。",
-      "Key_mf_chorus_echo": "造成等同于本效果数值的伤害；若手牌足够多，再造成一次较小伤害。",
-      "Key_mf_swarm_pull": "抽等同于本效果数值的牌；若弃牌堆足够多，再抽一张。",
-      "Key_mf_chain_finish": "造成等同于本效果数值的伤害，弃牌堆越厚伤害越高（至多再加六点）。",
-      "Key_mf_brood_call": "将等同于本效果数值的「蝌蚪」加入手牌。",
-      "Key_mf_shield_bash": "造成等同于你当前格挡一半的伤害（没有格挡时按下限结算），然后失去全部格挡。",
-      "Key_mf_bulwark_pray": "治疗相当于你当前格挡三分之一的数值（不足时按下限治疗）。",
-      "Key_mf_last_bastion": "获得格挡；若你的生命不高于一半，额外获得格挡并治疗。",
-      "Key_mf_molt_shell": "失去全部格挡，抽等同于本效果数值的牌。",
-      "Key_mf_feast": "抽牌，弃若干张随机手牌，并加一点紫能量。",
-      "Key_mf_glut": "弃若干张随机手牌，每弃一张加一点黑能量。",
-      "Key_mf_renew": "治疗；若你手牌很少，改为抽两张牌。",
-      "Key_mf_void_tithe": "失去生命，获得格挡与紫能量。",
-      "Key_mf_king_decree": "造成伤害（手牌越多伤害越高），并对对手施加流血。"
+      "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。"
     }
   }
 }

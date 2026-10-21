@@ -16,14 +16,11 @@
   "artTemplate": "Block",
   "effects": [
     {
-      "custom": "mf_renew",
+      "builtin": "heal",
       "amounts": [
         8
       ]
     }
-  ],
-  "keywords": [
-    "Perishable"
   ],
   "upgrade": {
     "effectNumbers": [

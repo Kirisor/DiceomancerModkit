@@ -16,21 +16,24 @@
   "artTemplate": "Block",
   "effects": [
     {
-      "custom": "mf_molt_shell",
+      "builtin": "heal",
+      "amounts": [
+        4
+      ]
+    },
+    {
+      "builtin": "draw",
       "amounts": [
         1
       ]
     }
-  ],
-  "keywords": [
-    "Exert"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          2
+          6
         ]
       }
     ]

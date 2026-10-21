@@ -17,14 +17,17 @@
   "artTemplate": "Block",
   "effects": [
     {
-      "custom": "mf_last_bastion",
+      "builtin": "block",
       "amounts": [
         5
       ]
+    },
+    {
+      "builtin": "heal",
+      "amounts": [
+        3
+      ]
     }
-  ],
-  "keywords": [
-    "Perishable"
   ],
   "upgrade": {
     "effectNumbers": [

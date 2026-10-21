@@ -23,12 +23,12 @@
       ]
     },
     {
-      "builtin": "gain_ability",
-      "name": "Bleed",
-      "target": "Opponent",
+      "builtin": "apply_state",
+      "name": "Injure",
       "amounts": [
         2
-      ]
+      ],
+      "target": "Opponent"
     }
   ],
   "upgrade": {

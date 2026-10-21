@@ -31,11 +31,7 @@
     }
   ],
   "keywords": [
-    "Perishable",
-    {
-      "name": "milk_frog",
-      "number": 3
-    }
+    "milk_frog"
   ],
   "upgrade": {
     "effectNumbers": [

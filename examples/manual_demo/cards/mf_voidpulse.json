@@ -19,9 +19,17 @@
   "artTemplate": "GoodStrike",
   "effects": [
     {
-      "custom": "mf_shield_bash",
+      "builtin": "deal_damage",
       "amounts": [
-        4
+        10
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
+      "builtin": "discard_random",
+      "amounts": [
+        1
       ]
     }
   ],
@@ -30,7 +38,7 @@
       {
         "index": 0,
         "amounts": [
-          6
+          13
         ]
       }
     ]

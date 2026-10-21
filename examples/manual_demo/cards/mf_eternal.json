@@ -17,9 +17,9 @@
   "artTemplate": "Block",
   "effects": [
     {
-      "custom": "mf_bulwark_pray",
+      "builtin": "heal",
       "amounts": [
-        6
+        12
       ]
     },
     {
@@ -29,15 +29,12 @@
       ]
     }
   ],
-  "keywords": [
-    "Perishable"
-  ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          13
+          15
         ]
       }
     ]

@@ -17,25 +17,21 @@
   "artTemplate": "Block",
   "effects": [
     {
-      "custom": "mf_chorus_echo",
+      "builtin": "block",
       "amounts": [
-        5
+        4
       ]
     }
   ],
   "keywords": [
-    "Exert",
-    {
-      "name": "milk_frog",
-      "number": 2
-    }
+    "milk_frog"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          7
+          6
         ]
       }
     ]

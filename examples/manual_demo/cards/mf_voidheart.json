@@ -17,21 +17,26 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "custom": "mf_void_tithe",
+      "builtin": "gain_mana",
+      "color": "Purple",
       "amounts": [
-        3
+        2
+      ]
+    },
+    {
+      "builtin": "gain_mana",
+      "color": "Black",
+      "amounts": [
+        2
       ]
     }
-  ],
-  "keywords": [
-    "Perishable"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          5
+          1
         ]
       }
     ]

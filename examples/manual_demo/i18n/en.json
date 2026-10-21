@@ -40,23 +40,7 @@
       "manual_demo.mf_voidheart": "Void Heart",
       "manual_demo.mf_lastcroak": "Last Croak",
       "manual_demo.mf_ancestral": "Ancestral Pool",
-      "manual_demo.mf_crown": "Chain Crown",
-      "manual_demo.mf_tadpole_token": "Tadpole"
-    },
-    "EffectDescription": {
-      "Key_mf_chorus_echo": "Deal damage equal to this effect's value; if you have enough cards in hand, deal a smaller amount again.",
-      "Key_mf_swarm_pull": "Draw cards equal to this effect's value; if your discard pile is large enough, draw one more.",
-      "Key_mf_chain_finish": "Deal damage equal to this effect's value, plus more the larger your discard pile (up to 6).",
-      "Key_mf_brood_call": "Add Tadpoles equal to this effect's value to your hand.",
-      "Key_mf_shield_bash": "Deal damage equal to half your Block (a minimum applies if you have none), then lose all Block.",
-      "Key_mf_bulwark_pray": "Heal for a third of your Block (a minimum applies).",
-      "Key_mf_last_bastion": "Gain Block. If you are at half health or below, gain more Block and heal.",
-      "Key_mf_molt_shell": "Lose all Block and draw cards equal to this effect's value.",
-      "Key_mf_feast": "Draw cards, discard some at random, and gain 1 Purple mana.",
-      "Key_mf_glut": "Discard some random cards; gain 1 Black mana for each.",
-      "Key_mf_renew": "Heal. If you have very few cards in hand, draw 2 instead.",
-      "Key_mf_void_tithe": "Lose health, gain Block and Purple mana.",
-      "Key_mf_king_decree": "Deal damage (more with a larger hand) and apply Bleed to the opponent."
+      "manual_demo.mf_crown": "Chain Crown"
     }
   }
 }
