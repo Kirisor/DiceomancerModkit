@@ -104,14 +104,19 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <DockPanel Grid.Column="0">
-                                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
-                                    <ComboBox x:Name="KeywordKindBox" IsEditable="True" Width="150" SelectionChanged="OnKeywordKindChanged" />
-                                    <Button Content="新建关键词…" Click="OnCreateKeywordClick" Margin="6,0,0,0" />
-                                    <TextBlock Text="参数" VerticalAlignment="Center" Margin="8,0,4,0"
+                                <!-- ★ 用 WrapPanel 而不是横向 StackPanel：
+                                     关键词面板只有半栏宽，横向排列时「添加」按钮会被挤出可视区域
+                                     （实机反馈：选了关键词却看不到添加按钮）。WrapPanel 会自动折行。 -->
+                                <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                                    <ComboBox x:Name="KeywordKindBox" IsEditable="True" MinWidth="110" Width="130"
+                                              Margin="0,0,0,4" SelectionChanged="OnKeywordKindChanged" />
+                                    <Button Content="新建关键词…" Click="OnCreateKeywordClick" Margin="6,0,0,4" />
+                                    <TextBlock Text="参数" VerticalAlignment="Center" Margin="8,0,4,4"
                                                Foreground="{StaticResource InkSoft}" FontSize="12" />
-                                    <TextBox x:Name="KeywordNumberBox" Width="56" ToolTip="可空；填了必须是整数" />
-                                    <Button Content="添加" Click="OnAddKeywordClick" Margin="6,0,0,0" />
-                                </StackPanel>
+                                    <TextBox x:Name="KeywordNumberBox" Width="56" Margin="0,0,0,4"
+                                             ToolTip="可空；填了必须是整数" />
+                                    <Button Content="添加" Click="OnAddKeywordClick" Margin="6,0,0,4" FontWeight="Bold" />
+                                </WrapPanel>
                                 <Button DockPanel.Dock="Bottom" Content="删除所选关键词" Click="OnRemoveKeywordClick"
                                         HorizontalAlignment="Left" Margin="0,4,0,0" />
                                 <ListBox x:Name="KeywordList" />
