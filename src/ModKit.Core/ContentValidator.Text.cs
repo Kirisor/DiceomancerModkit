@@ -39,6 +39,75 @@ namespace ModKit.Core
         /// <remarks>
         /// 只报第一处（一条诊断足以让作者去改），但消息里带上片段便于定位。
         /// </remarks>
+        /// <summary>
+        /// 允许在**模板表**里出现的占位符（必须是游戏能解析的键）。
+        /// 依据 EffectBase.AddNumbersToLocalizedString：rNumbers 依次填
+        /// <c>Number</c> / <c>Number1</c> / <c>Number2</c>；
+        /// ManaString / State / CardName / AbilityName / CardRequirement 由同类方法填充。
+        /// </summary>
+        private static readonly string[] AllowedPlaceholders =
+        {
+            "Number", "Number1", "Number2",
+            "Mana", "State", "CardName", "AbilityName", "CardRequirement",
+        };
+
+        /// <summary>
+        /// 模板表专用：允许**白名单占位符**，其余花括号仍判错。
+        /// </summary>
+        /// <remarks>
+        /// 为什么不能一刀切禁止：<c>EffectDescription</c> 的键（如 <c>Key_mf_feast</c>）
+        /// 正是给游戏当模板渲染的，写了 <c>{Number}</c> 才会显示具体数值；
+        /// 全禁会退化成「造成点伤害」这种没有数字的文案（实机 2026-10-21 复现）。
+        /// 但仍要拦住"写错的占位符"——那会在战斗中抛 SmartFormat 解析异常。
+        /// </remarks>
+        private static void CheckPlaceholders(string text, string path, ValidationReport report, string id)
+        {
+            if (string.IsNullOrEmpty(text)) { return; }
+
+            int i = 0;
+            while (i < text.Length)
+            {
+                int open = text.IndexOf('{', i);
+                int close = open < 0 ? -1 : text.IndexOf('}', open + 1);
+                if (open < 0) { break; }
+
+                if (close < 0)
+                {
+                    report.Error(id, path, "文案里有未闭合的 '{'（片段：…" + Slice(text, open) + "…）。");
+                    return;
+                }
+
+                string token = text.Substring(open + 1, close - open - 1).Trim();
+                bool allowed = false;
+                for (int k = 0; k < AllowedPlaceholders.Length; k++)
+                {
+                    if (string.Equals(token, AllowedPlaceholders[k], StringComparison.Ordinal)) { allowed = true; break; }
+                }
+                if (!allowed)
+                {
+                    report.Error(id, path,
+                        "未知占位符 '{" + token + "}'。模板表只允许：" +
+                        string.Join(" / ", AllowedPlaceholders) +
+                        "。写错的占位符会在战斗中抛 SmartFormat 解析异常。");
+                    return;
+                }
+                i = close + 1;
+            }
+
+            // 多余的 '}' 也拦一下
+            if (text.IndexOf('}') >= 0 && text.IndexOf('{') < 0)
+            {
+                report.Error(id, path, "文案里有孤立 '}'（片段：…" + Slice(text, text.IndexOf('}')) + "…）。");
+            }
+        }
+
+        private static string Slice(string text, int at)
+        {
+            int from = Math.Max(0, at - 10);
+            int len = Math.Min(text.Length - from, 21);
+            return text.Substring(from, len);
+        }
+
         private static void CheckNoFormatBraces(string text, string path, ValidationReport report, string id)
         {
             if (string.IsNullOrEmpty(text)) { return; }

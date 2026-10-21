@@ -26,7 +26,10 @@
   ],
   "keywords": [
     "Exert",
-    "milk_frog"
+    {
+      "name": "milk_frog",
+      "number": 2
+    }
   ],
   "upgrade": {
     "effectNumbers": [

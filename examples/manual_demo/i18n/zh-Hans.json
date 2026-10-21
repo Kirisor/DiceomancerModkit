@@ -71,7 +71,20 @@
       "manual_demo.manual_relic_battle_start": "手册·开场能力"
     },
     "EffectDescription": {
-      "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。"
+      "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。",
+      "Key_mf_chorus_echo": "造成{Number}点伤害；若你手牌不少于{Number1}张，再造成{Number2}点伤害。",
+      "Key_mf_swarm_pull": "抽{Number}张牌；若你弃牌堆不少于{Number1}张，再抽1张。",
+      "Key_mf_chain_finish": "造成{Number}点伤害，加上你弃牌堆张数的四分之一（至多6点）。",
+      "Key_mf_brood_call": "将{Number}张「蝌蚪」加入手牌。",
+      "Key_mf_shield_bash": "造成等于你当前格挡一半的伤害（没有格挡时改为{Number}点），然后失去全部格挡。",
+      "Key_mf_bulwark_pray": "治疗相当于你当前格挡三分之一的伤害（至少{Number}点）。",
+      "Key_mf_last_bastion": "获得{Number}格挡；若你的生命不高于一半，额外获得{Number1}格挡并治疗{Number2}点。",
+      "Key_mf_molt_shell": "失去全部格挡，抽{Number}张牌。",
+      "Key_mf_feast": "抽{Number}张牌，弃{Number1}张随机手牌，加1点紫能量。",
+      "Key_mf_glut": "弃{Number}张随机手牌，每弃1张加1点黑能量。",
+      "Key_mf_renew": "治疗{Number}点生命；若你手牌不多于2张，改为抽2张牌。",
+      "Key_mf_void_tithe": "失去{Number}点生命，获得{Number1}格挡与{Number2}点紫能量。",
+      "Key_mf_king_decree": "造成{Number}点伤害（每2张手牌再加1点），并对对手施加{Number1}层负伤。"
     }
   }
 }

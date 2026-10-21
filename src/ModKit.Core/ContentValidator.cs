@@ -631,9 +631,10 @@ namespace ModKit.Core
                     }
                     else if (IsFormatTemplateTable(table.Name))
                     {
-                        // ★ P3：这张表的值会被游戏当**格式化模板**渲染 ⇒ 花括号会在战斗中弹异常框。
-                        //   （哪些表算"模板"见 ContentValidator.Text.cs 的 IsFormatTemplateTable。）
-                        CheckNoFormatBraces((string)entry.Value,
+                        // ★ P3：这张表的值会被游戏当**格式化模板**渲染。
+                        //   模板表中**白名单占位符是合法的**（EffectDescription 就靠 {Number} 显示数值），
+                        //   其余花括号仍判错 —— 见 ContentValidator.Text.cs 的 CheckPlaceholders。
+                        CheckPlaceholders((string)entry.Value,
                             "tables." + table.Name + "." + entry.Name, report, null);
                     }
                 }

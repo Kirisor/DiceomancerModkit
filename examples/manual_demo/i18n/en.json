@@ -42,6 +42,21 @@
       "manual_demo.mf_ancestral": "Ancestral Pool",
       "manual_demo.mf_crown": "Chain Crown",
       "manual_demo.mf_tadpole_token": "Tadpole"
+    },
+    "EffectDescription": {
+      "Key_mf_chorus_echo": "Deal {Number} damage. If you have at least {Number1} cards in hand, deal {Number2} more.",
+      "Key_mf_swarm_pull": "Draw {Number} card(s). If your discard pile has at least {Number1} cards, draw 1 more.",
+      "Key_mf_chain_finish": "Deal {Number} damage plus a quarter of your discard pile size (up to 6).",
+      "Key_mf_brood_call": "Add {Number} Tadpole(s) to your hand.",
+      "Key_mf_shield_bash": "Deal damage equal to half your Block (or {Number} if you have none), then lose all Block.",
+      "Key_mf_bulwark_pray": "Heal for a third of your Block (at least {Number}).",
+      "Key_mf_last_bastion": "Gain {Number} Block. If you are at half health or below, gain {Number1} more Block and heal {Number2}.",
+      "Key_mf_molt_shell": "Lose all Block and draw {Number} card(s).",
+      "Key_mf_feast": "Draw {Number} card(s), discard {Number1} at random, gain 1 Purple mana.",
+      "Key_mf_glut": "Discard {Number} random card(s); gain 1 Black mana for each.",
+      "Key_mf_renew": "Heal {Number}. If you have 2 or fewer cards in hand, draw 2 instead.",
+      "Key_mf_void_tithe": "Lose {Number} health, gain {Number1} Block and {Number2} Purple mana.",
+      "Key_mf_king_decree": "Deal {Number} damage (+1 per 2 cards in hand) and apply {Number1} Injure to the opponent."
     }
   }
 }
