@@ -50,7 +50,7 @@
       "Key_mf_brood_call": "Add {Number} Tadpole(s) to your hand.",
       "Key_mf_shield_bash": "Deal half your Block as damage (or {Number} if you have none), then lose all Block.",
       "Key_mf_bulwark_pray": "Heal for a third of your Block (at least {Number}).",
-      "Key_mf_last_bastion": "Gain {Number} Block. At half health or below, gain 6 more Block and heal 4.",
+      "Key_mf_last_bastion": "Gain {Number} Block. At half health or below, gain 10 more Block.",
       "Key_mf_molt_shell": "Lose all Block and draw {Number} card(s).",
       "Key_mf_feast": "Draw {Number} card(s), discard 1 at random, gain 1 Purple mana.",
       "Key_mf_glut": "Discard {Number} random card(s); gain 1 Black mana for each.",

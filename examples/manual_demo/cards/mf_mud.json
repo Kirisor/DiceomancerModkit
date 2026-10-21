@@ -18,25 +18,19 @@
     {
       "builtin": "block",
       "amounts": [
-        3
-      ]
-    },
-    {
-      "builtin": "heal",
-      "amounts": [
-        2
+        4
       ]
     }
   ],
   "keywords": [
-    "Temporary"
+    "Perishable"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          5
+          6
         ]
       }
     ]

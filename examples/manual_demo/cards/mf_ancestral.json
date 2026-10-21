@@ -23,9 +23,9 @@
       ]
     },
     {
-      "builtin": "heal",
+      "builtin": "draw",
       "amounts": [
-        10
+        2
       ]
     }
   ],

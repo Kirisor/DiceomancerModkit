@@ -23,14 +23,14 @@
     }
   ],
   "keywords": [
-    "Temporary"
+    "Exert"
   ],
   "upgrade": {
     "effectNumbers": [
       {
         "index": 0,
         "amounts": [
-          8
+          7
         ]
       }
     ]

@@ -21,8 +21,14 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using Ability;
+using Card;
 using Combat;
+using Command;
 using Effects;
+using GameData;
+using Keyword;
+using Utilities;
 using ModKit.Api;
 using ModKit.Core;
 
@@ -178,13 +184,17 @@ namespace ModKit.Game
     }
 
     /// <summary>
-    /// 作者效果的运行时上下文（最小打通版）。
+    /// 作者效果的运行时上下文（**已接通**：读写都落到游戏真实命令/字段上）。
     /// </summary>
     /// <remarks>
-    /// ★ 已**真实现**：<see cref="Amount"/> / <see cref="AmountAt"/> / <see cref="Block"/>（Self）/ <see cref="Log"/>。
-    /// ★ 其余成员**故意**先记 Warn 再跳过：编译期必须齐全，运行期宁可吵闹也不静默。
-    ///   逐个补齐时，请照着平台已验证的内置效果写法翻（`EffectSpEffectCleanMana` 用 `SubCommandRemoveMana`、
-    ///   `EffectChangeMaxHealth` 用 `SubCommandChangeMaxHealth`；格挡用 `CharacterPlayer.ApplyBlock`，本文件已在用）。
+    /// ★ 2026-10-21 实机暴露：上一版只有 Amount/AmountAt/Block(Self)/Log 是真实现，
+    ///   其余成员 WarnOnce 后**静默跳过** —— 表现就是"自定义效果没触发"（蛙群合唱/疗泥/蛙王轰鸣）。
+    ///   本版按游戏原版 <c>Effects/EffectXxx.cs</c> 的写法逐个接通：
+    ///   伤害/失去生命走 <c>SubCommandDealDamage</c>，治疗走 <c>SubCommandHeal</c>，
+    ///   抽牌走 <c>CardManager.DrawCards</c>，弃牌走 <c>SubCommandDiscardRandomCard</c>，
+    ///   能量走 <c>SubCommandAddManaS</c>，能力走 <c>SubCommandApplyAbility</c>，
+    ///   状态走 <c>Character.SetSpecialStateToCertainNumber</c>，
+    ///   生成卡走 <c>SubCommandAddCardToPlayer</c>。
     /// </remarks>
     internal sealed class GameEffectContext : EffectContext
     {
@@ -199,7 +209,7 @@ namespace ModKit.Game
             _target = target;
         }
 
-        // ---------------- 读：真实现 ----------------
+        // ---------------- 读 ----------------
 
         public override int Amount { get { return AmountAt(0); } }
 
@@ -210,49 +220,97 @@ namespace ModKit.Game
             return nums[index].GetCollapsedNumber();
         }
 
-        public override ICombatant Self
+        private Character OwnerCharacter
         {
             get
             {
-                // ★ 已知缺口（2026-10-13 编译期暴露）：`Combat.CharacterPlayer` **不是** `ModKit.Api.ICombatant`
-                //   —— 也就是说 `ICombatant` 在游戏侧**还没有实现类**（这是"执行层从未写出来"的又一处证据）。
-                //   本版先返回 null 并 Warn；补齐时要写一个 `GameCombatant : ICombatant` 包住 `Combat.Character`。
-                WarnOnce("get_Self");
-                return null;
+                try { return _self == null || _self.EffectOwner == null ? null : _self.EffectOwner.GetOwnerCharacter(); }
+                catch { return null; }
             }
         }
 
-        public override string OwnerName { get { return "Player"; } }
+        public override ICombatant Self { get { return Wrap(OwnerCharacter); } }
+        public override ICombatant Opponent { get { return Wrap(FirstOpponent()); } }
 
-        public override int HandCount
+        public override IReadOnlyList<ICombatant> Targets
         {
             get
             {
+                var list = new List<ICombatant>();
+                foreach (var ch in Resolve(CombatantSelector.Opponent)) { list.Add(Wrap(ch)); }
+                return list;
+            }
+        }
+
+        public override string OwnerName
+        {
+            get { var c = OwnerCharacter; return c == null ? "Player" : c.name; }
+        }
+
+        public override int HandCount
+        {
+            get { var cm = CardManager.Instance; return cm == null || cm.cardHand == null ? 0 : cm.cardHand.Count; }
+        }
+
+        public override int LibraryCount
+        {
+            get { var cm = CardManager.Instance; return cm == null ? 0 : cm.GetCardLibrary().Length; }
+        }
+
+        public override int GraveCount
+        {
+            get { var cm = CardManager.Instance; return cm == null ? 0 : cm.GetCardGrave().Length; }
+        }
+
+        public override IReadOnlyList<ICardRef> HandCards
+        {
+            get
+            {
+                var list = new List<ICardRef>();
                 var cm = CardManager.Instance;
-                return cm == null || cm.cardHand == null ? 0 : cm.cardHand.Count;
+                if (cm == null || cm.cardHand == null) { return list; }
+                foreach (var c in cm.cardHand) { list.Add(new GameCardRef(c)); }
+                return list;
             }
         }
 
         public override int Mana
         {
-            get
-            {
-                var mm = ManaManager.Instance;
-                return mm == null ? 0 : (int)mm.GetManaArray().Length;
-            }
+            get { var mm = ManaManager.Instance; return mm == null ? 0 : mm.GetManaArray().Length; }
+        }
+
+        public override int MaxMana
+        {
+            get { var mm = ManaManager.Instance; return mm == null ? 0 : mm.GetMaxCount(); }
         }
 
         public override System.Random Random { get { return _random; } }
 
-        public override void Log(string message)
-        {
-            ModKitLog.Info("[custom] " + message);
-        }
+        public override void Log(string message) { ModKitLog.Info("[custom] " + message); }
 
-        // ---------------- 写：真实现（只做已实证的那一个） ----------------
+        // ---------------- 写（照原版 Effects/*.cs 的写法） ----------------
+
+        public override void DealDamage(int amount, DamageMode mode, CombatantSelector target = CombatantSelector.Opponent)
+        {
+            if (amount <= 0) { return; }
+            var from = OwnerCharacter;
+            if (from == null) { WarnOnce("DealDamage(no owner)"); return; }
+
+            foreach (var ch in Resolve(target))
+            {
+                var dmgType = mode == DamageMode.Direct
+                    ? DamageSourceType.DirectDamage
+                    : DamageSourceType.IndirectDamage;
+                var special = mode == DamageMode.LoseLife
+                    ? DamageSpecialType.DirectLoseLife
+                    : DamageSpecialType.Standard;
+                new SubCommandDealDamage(new Damage(amount, from, ch, dmgType, special));
+            }
+        }
 
         public override void Block(int amount, CombatantSelector target = CombatantSelector.Self)
         {
+            if (amount <= 0) { return; }
             if (target != CombatantSelector.Self)
             {
                 WarnOnce("Block(target=" + target + ")");
@@ -263,38 +321,162 @@ namespace ModKit.Game
             player.ApplyBlock(amount);
         }
 
-        // ---------------- 其余：编译期齐全 + 运行期 Warn ----------------
-
-        public override void DealDamage(int amount, DamageMode mode, CombatantSelector target = CombatantSelector.Opponent)
-        { WarnOnce("DealDamage"); }
-
         public override void Heal(int amount, CombatantSelector target = CombatantSelector.Self)
-        { WarnOnce("Heal"); }
+        {
+            if (amount <= 0) { return; }
+            foreach (var ch in Resolve(target)) { new SubCommandHeal(ch, amount); }
+        }
 
         public override void LoseLife(int amount, CombatantSelector target = CombatantSelector.Opponent)
-        { WarnOnce("LoseLife"); }
+        {
+            if (amount <= 0) { return; }
+            DealDamage(amount, DamageMode.LoseLife, target);
+        }
 
-        public override void Draw(int amount) { WarnOnce("Draw"); }
-        public override void DiscardRandom(int amount) { WarnOnce("DiscardRandom"); }
+        public override void Draw(int amount)
+        {
+            if (amount <= 0) { return; }
+            var cm = CardManager.Instance;
+            if (cm == null) { WarnOnce("Draw(no CardManager)"); return; }
+            cm.DrawCards(amount);
+        }
 
-        public override void GainMana(ManaColor color, int amount) { WarnOnce("GainMana"); }
-        public override void SetMaxMana(int amount) { WarnOnce("SetMaxMana"); }
-        public override void CleanMana() { WarnOnce("CleanMana"); }
+        public override void DiscardRandom(int amount)
+        {
+            if (amount <= 0) { return; }
+            for (int i = 0; i < amount; i++) { new SubCommandDiscardRandomCard(true); }
+        }
+
+        public override void GainMana(ManaColor color, int amount)
+        {
+            if (amount <= 0) { return; }
+            new SubCommandAddManaS(ToColorE(color), amount, isInsert: true);
+        }
+
+        public override void SetMaxMana(int amount)
+        {
+            var mm = ManaManager.Instance;
+            if (mm == null) { WarnOnce("SetMaxMana(no ManaManager)"); return; }
+            mm.SetMaxManaCount(amount);
+        }
+
+        public override void CleanMana()
+        {
+            // 原版 EffectCleanMana 走 Effects.Special.CardEffect.EffectSpEffectCleanMana，
+            // 内部是 SubCommandRemoveMana；这里按"把所有当前能量移除"实现。
+            var mm = ManaManager.Instance;
+            if (mm == null) { WarnOnce("CleanMana(no ManaManager)"); return; }
+            var mana = mm.GetManaArray();
+            if (mana != null && mana.Length > 0) { new SubCommandRemoveMana(mana); }
+        }
 
         public override void AddState(string stateName, int amount, CombatantSelector target = CombatantSelector.Self)
-        { WarnOnce("AddState"); }
+        {
+            if (string.IsNullOrEmpty(stateName) || amount == 0) { return; }
+            foreach (var ch in Resolve(target))
+            {
+                int cur = ch.GetSpecialStateNumber(stateName);
+                ch.SetSpecialStateToCertainNumber(stateName, cur + amount);
+            }
+        }
 
         public override void ReduceState(string stateName, int amount, CombatantSelector target = CombatantSelector.Self)
-        { WarnOnce("ReduceState"); }
+        {
+            if (string.IsNullOrEmpty(stateName) || amount == 0) { return; }
+            foreach (var ch in Resolve(target))
+            {
+                int cur = ch.GetSpecialStateNumber(stateName);
+                int next = cur - amount;
+                ch.SetSpecialStateToCertainNumber(stateName, next < 0 ? 0 : next);
+            }
+        }
 
         public override void GiveAbility(string abilityName, int level, CombatantSelector target = CombatantSelector.Self)
-        { WarnOnce("GiveAbility"); }
+        {
+            if (string.IsNullOrEmpty(abilityName)) { return; }
+            var dm = DataManager.Instance;
+            var adm = dm == null ? null : dm.GetAbilityDataManager();
+            var so = adm == null ? null : adm.GetAbilitySo(abilityName);
+            if (so == null)
+            {
+                ModKitLog.Error("自定义效果：找不到能力 '" + abilityName + "'（gain_ability 的名字必须是原版能力名）");
+                return;
+            }
+            foreach (var ch in Resolve(target))
+            {
+                new SubCommandApplyAbility(ch, so.abilityInfo, level <= 0 ? 1 : level);
+            }
+        }
 
         public override void GiveCard(string cardId, CardDestination destination, int amount = 1)
-        { WarnOnce("GiveCard"); }
+        {
+            GiveCardCore(cardId, destination, amount, temporary: false);
+        }
 
         public override void GiveTemporaryCard(string cardId, CardDestination destination, int amount = 1)
-        { WarnOnce("GiveTemporaryCard"); }
+        {
+            GiveCardCore(cardId, destination, amount, temporary: true);
+        }
+
+        private void GiveCardCore(string cardId, CardDestination destination, int amount, bool temporary)
+        {
+            if (string.IsNullOrEmpty(cardId) || amount <= 0) { return; }
+            var so = FindCardSo(cardId);
+            if (so == null)
+            {
+                ModKitLog.Error("自定义效果：找不到卡 '" + cardId + "'（give_card / give_temporary_card 的 id 必须存在）");
+                return;
+            }
+
+            var info = so.CardInfo.CreateDeepCopy();
+            if (temporary) { info.AddKeywordToKeywordInfo(new CardKeyWordInfo("Temporary")); }
+
+            CardPlace place;
+            switch (destination)
+            {
+                case CardDestination.Library: place = CardPlace.Library; break;
+                case CardDestination.Grave: place = CardPlace.Grave; break;
+                default: place = CardPlace.Hand; break;
+            }
+            new SubCommandAddCardToPlayer(info, place, amount);
+            if (place == CardPlace.Library && CardManager.Instance != null) { CardManager.Instance.ShuffleLibrary(); }
+        }
+
+        /// <summary>
+        /// 按 id 找卡 SO：先按原名查，再在游戏卡字典里找 **以 ".&lt;id&gt;" 结尾** 的键。
+        /// </summary>
+        /// <remarks>
+        /// mod 卡在游戏里的 cardName 带 mod 前缀（如 <c>manual_demo.mf_tadpole_token</c>），
+        /// 而作者在 JSON 里写裸 id —— 两种都接受。
+        /// </remarks>
+        private static CardSo FindCardSo(string id)
+        {
+            var cdm = CardDataManager.Instance;
+            if (cdm == null) { return null; }
+
+            var direct = cdm.GetCardSoByName(id);
+            if (direct != null) { return direct; }
+
+            try
+            {
+                var f = cdm.GetType().GetField("_allInGameCardSoDictionary",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Public);
+                var dict = f == null ? null : f.GetValue(cdm) as System.Collections.IDictionary;
+                if (dict == null) { return null; }
+
+                var suffix = "." + id;
+                foreach (System.Collections.DictionaryEntry e in dict)
+                {
+                    var key = e.Key as string;
+                    var card = e.Value as CardSo;
+                    if (card == null || key == null) { continue; }
+                    if (key == id || key.EndsWith(suffix, StringComparison.Ordinal)) { return card; }
+                }
+            }
+            catch { }
+            return null;
+        }
 
         public override void UpgradeCard(ICardRef card) { WarnOnce("UpgradeCard"); }
         public override void EndTurn() { WarnOnce("EndTurn"); }
@@ -302,37 +484,119 @@ namespace ModKit.Game
         public override void SubscribeTrigger(string triggerName, Action<TriggerEvent> handler)
         { WarnOnce("SubscribeTrigger"); }
 
-        public override ICombatant Opponent { get { WarnOnce("get_Opponent"); return null; } }
+        // ---------------- 内部 ----------------
 
-        public override IReadOnlyList<ICombatant> Targets
+        private Character FirstOpponent()
         {
-            get
-            {
-                WarnOnce("get_Targets");
-                return new List<ICombatant>();
-            }
+            var arr = Resolve(CombatantSelector.Opponent);
+            return arr.Count > 0 ? arr[0] : null;
         }
 
-        public override int LibraryCount { get { WarnOnce("get_LibraryCount"); return 0; } }
-        public override int GraveCount { get { WarnOnce("get_GraveCount"); return 0; } }
-
-        public override IReadOnlyList<ICardRef> HandCards
+        private List<Character> Resolve(CombatantSelector selector)
         {
-            get
+            var list = new List<Character>();
+            var owner = OwnerCharacter;
+            try
             {
-                WarnOnce("get_HandCards");
-                return new List<ICardRef>();
+                if (selector == CombatantSelector.Self)
+                {
+                    if (owner != null) { list.Add(owner); }
+                    return list;
+                }
+                if (owner == null) { return list; }
+                var arr = owner.GetDefaultCharactersByTarget(EffectTargetEnum.TargetOpponent);
+                if (arr != null) { foreach (var c in arr) { if (c != null) { list.Add(c); } } }
             }
+            catch (Exception ex) { WarnOnce("Resolve(" + selector + "): " + ex.GetType().Name); }
+            return list;
         }
 
-        public override int MaxMana { get { WarnOnce("get_MaxMana"); return 0; } }
+        private static ICombatant Wrap(Character c) { return c == null ? null : new GameCombatant(c); }
+
+        private static ColorE ToColorE(ManaColor color)
+        {
+            switch (color)
+            {
+                case ManaColor.Red: return ColorE.Red;
+                case ManaColor.Green: return ColorE.Green;
+                case ManaColor.Blue: return ColorE.Blue;
+                case ManaColor.Purple: return ColorE.Purple;
+                case ManaColor.Black: return ColorE.Black;
+                default: return ColorE.Void;
+            }
+        }
 
         private void WarnOnce(string member)
         {
             if (_warned.Add(member))
             {
-                ModKitLog.Warn("自定义效果的上下文成员尚未实现：" + member
-                    + "（作者调用了它，但平台这版适配层还没接上）");
+                ModKitLog.Warn("自定义效果的上下文成员未实现/失败：" + member);
+            }
+        }
+    }
+
+    /// <summary>`ModKit.Api.ICombatant` 在游戏侧的实现类（包住 <see cref="Character"/>）。</summary>
+    internal sealed class GameCombatant : ICombatant
+    {
+        private static readonly System.Reflection.PropertyInfo MaxHpProperty =
+            typeof(Character).GetProperty("MaxHealthPoint",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic |
+                System.Reflection.BindingFlags.Public);
+
+        private readonly Character _c;
+
+        public GameCombatant(Character c) { _c = c; }
+
+        public string Name { get { return _c == null ? "?" : _c.name; } }
+        public int Health { get { return _c == null ? 0 : _c.GetHealthPoint(); } }
+
+        public int MaxHealth
+        {
+            get
+            {
+                if (_c == null || MaxHpProperty == null) { return 0; }
+                try { return (int)MaxHpProperty.GetValue(_c, null); } catch { return 0; }
+            }
+        }
+
+        public bool IsDead { get { return _c == null || Health <= 0; } }
+
+        public int GetState(string stateName)
+        {
+            if (_c == null || string.IsNullOrEmpty(stateName)) { return 0; }
+            try { return _c.GetSpecialStateNumber(stateName); } catch { return 0; }
+        }
+
+        public IReadOnlyList<string> GetStateNames() { return new List<string>(); }
+    }
+
+    /// <summary>`ModKit.Api.ICardRef` 在游戏侧的实现类（包住 <see cref="CardBase"/>）。</summary>
+    internal sealed class GameCardRef : ICardRef
+    {
+        private readonly CardBase _card;
+        public GameCardRef(CardBase card) { _card = card; }
+
+        public string Id
+        {
+            get
+            {
+                try { return _card == null ? "" : _card.CardName; } catch { return ""; }
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                try { return _card == null ? "" : _card.CardName; } catch { return ""; }
+            }
+        }
+
+        public bool IsUpgraded
+        {
+            get
+            {
+                try { return _card != null && _card.cardUpgradeInfo.isUpgraded; } catch { return false; }
             }
         }
     }

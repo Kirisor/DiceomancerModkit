@@ -90,7 +90,7 @@ namespace ManualDemo
         }
     }
 
-    /// <summary>最后壁垒：获得 Number 格挡；半血以下额外 +6 格挡、治疗 4。</summary>
+    /// <summary>最后壁垒：获得 Number 格挡；半血以下额外 +10 格挡（不治疗——治疗是稀缺资源）。</summary>
     [ModEffect("mf_last_bastion")]
     public sealed class MfLastBastion : SyncCardEffect
     {
@@ -99,8 +99,7 @@ namespace ManualDemo
             ctx.Block(System.Math.Max(1, ctx.Amount));
             if (ctx.Self != null && ctx.Self.MaxHealth > 0 && ctx.Self.Health * 2 <= ctx.Self.MaxHealth)
             {
-                ctx.Block(6);
-                ctx.Heal(4);
+                ctx.Block(10);
             }
         }
     }

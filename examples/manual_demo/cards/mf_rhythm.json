@@ -18,14 +18,7 @@
     {
       "builtin": "draw",
       "amounts": [
-        1
-      ]
-    },
-    {
-      "builtin": "gain_mana",
-      "color": "Purple",
-      "amounts": [
-        1
+        2
       ]
     }
   ],
@@ -37,7 +30,7 @@
       {
         "index": 0,
         "amounts": [
-          2
+          3
         ]
       }
     ]

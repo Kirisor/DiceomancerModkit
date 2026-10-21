@@ -16,6 +16,14 @@
   "artTemplate": "Block",
   "effects": [
     {
+      "builtin": "deal_damage",
+      "amounts": [
+        3
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    },
+    {
       "builtin": "draw",
       "amounts": [
         1
@@ -34,7 +42,7 @@
       {
         "index": 0,
         "amounts": [
-          1
+          4
         ]
       }
     ]

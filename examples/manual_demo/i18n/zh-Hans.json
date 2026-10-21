@@ -78,7 +78,7 @@
       "Key_mf_brood_call": "将{Number}张「蝌蚪」加入手牌。",
       "Key_mf_shield_bash": "造成等于你当前格挡一半的伤害（没有格挡时为{Number}点），然后失去全部格挡。",
       "Key_mf_bulwark_pray": "治疗相当于你当前格挡三分之一的数值（至少{Number}点）。",
-      "Key_mf_last_bastion": "获得{Number}格挡；若生命不高于一半，额外获得6格挡并治疗4点。",
+      "Key_mf_last_bastion": "获得{Number}格挡；若生命不高于一半，额外获得10格挡。",
       "Key_mf_molt_shell": "失去全部格挡，抽{Number}张牌。",
       "Key_mf_feast": "抽{Number}张牌，弃1张随机手牌，加1点紫能量。",
       "Key_mf_glut": "弃{Number}张随机手牌，每弃1张加1点黑能量。",

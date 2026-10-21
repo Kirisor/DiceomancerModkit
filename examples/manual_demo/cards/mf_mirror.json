@@ -25,7 +25,7 @@
     {
       "builtin": "block",
       "amounts": [
-        4
+        8
       ]
     }
   ],
@@ -37,7 +37,7 @@
       {
         "index": 0,
         "amounts": [
-          2
+          3
         ]
       }
     ]
