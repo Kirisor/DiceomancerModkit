@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_tadpole_token",
+  "name": {
+    "zh-Hans": "蝌蚪",
+    "en": "Tadpole"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent",
+      "mode": "Direct"
+    }
+  ],
+  "keywords": [
+    "Temporary"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          3
+        ]
+      }
+    ]
+  }
+}
