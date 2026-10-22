@@ -206,6 +206,22 @@ namespace ModKit.Game
                     return;
                 }
                 dict[abilityName] = so;
+
+                // ★ 同时登记**短名**（去掉 mod 前缀）。
+                //   卡片的 gain_ability / apply_prim_ability / apply_util_ability 里，
+                //   作者写的是能力 id（如 "milkfrog_choice"），而平台注册时带 mod 前缀
+                //   （"manual_demo.milkfrog_choice"）—— 游戏按作者写的名字查不到 ⇒ abilitySo 为 null
+                //   ⇒ 实例化卡牌时 NRE（实机症状：图鉴里这张卡渲染失败、只剩一张缩略图）。
+                //   短名只在**没有同名原版能力**时登记，避免覆盖原版。
+                if (!string.IsNullOrEmpty(abilityName))
+                {
+                    int dot = abilityName.LastIndexOf('.');
+                    if (dot >= 0 && dot + 1 < abilityName.Length)
+                    {
+                        string leaf = abilityName.Substring(dot + 1);
+                        if (!dict.ContainsKey(leaf)) { dict[leaf] = so; }
+                    }
+                }
             }
             catch (Exception ex)
             {
