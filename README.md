@@ -14,7 +14,7 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 |---|---|---|
 | **玩别人做的 mod** | **[ModKit-Platform-0.3.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.0/ModKit-Platform-0.3.0.zip)** | **167 KB · 必装**：平台本体（3 个 dll + 配置模板） |
 | **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
-| **玩奶蛙 mod** | **[Naifrog-Mod-1.0.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v1.0.0/Naifrog-Mod-1.0.0.zip)** | **623 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符 + 黑球）16 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
+| **玩奶蛙 mod** | **[Naifrog-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.1.0/Naifrog-Mod-0.1.0.zip)** | **623 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符 + 黑球）16 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
 | **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.0/SHA256SUMS.txt) | 全校验和（zip + 包内每个文件） |
 
 > 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
