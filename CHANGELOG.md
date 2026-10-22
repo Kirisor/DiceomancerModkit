@@ -21,7 +21,7 @@
 - 四件套目前由本机已安装版本打包：仓库只能从 `src` 复现 Game / Plugin，
   Api 源码缺 `ClassSpec` / `IModClassProvider`，"发布物 ↔ 源码"的逐位对应仍未打通。
 
-### 奶蛙 mod（独立发行版 `naifrog-v1.0.0`）
+### 奶蛙 mod（独立发行版 `naifrog-v0.1.0`）
 
 - mod id / 显示名 / 程序集/目录全部改为 `naifrog` / 奶蛙 / `naifrog.dll` /
   `examples/naifrog`；打包脚本产出 `Naifrog-Mod-<mod 版本>.zip`。
