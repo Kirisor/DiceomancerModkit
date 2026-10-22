@@ -81,8 +81,5 @@
     "i18n/zh-Hans.json"
   ],
   "entryAssembly": "manual_demo.dll",
-  "abilities": [
-    "abilities/milkfrog_choice.json",
-    "abilities/milkfrog_choice_full.json"
-  ]
+  "abilities": []
 }

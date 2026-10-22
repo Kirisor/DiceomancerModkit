@@ -55,25 +55,16 @@ namespace ManualDemo
     /// 通过静态开关 <see cref="CardKeywordMilkFrog.SelectionMode"/> 生效，
     /// 奶蛙关键词在拉取阶段读它决定走"自动"还是"弹选择框"。
     /// </remarks>
-    /// <summary>蛙母的号令（基础）：只能从奶蛙卡里选。</summary>
+    /// <summary>蛙母的号令：把奶蛙的"自动拉取"改成"玩家选择"。Amount=1 只能选奶蛙卡，2 可选任意卡。</summary>
     [ModEffect("mf_mother_law")]
     public sealed class MfMotherLaw : SyncCardEffect
     {
-        public override void Apply(EffectContext ctx) { ApplyMode(ctx, 1); }
-
-        internal static void ApplyMode(EffectContext ctx, int mode)
+        public override void Apply(EffectContext ctx)
         {
-            // ★ 模式不再由这里设置：卡片挂的是能力（milkfrog_choice / _full），
-            //   奶蛙关键词按能力判断。能力由游戏管理，战斗结束自动清。
-            ctx.Log("蛙母的号令：本场战斗内奶蛙拉取改为「" + (mode >= 2 ? "任意卡" : "奶蛙卡") + "」（玩家选择）。");
+            int mode = Math.Max(1, Math.Min(2, ctx.Amount));
+            CardKeywordMilkFrog.SelectionMode = mode;
+            ctx.Log("蛙母的号令：奶蛙拉取改为「" + (mode >= 2 ? "任意卡" : "奶蛙卡") + "」（玩家选择）。");
         }
-    }
-
-    /// <summary>蛙母的号令（升级）：可以选任意卡。</summary>
-    [ModEffect("mf_mother_law_full")]
-    public sealed class MfMotherLawFull : SyncCardEffect
-    {
-        public override void Apply(EffectContext ctx) { MfMotherLaw.ApplyMode(ctx, 2); }
     }
 
     /// <summary>空效果：给"必须写 effects 但又不需要实际行为"的能力占位用。</summary>
