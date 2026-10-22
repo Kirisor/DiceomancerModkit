@@ -33,11 +33,10 @@ public sealed class MilkFrogClass : IModClassProvider
             // 卡 id 写 mod 内的短名即可（平台会归一化成 manual_demo.<id>）；重复出现 = 多份
             StartDeck = new List<string>
             {
-                // 4 种初始卡 × 数量，共 10 张
-                "milkfrogstrike", "milkfrogstrike", "milkfrogstrike", "milkfrogstrike",    // 奶蛙打击
-                "milkfrogblock", "milkfrogblock", "milkfrogblock",  "milkfrogblock", // 奶蛙格挡
-                "milkfroglaugh", // 奶蛙大笑
-		"milkfroglaugh"   
+                // 3 种初始卡 × 数量，共 10 张（重置后统一用仓库里的卡 id）
+                "mf_mire_swell", "mf_mire_swell", "mf_mire_swell", "mf_mire_swell",  // 腐泥翻涌（弃牌堆伤害）
+                "mf_bellow", "mf_bellow", "mf_bellow", "mf_bellow",                  // 鼓气长鸣（临时力量）
+                "mf_venom_fang", "mf_venom_fang"                                     // 蛙毒牙（真伤 + 条件流血）
             },
 
             // ★ 至少 2 件：职业介绍卡硬取 relicSos[1] 做护符预览，少于 2 件会在开局界面抛异常
