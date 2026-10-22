@@ -14,7 +14,7 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 |---|---|---|
 | **玩别人做的 mod** | **[ModKit-Platform-0.3.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.0/ModKit-Platform-0.3.0.zip)** | **167 KB · 必装**：平台本体（3 个 dll + 配置模板） |
 | **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
-| **参考示例** | **[Example-Mod-0.2.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.2/Example-Mod-0.2.2.zip)** | 553 KB：13 张卡 + 2 遗物 + 关键词 + 文案 |
+| **玩奶蛙 mod** | **[Naifrog-Mod-1.0.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v1.0.0/Naifrog-Mod-1.0.0.zip)** | **623 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符 + 黑球）16 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
 | **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.0/SHA256SUMS.txt) | 全校验和（zip + 包内每个文件） |
 
 > 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
@@ -32,19 +32,26 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 1. 装好 BepInEx（见上）
 2. 把 **平台包**里 `BepInEx\plugins\ModKit.*.dll`（**四个文件，缺一不可**）复制到 `<游戏根>\BepInEx\plugins\`
 3. 把要玩的 mod 目录放到 `<游戏根>\BepInEx\DiceomancerMods\<modid>\`
+   （例：奶蛙 mod 解压出 `naifrog/`，就放到 `DiceomancerMods\naifrog\`，里面的 `naifrog.dll` 要一起放）
 4. 启动游戏
 
 验证：`BepInEx\LogOutput.log` 里搜 `[ModKit]`，应出现 `mod 已加载：<modid>：卡 N / 遗物 M / 关键词 K`。
 
+> 带**职业**的 mod（如奶蛙）要**开新档**：职业球只在新战役的选球界面出现，旧存档不会长出来。
+
 ---
 
-## 奶蛙 mod（示例职业）
+## 奶蛙 mod（职业 mod · v1.0.0）
 
-`examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫/绿/黑三色护符 + 黑球），
-16 张卡、1 件遗物、2 个能力、中英双语文案，带自己的 C# 行为（`naifrog.dll`）。
+下载：**[Naifrog-Mod-1.0.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v1.0.0/Naifrog-Mod-1.0.0.zip)**（623 KB / 38 个文件，解压即 `naifrog/`）
 
-- 玩：把 `naifrog` 目录（含 `naifrog.dll`）放进 `<游戏根>\BepInEx\DiceomancerMods\`，
-  再装平台包，启动后新档选球时就能选到「奶蛙」。
+`examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫 / 绿 / 黑三色护符，黑球是标志），
+16 张卡、1 件起始遗物（奶蛙之护符）、2 个能力（蛙母的选择 / 蛙母的全权）、中英双语文案，
+带自己的 C# 行为（`naifrog.dll`）。
+
+- 玩：解压后把 `naifrog/` 整个目录放进 `<游戏根>\BepInEx\DiceomancerMods\`，再装平台包；
+  **新开一局**，选球界面会出现第 6 颗（黑）球。每结算一张带「奶蛙」的卡，就从抽牌堆 / 弃牌堆
+  再拉同伴免费结算一次；「蛙群瞪视」这类卡被奶蛙结算时还会额外触发一条「被奶蛙结算时：」效果。
 - 学：它同时是"平台能做什么"的活例子 —— 自定义关键词、自定义效果、职业三色护符、
   自定义颜色、连锁触发点都在里面；改完源码跑 `bash examples/naifrog/build-mod.sh` 重新编译。
 - 打包：`studio/pack.sh` 第 3 段产出 `Naifrog-Mod-<mod 版本>.zip`。
