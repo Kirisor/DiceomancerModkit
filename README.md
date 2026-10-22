@@ -13,7 +13,7 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 | 我要… | 下载 | 说明 |
 |---|---|---|
 | **玩别人做的 mod** | **[ModKit-Platform-0.3.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.0/ModKit-Platform-0.3.0.zip)** | **167 KB · 必装**：平台本体（3 个 dll + 配置模板） |
-| **自己做 mod** | **[ModKit-Studio-0.2.1-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.1/ModKit-Studio-0.2.1-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
+| **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
 | **参考示例** | **[Example-Mod-0.2.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.2/Example-Mod-0.2.2.zip)** | 553 KB：13 张卡 + 2 遗物 + 关键词 + 文案 |
 | **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.0/SHA256SUMS.txt) | 全校验和（zip + 包内每个文件） |
 
