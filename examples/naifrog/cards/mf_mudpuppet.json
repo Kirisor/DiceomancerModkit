@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_mudpuppet",
   "name": {
-    "zh-Hans": "泥偶蛙",
+    "zh-Hans": "奶狗",
     "en": "Mud Puppet"
   },
   "cost": [
@@ -14,7 +14,7 @@
     "Black"
   ],
   "resolve": "OnCast",
-  "artTemplate": "Block",
+  "artTemplate": "EarthElement",
   "effects": [],
   "upgrade": {
     "cost": []

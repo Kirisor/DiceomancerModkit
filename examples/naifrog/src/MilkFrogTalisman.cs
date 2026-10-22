@@ -36,7 +36,7 @@ namespace ManualDemo
                 __result.relicInfo.relicColors = new[] { ColorE.Purple, ColorE.Green, ColorE.Black };
                 __result.relicInfo.hasTriggerLimit = true;
                 __result.relicInfo.triggerLimitType = RelicTriggerLimitType.EachTurn;
-                __result.relicInfo.triggerLimit = 2;
+                __result.relicInfo.triggerLimit = 1;
                 _applied = true;
                 Debug.Log("[ModKit] 奶蛙之护符：已设为 紫/绿/黑 三球，每回合至多触发 2 次。");
             }

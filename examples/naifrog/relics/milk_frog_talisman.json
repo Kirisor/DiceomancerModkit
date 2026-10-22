@@ -10,10 +10,11 @@
   "extraString": "milk_frog",
   "effects": [
     {
-      "builtin": "draw",
-      "amounts": [
-        1
-      ]
+      "builtin": "gain_mana",
+    "amounts": [
+      1
+    ],
+    "color": "Void"
     }
   ],
   "addToPool": false

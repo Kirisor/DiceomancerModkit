@@ -1,9 +1,9 @@
 {
   "$schema": "modkit/card@1",
-  "id": "manual_free",
+  "id": "milkfroglaugh",
   "name": {
     "zh-Hans": "奶蛙大笑",
-    "en": "Manual Free"
+    "en": "milkfroglaugh"
   },
   "cost": [
     "Green",
@@ -16,6 +16,7 @@
   "resolve": "OnCast",
   "artTemplate": "Block",
   "keywords": [
+    "Limited",
     {
       "name": "milk_frog",
       "number": 3
@@ -52,5 +53,6 @@
         "number": 4
       }
     ]
-  }
+  },
+  "art": "art/naifrog.png"
 }

@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_bloodspawn",
   "name": {
-    "zh-Hans": "血蛙卵",
+    "zh-Hans": "奶蛋",
     "en": "Blood Spawn"
   },
   "cost": [
@@ -17,12 +17,12 @@
     "Black"
   ],
   "resolve": "OnCast",
-  "artTemplate": "Block",
+  "artTemplate": "DarkElement",
   "effects": [],
   "keywords": [
     {
       "name": "Summon",
-      "number": 4,
+      "number": 3,
       "toCard": "mf_essence_blood",
       "summon": "FireElement",
       "effects": [
@@ -32,7 +32,7 @@
           "amounts": [
             5
           ],
-          "target": "RandomOpponent"
+          "target": "AllOpponents"
         }
       ]
     },

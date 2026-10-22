@@ -1,5 +1,28 @@
 # 变更记录
 
+## 未发布
+
+### 平台修复
+
+- **初始牌组点名原版卡会变成「空白卡牌」**：游戏的 `CardDataManager.GetCardSoByName`
+  查不到时返回 `EmptyCard`（空白卡牌）而不是 `null`，平台按 `null` 判断"没找到"，
+  于是"按原版卡名兜底"那一步永远不执行 —— 初始牌组里点名原版卡（例：至尊骰 `Dice`）
+  进战斗就成了一张空白卡。判定改为"名字必须对得上"。
+- 同一陷阱一并修掉：`CustomEffectRuntime.FindCardSo`（`give_card` 会静默发空白卡）、
+  `ContentAssembler` 的 `artTemplate` 模板查找（模板写错会拿空白卡当模板）。
+- **能力描述键**：`AbilityDescription` 的键是 `<能力全名>`（平台自动补 `_Des`），
+  写裸 id 会显示 `No translation found for '<mod>.<ability>_Des'`；文档已注明。
+
+### 示例 mod：`manual_demo` → `naifrog`（奶蛙）
+
+- mod id / 显示名 / 程序集/目录全部改为 `naifrog` / 奶蛙 / `naifrog.dll` /
+  `examples/naifrog`；打包脚本产出 `Naifrog-Mod-<mod 版本>.zip`。
+- 修「蛙母的选择」「蛙母的全权」的能力描述键（补 mod 前缀），中文悬浮提示不再报缺翻译。
+- 蛙群瞪视重写：**原版效果**对所有敌人造成 4 点伤害 + 「被奶蛙结算时」8 层易伤；
+  新增 `MilkFrogCascade` 触发点模块（连锁结算命令开合窗口，任意卡可继承
+  `CascadeTriggeredEffect` 共用），替换掉原来的静态开关。
+- 文案表按现有内容整理（删掉已删卡/遗物的死键），补英文文案并启用 `i18n/en.json`。
+
 ## v0.3.0
 
 自定义颜色：平台把颜色从"游戏硬编码的 6 种"扩展为 **6–15 的开放空间**，颜色内容由 mod 声明。

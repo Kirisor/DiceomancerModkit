@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_venom_fang",
   "name": {
-    "zh-Hans": "蛙毒牙",
+    "zh-Hans": "胞兄之恨",
     "en": "Venom Fang"
   },
   "cost": [
@@ -17,7 +17,7 @@
     "Black"
   ],
   "resolve": "OnCast",
-  "artTemplate": "GoodStrike",
+  "artTemplate": "ThrowingKnife",
   "effects": [
     {
       "builtin": "lose_life",

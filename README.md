@@ -38,8 +38,20 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 ---
 
-## 自己做 mod
+## 奶蛙 mod（示例职业）
 
+`examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫/绿/黑三色护符 + 黑球），
+16 张卡、1 件遗物、2 个能力、中英双语文案，带自己的 C# 行为（`naifrog.dll`）。
+
+- 玩：把 `naifrog` 目录（含 `naifrog.dll`）放进 `<游戏根>\BepInEx\DiceomancerMods\`，
+  再装平台包，启动后新档选球时就能选到「奶蛙」。
+- 学：它同时是"平台能做什么"的活例子 —— 自定义关键词、自定义效果、职业三色护符、
+  自定义颜色、连锁触发点都在里面；改完源码跑 `bash examples/naifrog/build-mod.sh` 重新编译。
+- 打包：`studio/pack.sh` 第 3 段产出 `Naifrog-Mod-<mod 版本>.zip`。
+
+---
+
+## 自己做 mod
 1. 装好 BepInEx + 平台包，**启动游戏一次**（自动生成 `BepInEx\ModKitDump\` 字典数据）
 2. 解压并双击 `ModKit.Studio.exe`，首次启动选一下游戏根目录
 3. 新建 / 编辑卡牌、遗物、关键词 → **保存**（自动同步文案）

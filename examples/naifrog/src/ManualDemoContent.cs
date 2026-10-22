@@ -1,8 +1,8 @@
 // =============================================================================
-//  manual_demo 的 C# 部分 —— 手册 §6 自定义关键词 + §7 自定义效果的最小实例。
+//  naifrog 的 C# 部分 —— 手册 §6 自定义关键词 + §7 自定义效果的最小实例。
 //
-//  由 modkit\build-mod.ps1 编译成 manual_demo.dll：
-//    powershell -ExecutionPolicy Bypass -File build-mod.ps1 -Mod manual_demo ^
+//  由 modkit\build-mod.ps1 编译成 naifrog.dll：
+//    powershell -ExecutionPolicy Bypass -File build-mod.ps1 -Mod naifrog ^
 //        -ModsRoot G:\deepseek space\diceomancer-mod\state\scratch\manual-examples
 //
 //  这个文件里有两个类：

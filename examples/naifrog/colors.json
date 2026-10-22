@@ -1,0 +1,12 @@
+{
+  "colors": [
+    {
+      "value": 6,
+      "name": "黄色能量球",
+      "desc": "秩序与平衡之力！",
+      "color": "#A39212",
+      "icon": "art/color6.png",
+      "alias": "Yellow"
+    }
+  ]
+}

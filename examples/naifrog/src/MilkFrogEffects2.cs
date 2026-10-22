@@ -3,13 +3,13 @@ using ModKit.Api;
 
 namespace ManualDemo
 {
-    /// <summary>蛙毒牙（基础形态）：若本卡由「奶蛙」结算，对目标敌人施加 Amount 层流血。</summary>
+    /// <summary>胞兄之恨（基础形态）：被奶蛙结算时，对目标敌人施加 Amount 层流血。</summary>
+    /// <remarks>整个效果只在「被奶蛙结算时」这个触发点生效 —— 继承 <see cref="CascadeTriggeredEffect"/> 即可。</remarks>
     [ModEffect("mf_bleed_if_cascade")]
-    public sealed class MfBleedIfCascade : SyncCardEffect
+    public sealed class MfBleedIfCascade : CascadeTriggeredEffect
     {
-        public override void Apply(EffectContext ctx)
+        public override void ApplyWhenCascading(EffectContext ctx)
         {
-            if (!CardKeywordMilkFrog.IsCascadeResolve) { return; }
             ctx.GiveAbility("Bleed", Math.Max(1, ctx.Amount), CombatantSelector.Opponent);
         }
     }
@@ -25,25 +25,19 @@ namespace ManualDemo
     }
 
     /// <summary>
-    /// 蛙群瞪视：对所有敌人施加 Amount 层易伤；若本卡由「奶蛙」结算，再对所有敌人造成 Amount/2 点伤害。
+    /// 蛙群瞪视（连锁部分）：被奶蛙结算时，对所有敌人施加 Amount 层易伤。
     /// </summary>
     /// <remarks>
-    /// 自定义效果只有 1 个数字槽，所以"易伤层数"与"群伤"共享同一个数字（群伤 = 层数/2）。
-    /// 基础 8 → 4 伤；升级 16 → 8 伤（原设计想给 6，差 2 点，属于可接受的近似）。
+    /// 卡面上「对所有敌人造成 X 点伤害」那一条走**原版效果**
+    /// （<c>builtin: deal_damage</c> + <c>target: AllOpponents</c>，卡面文案由游戏的
+    /// <c>Key_DealDamageAllOpponents</c> 提供），这里只负责「被奶蛙结算时」那一条。
     /// </remarks>
-    [ModEffect("mf_glare")]
-    public sealed class MfGlare : SyncCardEffect
+    [ModEffect("mf_glare_cascade")]
+    public sealed class MfGlareCascade : CascadeTriggeredEffect
     {
-        public override void Apply(EffectContext ctx)
+        public override void ApplyWhenCascading(EffectContext ctx)
         {
-            int layers = Math.Max(1, ctx.Amount);
-            ctx.GiveAbility("Vulnerable", layers, CombatantSelector.AllOpponents);
-
-            if (CardKeywordMilkFrog.IsCascadeResolve)
-            {
-                int dmg = ctx.AmountAt(1);           // 第二个数字 = 被奶蛙时的群伤
-                if (dmg > 0) { ctx.DealDamage(dmg, DamageMode.Direct, CombatantSelector.AllOpponents); }
-            }
+            ctx.GiveAbility("Vulnerable", Math.Max(1, ctx.Amount), CombatantSelector.AllOpponents);
         }
     }
 

@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_pond_call",
   "name": {
-    "zh-Hans": "池塘呼朋",
+    "zh-Hans": "寻找黄色生物",
     "en": "Pond Call"
   },
   "cost": [
@@ -14,7 +14,7 @@
     "Black"
   ],
   "resolve": "OnCast",
-  "artTemplate": "DysonSphereProgram",
+  "artTemplate": "LongView",
   "effects": [
     {
       "builtin": "gain_mana",

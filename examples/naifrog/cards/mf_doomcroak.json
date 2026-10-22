@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_doomcroak",
   "name": {
-    "zh-Hans": "厄运蛙鸣",
+    "zh-Hans": "衰奶蛙",
     "en": "Doom Croak"
   },
   "cost": [
@@ -14,7 +14,7 @@
     "Black"
   ],
   "resolve": "OnCast",
-  "artTemplate": "GoodStrike",
+  "artTemplate": "TheTower",
   "effects": [
     {
       "builtin": "gain_ability",

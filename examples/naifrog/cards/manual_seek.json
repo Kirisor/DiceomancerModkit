@@ -1,19 +1,58 @@
 {
   "$schema": "modkit/card@1",
-  "id": "manual_seek",
-  "name": { "zh-Hans": "手册·检索", "en": "Manual Seek" },
-  "cost": [["Purple", "Green"]],
+  "id": "naifrogseek",
+  "name": {
+    "zh-Hans": "奶蛙思考",
+    "en": "naifrogseek"
+  },
+  "cost": [
+    [
+      "Purple",
+      "Green"
+    ]
+  ],
   "rarity": "Uncommon",
-  "colors": ["Green"],
+  "colors": [
+    "Green"
+  ],
   "resolve": "OnCast",
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
       "builtin": "seek_card",
-      "amounts": [1],
-      "require": { "colors": ["Green"], "describeKey": "manual_demo.req_blue" }
+      "amounts": [
+        1
+      ],
+      "require": {
+        "colors": [
+          "Green"
+        ],
+        "describeKey": "naifrog.req_blue"
+      }
     },
-    { "builtin": "gain_mana", "amounts": [1], "color": "Green" },
-    { "builtin": "draw", "amounts": [1] }
-  ]
+    {
+      "builtin": "gain_mana",
+      "amounts": [
+        1
+      ],
+      "color": "Green"
+    },
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "art": "art/naifrogseek.png",
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
 }

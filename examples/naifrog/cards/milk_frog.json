@@ -1,24 +1,53 @@
 {
   "$schema": "modkit/card@1",
-  "id": "milk_frog",
-  "name": { "zh-Hans": "奶蛙肚皮", "en": "Milk Frog" },
-  "cost": ["Void"],
-  "rarity": "Uncommon",
-  "colors": ["Green"],
+  "id": "milkfrogblock",
+  "name": {
+    "zh-Hans": "奶蛙格挡",
+    "en": "milkfrogblock"
+  },
+  "cost": [
+    "Void"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
   "resolve": "OnCast",
   "artTemplate": "Block",
   "keywords": [
-    { "name": "milk_frog", "number": 1 }
+    {
+      "name": "milk_frog",
+      "number": 1
+    }
   ],
   "effects": [
-    { "builtin": "block", "amounts": [2] }
+    {
+      "builtin": "block",
+      "amounts": [
+        3
+      ]
+    }
   ],
   "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Void"
+      ]
+    ],
     "effectNumbers": [
-      { "index": 0, "amounts": [4] }
+      {
+        "index": 0,
+        "amounts": [
+          4
+        ]
+      }
     ],
     "keywordNumbers": [
-      { "keyword": "milk_frog", "number": 2 }
+      {
+        "keyword": "milk_frog",
+        "number": 2
+      }
     ]
   }
 }

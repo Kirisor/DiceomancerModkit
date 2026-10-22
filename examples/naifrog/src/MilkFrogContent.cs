@@ -20,17 +20,8 @@ using UnityEngine;
 /// </summary>
 public sealed class CardKeywordMilkFrog : CardKeyword
 {
-    /// <summary>关键词 id。游戏侧名字可能是 <c>milk_frog</c>，平台加前缀后是 <c>manual_demo.milk_frog</c>。</summary>
+    /// <summary>关键词 id。游戏侧名字可能是 <c>milk_frog</c>，平台加前缀后是 <c>naifrog.milk_frog</c>。</summary>
     internal const string MilkFrogLeaf = "milk_frog";
-
-    /// <summary>
-    /// 已被奶蛙排进队列、等待结算的卡（按**卡实例**记，不再用计数器）。
-    /// 用集合而不是计数：任何一张没能结算时，也只影响它自己，不会让后续所有奶蛙静默失效。
-    /// </summary>
-    internal static readonly HashSet<CardBase> CascadeQueue = new HashSet<CardBase>();
-
-    /// <summary>当前这次卡牌结算是否来自「奶蛙连锁」（供自定义效果判断「被奶蛙时」）。</summary>
-    internal static bool IsCascadeResolve;
 
     /// <summary>
     /// 当前拉取模式：0 = 自动；1 = 玩家从奶蛙卡里选；2 = 玩家从任意卡里选。
@@ -59,7 +50,7 @@ public sealed class CardKeywordMilkFrog : CardKeyword
             Ability.AbilityBase _;
             if (player.HasCertainAbility(abilityName, out _)) { return true; }
             // mod 能力也可能被登记成 "<modId>.<id>"
-            foreach (string prefix in new[] { "manual_demo." })
+            foreach (string prefix in new[] { "naifrog." })
             {
                 if (player.HasCertainAbility(prefix + abilityName, out _)) { return true; }
             }
@@ -71,9 +62,6 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         return false;
     }
 
-    /// <summary>连锁开始时刻。兜底用：万一有张被拉进来的卡没跑到钩子，计数不会永久卡住。</summary>
-    private static DateTime _cascadeStartedUtc;
-
     static CardKeywordMilkFrog()
     {
         // 关键字（静态构造函数）在游戏侧 Activator.CreateInstance 的那一刻先跑，
@@ -81,7 +69,7 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         MilkFrogNumberPatch.EnsureInstalled();
     }
 
-    /// <summary>关键词名是否是「奶蛙」（容忍 <c>manual_demo.milk_frog</c> 这类带 mod 前缀的写法）。</summary>
+    /// <summary>关键词名是否是「奶蛙」（容忍 <c>naifrog.milk_frog</c> 这类带 mod 前缀的写法）。</summary>
     internal static bool IsMilkFrogName(string keywordName)
     {
         if (string.IsNullOrEmpty(keywordName)) { return false; }
@@ -90,19 +78,19 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         return string.Equals(leaf, MilkFrogLeaf, StringComparison.OrdinalIgnoreCase);
     }
 
-    public override UniTask CardResolvePhaseBeforeEffect(CardBase card)
-    {
-        IsCascadeResolve = CascadeQueue.Remove(card);
-        return UniTask.CompletedTask;
-    }
-
+    /// <summary>
+    /// 本卡结算收尾：只有**正常打出**的奶蛙才继续拉别人；连锁进来的奶蛙不再扩散。
+    /// </summary>
+    /// <remarks>
+    /// 「这一张是不是连锁结算的」不再由本关键词记账 —— 它读的是
+    /// <see cref="MilkFrogCascade.IsResolving"/>（连锁结算命令自己开合的窗口）。
+    /// 这样其它卡只要继承 <see cref="CascadeTriggeredEffect"/> 就能共用同一个触发点。
+    /// </remarks>
     public override UniTask CardResolvePhaseAfterEffect(CardBase card)
     {
-        bool wasCascade = IsCascadeResolve;
-        IsCascadeResolve = false;
         try
         {
-            if (!wasCascade) { PullOthers(card); }
+            if (!MilkFrogCascade.IsResolving) { PullOthers(card); }
         }
         catch (Exception e)
         {
@@ -135,18 +123,14 @@ public sealed class CardKeywordMilkFrog : CardKeyword
 
         if (found.Count == 0) { return; }
 
-        CascadeQueue.Clear();
-        foreach (CardBase other in found) { CascadeQueue.Add(other); }
-
         string names = "";
         foreach (CardBase other in found)
         {
             if (names.Length > 0) { names += "、"; }
             names += other.CardName;
-            // 用 AutoPlay 而不是 Util：CardBase.cs:1363 里，只要这张卡「需要对手目标」，
-            // 而 cardResolveSource 不是 Copy/Spawn/AutoPlay，CardResolveAndCardFeedback 会直接
-            // return —— 整张卡什么都不做。AutoPlay 会自动给它挑一个敌人，卡才会真的结算完。
-            new CommandResolveCard(other, CardResolveSource.AutoPlay);
+            // 走平台的连锁结算入口：它用 AutoPlay（需要对手目标的卡才会真的结算完），
+            // 同时把「被奶蛙结算时」触发点的窗口包在这张卡的整个结算过程上。
+            MilkFrogCascade.ResolveAsCascade(other);
         }
         Debug.Log("[ModKit] 奶蛙：本卡结算后，额外结算 " + found.Count + " 张奶蛙（" + names + "）。");
 
@@ -179,7 +163,7 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         try
         {
             // mod DLL 是平台用 Assembly.LoadFrom 载入的 ⇒ Assembly.Location 就是 mod 目录
-            // （BepInEx\DiceomancerMods\manual_demo\manual_demo.dll），素材放它旁边的 sfx\ 里。
+            // （BepInEx\DiceomancerMods\naifrog\naifrog.dll），素材放它旁边的 sfx\ 里。
             string dir = Path.GetDirectoryName(typeof(CardKeywordMilkFrog).Assembly.Location);
             if (!string.IsNullOrEmpty(dir))
             {
@@ -193,11 +177,6 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         }
 
         ModKitSfx.Play("CopyCard");
-    }
-
-    private static bool IsCascadeStale()
-    {
-        return (DateTime.UtcNow - _cascadeStartedUtc).TotalSeconds > 20.0;
     }
 
     /// <summary>
@@ -236,15 +215,13 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     private static UniTask ResolveChosen(CardBase[] cards)
     {
         if (cards == null || cards.Length == 0) { return UniTask.CompletedTask; }
-        CascadeQueue.Clear();
-        foreach (CardBase c in cards) { if (c != null) { CascadeQueue.Add(c); } }
         string names = "";
         foreach (CardBase c in cards)
         {
             if (c == null) { continue; }
             if (names.Length > 0) { names += "、"; }
             names += c.CardName;
-            new CommandResolveCard(c, CardResolveSource.AutoPlay);
+            MilkFrogCascade.ResolveAsCascade(c);
         }
         Debug.Log("[ModKit] 蛙母的号令：玩家选择了 " + cards.Length + " 张（" + names + "）。");
         PlayCascadeSound();
@@ -317,7 +294,7 @@ internal static class MilkFrogNumberPatch
         _installed = true;
         try
         {
-            new Harmony("modkit.manual_demo.milk_frog").PatchAll(typeof(MilkFrogNumberPatch).Assembly);
+            new Harmony("modkit.naifrog.milk_frog").PatchAll(typeof(MilkFrogNumberPatch).Assembly);
             Debug.Log("[ModKit] 奶蛙：已把 milk_frog 加入「关键词带数字」名单。");
         }
         catch (Exception e)

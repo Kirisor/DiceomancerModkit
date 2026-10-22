@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_bloodkiss",
   "name": {
-    "zh-Hans": "血蛙之吻",
+    "zh-Hans": "豆奶之吻",
     "en": "Blood Kiss"
   },
   "cost": [
@@ -20,17 +20,22 @@
       "builtin": "gain_ability",
       "name": "Bleed",
       "amounts": [
-        6
+        8
       ],
-      "target": "Opponent"
+      "target": "AllOpponents"
     }
   ],
   "keywords": [
     "Exert"
   ],
   "upgrade": {
-    "removeKeywords": [
-      "Exert"
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          16
+        ]
+      }
     ]
   }
 }

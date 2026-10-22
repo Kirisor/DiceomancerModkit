@@ -2,12 +2,15 @@
   "$schema": "modkit/card@1",
   "id": "mf_mother_law",
   "name": {
-    "zh-Hans": "蛙母的号令",
+    "zh-Hans": "以母之名",
     "en": "Mother's Decree"
   },
   "cost": [
     "Green",
-    "Green",
+    [
+      "Green",
+      "Black"
+    ],
     "Green"
   ],
   "rarity": "Rare",
@@ -29,22 +32,10 @@
   "upgrade": {
     "cost": [
       "Green",
-      "Green"
-    ],
-    "replaceEffects": [
-      {
-        "index": 0,
-        "effects": [
-          {
-            "builtin": "gain_ability",
-            "name": "milkfrog_choice_full",
-            "target": "Self",
-            "amounts": [
-              1
-            ]
-          }
-        ]
-      }
+      [
+        "Green",
+        "Black"
+      ]
     ]
   }
 }

@@ -1,9 +1,9 @@
 {
   "$schema": "modkit/card@1",
-  "id": "mf_bellow",
+  "id": "milkfrogangre",
   "name": {
-    "zh-Hans": "鼓气长鸣",
-    "en": "Bellow"
+    "zh-Hans": "愤怒的奶蛙",
+    "en": "milkfrogangre"
   },
   "cost": [
     "Void"
@@ -13,7 +13,7 @@
     "Green"
   ],
   "resolve": "OnCast",
-  "artTemplate": "GoodStrike",
+  "artTemplate": "WildMight",
   "effects": [
     {
       "custom": "mf_bellow",

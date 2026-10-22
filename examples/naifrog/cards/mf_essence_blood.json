@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_essence_blood",
   "name": {
-    "zh-Hans": "血蛙卵精粹",
+    "zh-Hans": "奶蛋精粹",
     "en": "Spawn Essence"
   },
   "cost": [],

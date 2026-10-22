@@ -30,7 +30,7 @@ public sealed class MilkFrogClass : IModClassProvider
             OrbSprite = "art/naifrogball.png",
             BallScale = 0.5f,
 
-            // 卡 id 写 mod 内的短名即可（平台会归一化成 manual_demo.<id>）；重复出现 = 多份
+            // 卡 id 写 mod 内的短名即可（平台会归一化成 naifrog.<id>）；重复出现 = 多份
             StartDeck = new List<string>
             {
                 // 4 种初始卡 × 数量，共 10 张
@@ -51,7 +51,7 @@ public sealed class MilkFrogClass : IModClassProvider
             {
                 // 只列实际存在的卡（17 张）——清单里没有的卡引用了会在装配期报错
                 "mf_bloodkiss", "mf_bloodspawn", "mf_doomcroak", "mf_essence_blood", "mf_essence_mud",
-                "mf_glare", "mf_mire_swell", "mf_molt", "mf_mother_law", "mf_mudpuppet",
+                "mf_glare", "mf_mire_swell", "mf_mother_law", "mf_mudpuppet",
                 "mf_pond_call", "mf_venom_fang", "milkfrogangre", "milkfrogblock", "milkfroglaugh",
                 "milkfrogstrike", "naifrogseek"
             }

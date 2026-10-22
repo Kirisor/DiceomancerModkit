@@ -1,9 +1,9 @@
 {
   "$schema": "modkit/mod@1",
-  "id": "manual_demo",
-  "name": "手册示例 Mod",
+  "id": "naifrog",
+  "name": "奶蛙",
   "version": "1.0.0",
-  "author": "(你的名字)",
+  "author": "Kirisor",
   "cards": [
     "cards/manual_art.json",
     "cards/manual_free.json",
@@ -16,7 +16,6 @@
     "cards/mf_essence_mud.json",
     "cards/mf_glare.json",
     "cards/mf_mire_swell.json",
-    "cards/mf_molt.json",
     "cards/mf_mother_law.json",
     "cards/mf_mudpuppet.json",
     "cards/mf_pond_call.json",
@@ -31,9 +30,10 @@
     "keywords/milk_frog.json"
   ],
   "i18n": [
-    "i18n/zh-Hans.json"
+    "i18n/zh-Hans.json",
+    "i18n/en.json"
   ],
-  "entryAssembly": "manual_demo.dll",
+  "entryAssembly": "naifrog.dll",
   "abilities": [
     "abilities/milkfrog_choice.json",
     "abilities/milkfrog_choice_full.json"

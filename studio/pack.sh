@@ -14,7 +14,7 @@ set -eu
 VERSION="${1:-0.1.0}"
 SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需下载 .NET 运行时包）；0 = 框架依赖
 WITH_BEPINEX="${WITH_BEPINEX:-0}"
-EXAMPLE_SRC="${EXAMPLE_SRC:-}"    # 示例 mod 源目录；留空则用游戏目录里的 manual_demo       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
+EXAMPLE_SRC="${EXAMPLE_SRC:-}"    # 示例 mod 源目录；留空则用游戏目录里的 naifrog       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
 ROOT="/g/Modkit"
 GAME="/g/deepseek space/DICEOMANCER"
 DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
@@ -158,27 +158,30 @@ zip_dir "$DIST/ModKit-Studio-$VERSION-win-x64.zip" "$S"
 
 # ============================================================
 echo
-echo "=== 3/3 示例 mod ==="
+echo "=== 3/3 奶蛙 mod ==="
 E="$STAGE/example-mod"
-MOD="${EXAMPLE_SRC:-$GAME/BepInEx/DiceomancerMods/manual_demo}"
+MOD="${EXAMPLE_SRC:-$GAME/BepInEx/DiceomancerMods/naifrog}"
 if [ -d "$MOD" ]; then
-  mkdir -p "$E/manual_demo"
-  for item in mod.json cards relics keywords i18n art sfx src manual_demo.dll; do
-    [ -e "$MOD/$item" ] && cp -r "$MOD/$item" "$E/manual_demo/" 2>/dev/null || true
+  mkdir -p "$E/naifrog"
+  for item in mod.json cards relics keywords i18n art sfx src naifrog.dll; do
+    [ -e "$MOD/$item" ] && cp -r "$MOD/$item" "$E/naifrog/" 2>/dev/null || true
   done
   # 只剔除备份与笔记；dll/src 是职业与关键词行为的实现，必须保留（否则没有职业球）
   find "$E" -name "*.bak" -delete 2>/dev/null || true
   find "$E" -name "*.pdb" -delete 2>/dev/null || true
-  if [ ! -f "$E/manual_demo/manual_demo.dll" ]; then
-    echo "  ! 示例缺少 manual_demo.dll —— 职业球不会出现"
+  if [ ! -f "$E/naifrog/naifrog.dll" ]; then
+    echo "  ! mod 缺少 naifrog.dll —— 职业球不会出现"
   fi
+  # mod 版本号取 mod.json 自己的 version（与平台版本无关）
+  MOD_VER="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$MOD/mod.json" | head -1)"
+  [ -n "$MOD_VER" ] || MOD_VER="0.0.0"
   if [ "$(find "$E" -type f | wc -l)" -eq 0 ]; then
-    echo "  ! 示例 mod 源目录为空，跳过示例包（用 EXAMPLE_SRC=<目录> 指定）"
+    echo "  ! mod 源目录为空，跳过（用 EXAMPLE_SRC=<目录> 指定）"
   else
-    zip_dir "$DIST/Example-Mod-$VERSION.zip" "$E"
+    zip_dir "$DIST/Naifrog-Mod-$MOD_VER.zip" "$E"
   fi
 else
-  echo "  （没有示例 mod 可打包）"
+  echo "  （没有 naifrog mod 可打包）"
 fi
 
 # ============================================================

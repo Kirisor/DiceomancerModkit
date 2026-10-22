@@ -239,7 +239,7 @@ ModKit Studio 是 DICEOMANCER ModKit 的图形化编辑器：把内容写成表�
 
 ```bash
 bash studio/build-mod.sh <modId> [mods 根目录]
-# 例：bash studio/build-mod.sh manual_demo
+# 例：bash studio/build-mod.sh naifrog
 ```
 
 ### 8.3 常见编译错误

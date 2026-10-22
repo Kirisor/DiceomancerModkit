@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_mire_swell",
   "name": {
-    "zh-Hans": "腐泥翻涌",
+    "zh-Hans": "奶蛙回旋",
     "en": "Mire Swell"
   },
   "cost": [
@@ -13,7 +13,7 @@
     "Green"
   ],
   "resolve": "OnCast",
-  "artTemplate": "GoodStrike",
+  "artTemplate": "Reconsider",
   "effects": [
     {
       "custom": "mf_grave_swell",
