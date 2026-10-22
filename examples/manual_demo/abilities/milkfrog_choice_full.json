@@ -11,5 +11,9 @@
   "isUnique": true,
   "artTemplate": "Power",
   "trigger": "BattleStart",
-  "effects": []
+  "effects": [
+    {
+      "custom": "mf_noop"
+    }
+  ]
 }

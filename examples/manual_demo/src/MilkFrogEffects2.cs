@@ -75,4 +75,11 @@ namespace ManualDemo
     {
         public override void Apply(EffectContext ctx) { MfMotherLaw.ApplyMode(ctx, 2); }
     }
+
+    /// <summary>空效果：给"必须写 effects 但又不需要实际行为"的能力占位用。</summary>
+    [ModEffect("mf_noop")]
+    public sealed class MfNoOp : SyncCardEffect
+    {
+        public override void Apply(EffectContext ctx) { }
+    }
 }

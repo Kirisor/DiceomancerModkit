@@ -80,4 +80,24 @@ namespace ModKit.Game
             return null;   // 异常已被处理
         }
     }
+
+    /// <summary>
+    /// 另一条关键词描述路径：<c>RuleManager.GetLocalizedDescriptionForKeyWord</c>
+    /// （图鉴/词条详情用它）。同样可能因为缺参数抛 SmartFormat 异常，这里兜一份纯文本。
+    /// </summary>
+    [HarmonyPatch(typeof(global::Collection.Rules.RuleManager), "GetLocalizedDescriptionForKeyWord")]
+    internal static class KeywordRuleDescriptionGuard
+    {
+        private static Exception Finalizer(Exception __exception, ref string __result)
+        {
+            if (__exception == null) { return null; }
+            try
+            {
+                ModKitLog.Warn("词条描述渲染异常已兜底：" + __exception.GetType().Name + ": " + __exception.Message);
+                __result = "";
+            }
+            catch { __result = ""; }
+            return null;
+        }
+    }
 }

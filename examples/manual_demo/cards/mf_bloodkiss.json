@@ -14,7 +14,7 @@
     "Black"
   ],
   "resolve": "OnCast",
-  "artTemplate": "GoodStrike",
+  "artTemplate": "MindSpike",
   "effects": [
     {
       "builtin": "gain_ability",
