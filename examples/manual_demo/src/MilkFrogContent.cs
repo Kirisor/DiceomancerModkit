@@ -26,16 +26,49 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     /// 已被奶蛙排进队列、等待结算的卡（按**卡实例**记，不再用计数器）。
     /// 用集合而不是计数：任何一张没能结算时，也只影响它自己，不会让后续所有奶蛙静默失效。
     /// </summary>
-    private static readonly HashSet<CardBase> CascadeQueue = new HashSet<CardBase>();
+    internal static readonly HashSet<CardBase> CascadeQueue = new HashSet<CardBase>();
 
     /// <summary>当前这次卡牌结算是否来自「奶蛙连锁」（供自定义效果判断「被奶蛙时」）。</summary>
     internal static bool IsCascadeResolve;
 
     /// <summary>
-    /// 拉取模式：0 = 自动（默认）；1 = 玩家从奶蛙卡里选；2 = 玩家从任意卡里选。
-    /// 由「蛙母的号令」设置。
+    /// 当前拉取模式：0 = 自动；1 = 玩家从奶蛙卡里选；2 = 玩家从任意卡里选。
+    /// ★ 由**能力**决定（不再用 mod 静态字段）：
+    ///   「蛙母的号令」挂 <c>milkfrog_choice</c>（选奶蛙卡）或
+    ///   <c>milkfrog_choice_full</c>（选任意卡）；
+    ///   能力由游戏的战斗生命周期管理，战斗结束自动清 —— 与「压制射击 / 战争之王」同构。
     /// </summary>
-    internal static int SelectionMode;
+    internal static int SelectionMode
+    {
+        get
+        {
+            if (HasAbility("milkfrog_choice_full")) { return 2; }
+            if (HasAbility("milkfrog_choice")) { return 1; }
+            return 0;
+        }
+    }
+
+    /// <summary>玩家是否持有某个能力（容忍 mod 前缀写法）。</summary>
+    internal static bool HasAbility(string abilityName)
+    {
+        try
+        {
+            var player = CharacterPlayer.Instance;
+            if (player == null) { return false; }
+            Ability.AbilityBase _;
+            if (player.HasCertainAbility(abilityName, out _)) { return true; }
+            // mod 能力也可能被登记成 "<modId>.<id>"
+            foreach (string prefix in new[] { "manual_demo." })
+            {
+                if (player.HasCertainAbility(prefix + abilityName, out _)) { return true; }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[ModKit] 奶蛙：查询能力 '" + abilityName + "' 失败 —— " + e.Message);
+        }
+        return false;
+    }
 
     /// <summary>连锁开始时刻。兜底用：万一有张被拉进来的卡没跑到钩子，计数不会永久卡住。</summary>
     private static DateTime _cascadeStartedUtc;

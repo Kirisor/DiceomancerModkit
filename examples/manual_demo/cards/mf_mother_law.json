@@ -7,6 +7,7 @@
   },
   "cost": [
     "Green",
+    "Green",
     "Green"
   ],
   "rarity": "Rare",
@@ -17,18 +18,31 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "custom": "mf_mother_law",
+      "builtin": "gain_ability",
+      "name": "milkfrog_choice",
+      "target": "Self",
       "amounts": [
         1
       ]
     }
   ],
   "upgrade": {
-    "effectNumbers": [
+    "cost": [
+      "Green",
+      "Green"
+    ],
+    "replaceEffects": [
       {
         "index": 0,
-        "amounts": [
-          2
+        "effects": [
+          {
+            "builtin": "gain_ability",
+            "name": "milkfrog_choice_full",
+            "target": "Self",
+            "amounts": [
+              1
+            ]
+          }
         ]
       }
     ]
