@@ -59,6 +59,11 @@ namespace ModKit.Core
                         parsed.Value.Id = modId + "." + parsed.Value.Id;
                     }
                     result.Abilities.Add(parsed.Value);
+
+                    // ★ 记下"短名 → 全名"，装配器写 abilityName 时会用它换全名。
+                    //   （不登记的话，卡片里写的能力 id 在游戏里查不到 → abilitySo 为 null
+                    //    → EffectApplyAbility.GetEffectDesKey() 抛 NullReferenceException）
+                    DeclaredAbilities.Register(modId, parsed.Value.Id);
                 }
                 else
                 {

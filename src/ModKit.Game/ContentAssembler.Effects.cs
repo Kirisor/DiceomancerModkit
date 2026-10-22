@@ -181,7 +181,7 @@ namespace ModKit.Game
 
                 case ApiBuiltinEffect.GainAbility:
                     info.effectName = "ApplyAbility";
-                    info.abilityName = spec.Name;
+                    info.abilityName = ModKit.Core.DeclaredAbilities.Resolve(spec.Name);   // 短名 → mod 全名
                     break;
 
                 case ApiBuiltinEffect.AddRandomCard:
@@ -207,7 +207,7 @@ namespace ModKit.Game
                     //   并把"能力找不到"从 NRE 降级为一条 Error 日志。
                     info.effectName = "SpecialEffect";
                     info.specialEffectString = "ApplyPrimAbility";
-                    info.abilityName = spec.Name;
+                    info.abilityName = ModKit.Core.DeclaredAbilities.Resolve(spec.Name);   // 短名 → mod 全名
                     break;
 
                 case ApiBuiltinEffect.ApplyUtilAbility:
@@ -215,7 +215,7 @@ namespace ModKit.Game
                     //   ⇒ 换成平台自建的 `EffectSpEffectApplyUtilAbility`（行为等价 + 数字夹紧）。
                     info.effectName = "SpecialEffect";
                     info.specialEffectString = "ApplyUtilAbility";
-                    info.abilityName = spec.Name;
+                    info.abilityName = ModKit.Core.DeclaredAbilities.Resolve(spec.Name);   // 短名 → mod 全名
                     break;
 
                 case ApiBuiltinEffect.ChangeMaxHealth:
