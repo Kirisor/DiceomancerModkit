@@ -41,7 +41,7 @@ public sealed class MilkFrogClass : IModClassProvider
             },
 
             // ★ 至少 2 件：职业介绍卡硬取 relicSos[1] 做护符预览，少于 2 件会在开局界面抛异常
-            StartRelics = new List<string> { "manual_relic_turn_draw","TheOneDice", "milk_frog_talisman" },
+            StartRelics = new List<string> { "TheOneDice", "milk_frog_talisman" },
 
             // ★ 战役卡池：决定玩家整局能不能变强。只写初始牌组的话，玩家永远抽不到新卡，
             //   强度曲线是平的（第一层靠初始牌组还能打，第二层敌人一涨就崩）。
@@ -49,21 +49,11 @@ public sealed class MilkFrogClass : IModClassProvider
             //   ⚠️ 必须与 mod.json 的 cards 清单一致：引用了不存在的卡会在装配期报错。
             PoolCards = new List<string>
             {
-                // 36 张奶蛙专属卡全部进战役卡池（含初始 4 张）
-                "mf_strike", "mf_skin", "mf_call", "mf_hop",
-                "mf_mire_swell", "mf_bellow", "mf_bloodkiss", "mf_doomcroak",
-                "mf_venom_fang", "mf_pond_call", "mf_glare",
-                "mf_mudpuppet", "mf_bloodspawn", "mf_mother_law",
-                // 普通
-                "mf_drum", "mf_lily", "mf_gnat", "mf_rhythm", "mf_mud","milkfroglaugh",
-                "mf_chain_start", "mf_tongue", "mf_sun", "mf_pond", "mf_spring",
-                // 稀有
-                "mf_bulwark", "mf_leap_chain", "mf_spore", "mf_heal_mud", "mf_mirror",
-                "mf_blackvein", "mf_voidpulse", "mf_chorus", "mf_ironthroat",
-                "mf_swarm_guard", "mf_echo", "mf_molt",
-                // 传说
-                "mf_king", "mf_avalanche", "mf_eternal", "mf_blackhole", "mf_shell",
-                "mf_army", "mf_voidheart", "mf_lastcroak", "mf_ancestral", "mf_crown"
+                // 只列实际存在的卡（17 张）——清单里没有的卡引用了会在装配期报错
+                "mf_bloodkiss", "mf_bloodspawn", "mf_doomcroak", "mf_essence_blood", "mf_essence_mud",
+                "mf_glare", "mf_mire_swell", "mf_molt", "mf_mother_law", "mf_mudpuppet",
+                "mf_pond_call", "mf_venom_fang", "milkfrogangre", "milkfrogblock", "milkfroglaugh",
+                "milkfrogstrike", "naifrogseek"
             }
         };
     }
