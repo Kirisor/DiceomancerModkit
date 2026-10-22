@@ -14,7 +14,7 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 |---|---|---|
 | **玩别人做的 mod** | **[ModKit-Platform-0.3.1.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.1/ModKit-Platform-0.3.1.zip)** | **179 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
 | **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
-| **玩奶蛙 mod** | **[Naifrog-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.1.0/Naifrog-Mod-0.1.0.zip)** | **623 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符 + 黑球）16 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
+| **玩奶蛙 mod** | **[Naifrog-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.1.0/Naifrog-Mod-0.1.0.zip)** | **623 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）16 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
 | **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.1/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
 
 > 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
@@ -37,7 +37,7 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 验证：`BepInEx\LogOutput.log` 里搜 `[ModKit]`，应出现 `mod 已加载：<modid>：卡 N / 遗物 M / 关键词 K`。
 
-> 带**职业**的 mod（如奶蛙）要**开新档**：职业球只在新战役的选球界面出现，旧存档不会长出来。
+> 带**职业**的 mod（如奶蛙）要**开新档**：职业只在**新战役**开始时可选，旧存档不会长出来。
 
 ---
 
@@ -45,12 +45,13 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 下载：**[Naifrog-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.1.0/Naifrog-Mod-0.1.0.zip)**（623 KB / 38 个文件，解压即 `naifrog/`）
 
-`examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫 / 绿 / 黑三色护符，黑球是标志），
+`examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫 / 绿 / 黑三色护符），
 16 张卡、1 件起始遗物（奶蛙之护符）、2 个能力（蛙母的选择 / 蛙母的全权）、中英双语文案，
 带自己的 C# 行为（`naifrog.dll`）。
 
 - 玩：解压后把 `naifrog/` 整个目录放进 `<游戏根>\BepInEx\DiceomancerMods\`，再装平台包；
-  **新开一局**，选球界面会出现第 6 颗（黑）球。每结算一张带「奶蛙」的卡，就从抽牌堆 / 弃牌堆
+  **新开一局**时，选球界面左侧会出现**平台自建的职业面板**，选「奶蛙」→「开始游戏」即可
+  （面板上的「用原版选球」随时退回原版界面）。每结算一张带「奶蛙」的卡，就从抽牌堆 / 弃牌堆
   再拉同伴免费结算一次；「蛙群瞪视」这类卡被奶蛙结算时还会额外触发一条「被奶蛙结算时：」效果。
 - 学：它同时是"平台能做什么"的活例子 —— 自定义关键词、自定义效果、职业三色护符、
   自定义颜色、连锁触发点都在里面；改完源码跑 `bash examples/naifrog/build-mod.sh` 重新编译。
