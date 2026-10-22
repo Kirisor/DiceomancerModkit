@@ -450,6 +450,11 @@ namespace ModKit.Game
         /// <remarks>
         /// mod 卡在游戏里的 cardName 带 mod 前缀（如 <c>manual_demo.mf_tadpole_token</c>），
         /// 而作者在 JSON 里写裸 id —— 两种都接受。
+        /// <para>
+        /// ★ 不能用 <c>null</c> 判断"没找到"：游戏 <c>GetCardSoByName</c> 查不到时返回
+        ///   EmptyCard（"空白卡牌"）而不是 null。判 null 会让这里的"按后缀找 mod 卡"
+        ///   永远不执行，把空白卡当结果发放（症状：give_card 给的是一张空白卡）。
+        /// </para>
         /// </remarks>
         private static CardSo FindCardSo(string id)
         {
@@ -457,7 +462,7 @@ namespace ModKit.Game
             if (cdm == null) { return null; }
 
             var direct = cdm.GetCardSoByName(id);
-            if (direct != null) { return direct; }
+            if (IsNamedCard(direct, id)) { return direct; }
 
             try
             {
@@ -478,6 +483,15 @@ namespace ModKit.Game
             }
             catch { }
             return null;
+        }
+
+        /// <summary>按名查到的卡是否真的是这张（空白卡的 cardName 也非空，所以必须比名字）。</summary>
+        private static bool IsNamedCard(CardSo so, string expectedName)
+        {
+            return so != null
+                && !string.IsNullOrEmpty(so.cardName)
+                && so.cardName != "EmptyCard"
+                && string.Equals(so.cardName, expectedName, StringComparison.Ordinal);
         }
 
         public override void UpgradeCard(ICardRef card) { WarnOnce("UpgradeCard"); }

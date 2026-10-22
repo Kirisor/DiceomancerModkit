@@ -177,7 +177,10 @@ namespace ModKit.Game
                 }
 
                 var template = mgr.GetCardSoByName(def.ArtTemplate);
-                if (template == null)
+                // ★ GetCardSoByName 查不到时返回 EmptyCard（不是 null）：只判 null 会把"模板写错"
+                //   静默变成"拿空白卡当模板"（卡面与动画全是空白卡）。必须比对名字。
+                if (template == null || template.cardName == "EmptyCard" ||
+                    !string.Equals(template.cardName, def.ArtTemplate, StringComparison.Ordinal))
                 {
                     result.Errors.Add(def.Id + "：找不到模板卡 '" + def.ArtTemplate + "'。");
                     return null;

@@ -353,12 +353,18 @@ namespace ModKit.Game
                 if (log != null) { log.Warn("职业统计：处理 " + classKey + " 失败 —— " + ex.GetType().Name + ": " + ex.Message); }
             }
         }
-        /// <summary>把 mod 内的短 id 归一化成平台用的完整名（已经是完整名则原样返回）。</summary>
         /// <summary>
         /// 解析初始牌组的一张卡：先按 "&lt;modId&gt;.&lt;id&gt;" 在本 mod 的卡里找，
         /// 找不到再当作**原版卡名**去游戏数据里找 —— 这样职业可以点名带原版卡入组
         /// （例：奶蛙职业自带「至尊骰」Dice）。
         /// </summary>
+        /// <remarks>
+        /// ★ 不能用 <c>null</c> 判断"没找到"：游戏 <c>CardDataManager.GetCardSoByName</c>
+        ///   查不到时**返回 EmptyCard（"空白卡牌"）而不是 null**。判 null 会让"按原版卡名兜底"
+        ///   那一步永远不执行，牌组里就多出一张空白卡（2026-10-22 实机：初始牌组点名原版卡
+        ///   "Dice"，进战斗变成空白卡；Player.log 记录 "manual_demo.Dice is not found in
+        ///   CardDataManager"，而 GetCardSoByName 已经把 EmptyCard 当成"找到了"）。
+        /// </remarks>
         private static CardSo ResolveDeckCard(string modId, string rawId, List<CardSo> modCards)
         {
             if (string.IsNullOrEmpty(rawId)) { return null; }
@@ -370,14 +376,22 @@ namespace ModKit.Game
             try
             {
                 var cdm = CardDataManager.Instance;
-                if (cdm != null)
-                {
-                    so = cdm.GetCardSoByName(qualified);
-                    if (so == null) { so = cdm.GetCardSoByName(rawId); }
-                }
+                if (cdm == null) { return null; }
+
+                so = cdm.GetCardSoByName(qualified);
+                if (!IsExactCard(so, qualified)) { so = cdm.GetCardSoByName(rawId); }
+                return IsExactCard(so, rawId) ? so : null;
             }
-            catch { }
-            return so;
+            catch { return null; }
+        }
+
+        /// <summary>按名查到的卡是否**真的是这张**（空白卡的 cardName 也非空，所以必须比名字）。</summary>
+        private static bool IsExactCard(CardSo so, string expectedName)
+        {
+            return so != null
+                && !string.IsNullOrEmpty(so.cardName)
+                && so.cardName != "EmptyCard"
+                && string.Equals(so.cardName, expectedName, StringComparison.Ordinal);
         }
 
         /// <summary>解析起始遗物：先本 mod，再原版遗物（例：TheOneDice 至尊骰）。</summary>
@@ -402,6 +416,7 @@ namespace ModKit.Game
             return so;
         }
 
+        /// <summary>把 mod 内的短 id 归一化成平台用的完整名（已经是完整名则原样返回）。</summary>
         private static string Qualify(string modId, string id)        {
             if (string.IsNullOrEmpty(id)) { return id; }
             return id.Contains(".") ? id : modId + "." + id;
