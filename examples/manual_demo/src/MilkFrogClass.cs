@@ -36,11 +36,12 @@ public sealed class MilkFrogClass : IModClassProvider
                 // 3 种初始卡 × 数量，共 10 张（重置后统一用仓库里的卡 id）
                 "mf_mire_swell", "mf_mire_swell", "mf_mire_swell", "mf_mire_swell",  // 腐泥翻涌（弃牌堆伤害）
                 "mf_bellow", "mf_bellow", "mf_bellow", "mf_bellow",                  // 鼓气长鸣（临时力量）
-                "mf_venom_fang", "mf_venom_fang"                                     // 蛙毒牙（真伤 + 条件流血）
+                "mf_venom_fang", "mf_venom_fang",                                    // 蛙毒牙（真伤 + 条件流血）
+                "Dice"           // 至尊骰（原版卡）
             },
 
             // ★ 至少 2 件：职业介绍卡硬取 relicSos[1] 做护符预览，少于 2 件会在开局界面抛异常
-            StartRelics = new List<string> { "manual_relic_turn_draw", "manual_relic_battle_start" },
+            StartRelics = new List<string> { "manual_relic_turn_draw", "manual_relic_battle_start", "TheOneDice" },
 
             // ★ 战役卡池：决定玩家整局能不能变强。只写初始牌组的话，玩家永远抽不到新卡，
             //   强度曲线是平的（第一层靠初始牌组还能打，第二层敌人一涨就崩）。

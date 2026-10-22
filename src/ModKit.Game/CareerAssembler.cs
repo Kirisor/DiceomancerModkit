@@ -121,8 +121,7 @@ namespace ModKit.Game
                 {
                     foreach (var rawId in spec.StartDeck)
                     {
-                        string cardName = Qualify(modId, rawId);
-                        CardSo so = modCards.FirstOrDefault(c => c != null && c.cardName == cardName);
+                        CardSo so = ResolveDeckCard(modId, rawId, modCards);
                         if (so == null)
                         {
                             result.Errors.Add(modId + "：职业 " + spec.Id + " 的初始牌组引用了不存在的卡 '" + rawId + "'。");
@@ -141,8 +140,7 @@ namespace ModKit.Game
                 var relicSos = new List<RelicSo>();
                 foreach (var rawId in spec.StartRelics)
                 {
-                    string relicName = Qualify(modId, rawId);
-                    RelicSo so = modRelics.FirstOrDefault(r => r != null && r.relicInfo.relicName == relicName);
+                    RelicSo so = ResolveStartRelic(modId, rawId, modRelics);
                     if (so == null)
                     {
                         result.Errors.Add(modId + "：职业 " + spec.Id + " 的起始遗物引用了不存在的遗物 '" + rawId + "'。");
@@ -356,6 +354,54 @@ namespace ModKit.Game
             }
         }
         /// <summary>把 mod 内的短 id 归一化成平台用的完整名（已经是完整名则原样返回）。</summary>
+        /// <summary>
+        /// 解析初始牌组的一张卡：先按 "&lt;modId&gt;.&lt;id&gt;" 在本 mod 的卡里找，
+        /// 找不到再当作**原版卡名**去游戏数据里找 —— 这样职业可以点名带原版卡入组
+        /// （例：奶蛙职业自带「至尊骰」Dice）。
+        /// </summary>
+        private static CardSo ResolveDeckCard(string modId, string rawId, List<CardSo> modCards)
+        {
+            if (string.IsNullOrEmpty(rawId)) { return null; }
+            string qualified = Qualify(modId, rawId);
+
+            var so = modCards == null ? null : modCards.FirstOrDefault(c => c != null && c.cardName == qualified);
+            if (so != null) { return so; }
+
+            try
+            {
+                var cdm = CardDataManager.Instance;
+                if (cdm != null)
+                {
+                    so = cdm.GetCardSoByName(qualified);
+                    if (so == null) { so = cdm.GetCardSoByName(rawId); }
+                }
+            }
+            catch { }
+            return so;
+        }
+
+        /// <summary>解析起始遗物：先本 mod，再原版遗物（例：TheOneDice 至尊骰）。</summary>
+        private static RelicSo ResolveStartRelic(string modId, string rawId, List<RelicSo> modRelics)
+        {
+            if (string.IsNullOrEmpty(rawId)) { return null; }
+            string qualified = Qualify(modId, rawId);
+
+            var so = modRelics == null ? null : modRelics.FirstOrDefault(r => r != null && r.relicInfo.relicName == qualified);
+            if (so != null) { return so; }
+
+            try
+            {
+                var rdm = DataManager.Instance == null ? null : DataManager.Instance.GetRelicDataManager();
+                if (rdm != null)
+                {
+                    so = rdm.GetRelicSo(qualified);
+                    if (so == null) { so = rdm.GetRelicSo(rawId); }
+                }
+            }
+            catch { }
+            return so;
+        }
+
         private static string Qualify(string modId, string id)        {
             if (string.IsNullOrEmpty(id)) { return id; }
             return id.Contains(".") ? id : modId + "." + id;
