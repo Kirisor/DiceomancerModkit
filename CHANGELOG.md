@@ -1,9 +1,12 @@
 # 变更记录
 
-## 未发布
+## v0.3.1
 
-### 平台修复
+### 修复
 
+- **平台包缺启动入口**：0.3.0 的平台包只有 Api / Core / Game 三个 DLL，漏了 `ModKit.Plugin.dll`
+  （BepInEx 入口，流水线由它启动）——按 README 手动装包的新用户其实什么都不会加载。
+  0.3.1 包内补齐到四个 DLL，`CHECKSUMS.txt` 与 Release 的 `SHA256SUMS.txt` 同步给出。
 - **初始牌组点名原版卡会变成「空白卡牌」**：游戏的 `CardDataManager.GetCardSoByName`
   查不到时返回 `EmptyCard`（空白卡牌）而不是 `null`，平台按 `null` 判断"没找到"，
   于是"按原版卡名兜底"那一步永远不执行 —— 初始牌组里点名原版卡（例：至尊骰 `Dice`）
@@ -13,7 +16,12 @@
 - **能力描述键**：`AbilityDescription` 的键是 `<能力全名>`（平台自动补 `_Des`），
   写裸 id 会显示 `No translation found for '<mod>.<ability>_Des'`；文档已注明。
 
-### 示例 mod：`manual_demo` → `naifrog`（奶蛙）
+### 已知边界
+
+- 四件套目前由本机已安装版本打包：仓库只能从 `src` 复现 Game / Plugin，
+  Api 源码缺 `ClassSpec` / `IModClassProvider`，"发布物 ↔ 源码"的逐位对应仍未打通。
+
+### 奶蛙 mod（独立发行版 `naifrog-v1.0.0`）
 
 - mod id / 显示名 / 程序集/目录全部改为 `naifrog` / 奶蛙 / `naifrog.dll` /
   `examples/naifrog`；打包脚本产出 `Naifrog-Mod-<mod 版本>.zip`。
