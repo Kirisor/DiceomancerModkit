@@ -94,6 +94,10 @@
     "AbilityDescription": {
       "milkfrog_choice": "When Milk Frog pulls, you choose which Milk Frog cards resolve.",
       "milkfrog_choice_full": "When Milk Frog pulls, you choose any cards to resolve."
+    },
+    "Relic": {
+      "manual_demo.milk_frog_talisman": "Milk Frog Talisman",
+      "manual_demo.milk_frog_talisman_Des": "When you trigger Milk Frog, draw 1 card. Twice per turn at most."
     }
   }
 }

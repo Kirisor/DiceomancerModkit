@@ -86,7 +86,9 @@
     },
     "Relic": {
       "manual_demo.manual_relic_turn_draw": "手册·回合抽牌",
-      "manual_demo.manual_relic_battle_start": "手册·开场能力"
+      "manual_demo.manual_relic_battle_start": "手册·开场能力",
+      "manual_demo.milk_frog_talisman": "奶蛙之护符",
+      "manual_demo.milk_frog_talisman_Des": "当你触发 1 次「奶蛙」时，抽 1 张牌。每回合至多 2 次。"
     },
     "EffectDescription": {
       "Key_ManualGainBlock": "手册·自写效果：本卡的效果由 mod 的 C# 代码实现。",

@@ -377,6 +377,25 @@ namespace ModKit.Api
         public List<EffectSpec> Effects { get; set; }
 
         /// <summary>
+        /// 遗物图标上那几颗流派球的颜色（→ <c>relicInfo.relicColors</c>）。
+        /// </summary>
+        /// <remarks>
+        /// JSON 名 <c>colors</c>。不给则沿用 <see cref="ArtTemplate"/> 模板的颜色。
+        /// 职业护符正是靠它显示"三色球"（如德鲁伊 = 紫/绿/虚）——
+        /// 想改成黑球只需写 <c>"colors": ["Purple","Green","Black"]</c>，不必自己画图。
+        /// </remarks>
+        public List<string> Colors { get; set; }
+
+        /// <summary>触发次数上限（→ <c>relicInfo.triggerLimit</c>）。0 / 不给 = 不限。</summary>
+        public int? TriggerLimit { get; set; }
+
+        /// <summary>
+        /// 上限的作用域：<c>EachTurn</c> / <c>EachBattle</c>（→ <c>relicInfo.triggerLimitType</c>）。
+        /// 仅在给了 <see cref="TriggerLimit"/> 时生效。
+        /// </summary>
+        public string TriggerLimitType { get; set; }
+
+        /// <summary>
         /// 关键词自带效果的**结算时机**（<c>OnCast</c> / <c>OnDraw</c> / <c>OnDiscard</c> / <c>EndInHand</c>）。
         /// </summary>
         /// <remarks>

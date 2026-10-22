@@ -1,0 +1,20 @@
+{
+  "$schema": "modkit/relic@1",
+  "id": "milk_frog_talisman",
+  "name": {
+    "zh-Hans": "奶蛙之护符",
+    "en": "Milk Frog Talisman"
+  },
+  "artTemplate": "TalismanOfPGV",
+  "trigger": "CardKeywordTrigger",
+  "extraString": "milk_frog",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "addToPool": false
+}

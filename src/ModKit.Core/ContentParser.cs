@@ -110,6 +110,9 @@ namespace ModKit.Core
                 RelativeCharacter = Str(root, "relativeCharacter"),
                 ExtraString = Str(root, "extraString"),
                 ColorE = Str(root, "colorE"),
+                Colors = StrList(root, "colors"),
+                TriggerLimit = IntOrNull(root, "triggerLimit"),
+                TriggerLimitType = Str(root, "triggerLimitType"),
                 Effects = ParseEffects(root, report)
             };
 

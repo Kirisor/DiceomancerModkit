@@ -70,8 +70,9 @@
     "cards/milk_frog.json"
   ],
   "relics": [
+    "relics/manual_relic_battle_start.json",
     "relics/manual_relic_turn_draw.json",
-    "relics/manual_relic_battle_start.json"
+    "relics/milk_frog_talisman.json"
   ],
   "keywords": [
     "keywords/manual_bulwark.json",

@@ -8,6 +8,7 @@ using Command;
 using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using Keyword;
+using Trigger;
 using ModKit.Api;
 using UnityEngine;
 
@@ -148,6 +149,23 @@ public sealed class CardKeywordMilkFrog : CardKeyword
             new CommandResolveCard(other, CardResolveSource.AutoPlay);
         }
         Debug.Log("[ModKit] 奶蛙：本卡结算后，额外结算 " + found.Count + " 张奶蛙（" + names + "）。");
+
+        // 通知遗物系统："奶蛙"关键词刚刚触发了一次。
+        // 「奶蛙之护符」等的触发点正是 CardKeywordTrigger（匹配 extraString）。
+        try
+        {
+            TriggerBase keywordTrigger = new TriggerBase("CardKeywordTrigger")
+            {
+                Card = card,
+                ExtraString = "milk_frog"
+            };
+            TriggerManager.Instance.AddTrigger(keywordTrigger);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[ModKit] 奶蛙：抛关键词触发事件失败 —— " + e.Message);
+        }
+
         PlayCascadeSound();
     }
 
