@@ -1,0 +1,45 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "thonasflare",
+  "name": {
+    "zh-Hans": "托奶斯回旋",
+    "en": "thonasflare"
+  },
+  "cost": [
+    "Green"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        4
+      ],
+      "mode": "Direct",
+      "target": "Opponent"
+    }
+  ],
+  "keywords": [
+    {
+      "name": "Kick",
+      "number": 2
+    },
+    {
+      "name": "milk_frog",
+      "number": 2
+    }
+  ],
+  "artTemplate": "Abyss",
+  "upgrade": {
+    "keywordNumbers": [
+      {
+        "keyword": "Kick",
+        "number": 4
+      }
+    ]
+  }
+}

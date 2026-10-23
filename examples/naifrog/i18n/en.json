@@ -18,7 +18,12 @@
       "naifrog.mf_mother_law": "In Mother's Name",
       "naifrog.mf_essence_mud": "Puppy Essence",
       "naifrog.mf_essence_blood": "Egg Essence",
-      "naifrog.milkfrogangre": "Angry Milk Frog"
+      "naifrog.milkfrogangre": "Angry Milk Frog",
+      "naifrog.new_card": "New Card",
+      "naifrog.thonasflare": "thonasflare",
+      "naifrog.mf_swarm_surge": "Swarm Surge",
+      "naifrog.bigstomach": "bigstomach",
+      "naifrog.nainaiphus": "Nainaiphus"
     },
     "KeyWord": {
       "milk_frog": "Milk Frog",
@@ -32,7 +37,10 @@
       "Key_mf_bleed_if_cascade": "When resolved by Milk Frog: apply {Number} Bleed to the target.",
       "Key_mf_bleed_always": "Apply {Number} Bleed to the target.",
       "Key_mf_glare_cascade": "When resolved by Milk Frog: apply {Number} Vulnerable to all enemies.",
-      "Key_mf_noop": "(no additional effect)"
+      "Key_mf_noop": "(no additional effect)",
+      "Key_mf_swarm_surge_cascade": "When resolved by Milk Frog: deal {Number} damage to all enemies.",
+      "Key_mf_choose_discard": "Put {Number} card(s) from your hand into the discard pile.",
+      "Key_mf_choir_tenacity": "This turn, each time a Milk Frog card resolves, gain {Number} additional Tough."
     },
     "CardRequirementDes": {
       "naifrog.req_blue": "Green cards",
@@ -49,6 +57,10 @@
     "Relic": {
       "naifrog.milk_frog_talisman": "Milk Frog Talisman",
       "naifrog.milk_frog_talisman_Des": "When you trigger Milk Frog, draw 1 card. Twice per turn at most."
+    },
+    "PickCardConfigure": {
+      "Title_MilkfrogDiscard": "Choose a card to discard",
+      "Key_MilkfrogDiscard": "Discard"
     }
   }
 }

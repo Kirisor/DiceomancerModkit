@@ -1,0 +1,47 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "bigstomach",
+  "name": {
+    "zh-Hans": "大胃袋",
+    "en": "bigstomach"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Feast",
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "Tough",
+      "target": "Self",
+      "amounts": [
+        3
+      ]
+    },
+    {
+      "custom": "mf_choir_tenacity",
+      "amounts": [
+        3
+      ]
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 2
+    },
+    "Exert"
+  ],
+  "upgrade": {
+    "keywordNumbers": [
+      {
+        "keyword": "milk_frog",
+        "number": 3
+      }
+    ]
+  }
+}

@@ -31,5 +31,11 @@
         ]
       }
     ]
-  }
+  },
+  "keywords": [
+    {
+      "name": "Kick",
+      "number": 2
+    }
+  ]
 }

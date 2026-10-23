@@ -12,10 +12,10 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 | 我要… | 下载 | 说明 |
 |---|---|---|
-| **玩别人做的 mod** | **[ModKit-Platform-0.3.1.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.1/ModKit-Platform-0.3.1.zip)** | **179 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
+| **玩别人做的 mod** | **[ModKit-Platform-0.3.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.2/ModKit-Platform-0.3.2.zip)** | **181 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
 | **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
-| **玩奶蛙 mod** | **[Naifrog-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.1.0/Naifrog-Mod-0.1.0.zip)** | **623 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）16 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
-| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.1/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
+| **玩奶蛙 mod** | **[Naifrog-Mod-0.2.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.2.0/Naifrog-Mod-0.2.0.zip)** | **617 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）20 张卡 + 1 遗物 + 2 能力，中英双语；需要平台包 |
+| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.3.2/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
 
 > 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
 > 全部历史版本见 [Releases](https://github.com/Kirisor/DiceomancerModkit/releases)。
@@ -41,12 +41,12 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 ---
 
-## 奶蛙 mod（职业 mod · v0.1.0）
+## 奶蛙 mod（职业 mod · v0.2.0）
 
-下载：**[Naifrog-Mod-0.1.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.1.0/Naifrog-Mod-0.1.0.zip)**（623 KB / 38 个文件，解压即 `naifrog/`）
+下载：**[Naifrog-Mod-0.2.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.2.0/Naifrog-Mod-0.2.0.zip)**（617 KB / 44 个文件，解压即 `naifrog/`）
 
 `examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫 / 绿 / 黑三色护符），
-16 张卡、1 件起始遗物（奶蛙之护符）、2 个能力（蛙母的选择 / 蛙母的全权）、中英双语文案，
+20 张卡、1 件起始遗物（奶蛙之护符）、2 个能力（蛙母的选择 / 蛙母的全权）、中英双语文案，
 带自己的 C# 行为（`naifrog.dll`）。
 
 - 玩：解压后把 `naifrog/` 整个目录放进 `<游戏根>\BepInEx\DiceomancerMods\`，再装平台包；

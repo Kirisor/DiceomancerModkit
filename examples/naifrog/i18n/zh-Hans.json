@@ -18,7 +18,12 @@
       "naifrog.mf_mother_law": "以母之名",
       "naifrog.mf_essence_mud": "奶狗精粹",
       "naifrog.mf_essence_blood": "奶蛋精粹",
-      "naifrog.milkfrogangre": "愤怒的奶蛙"
+      "naifrog.milkfrogangre": "愤怒的奶蛙",
+      "naifrog.new_card": "新卡牌",
+      "naifrog.thonasflare": "托奶斯回旋",
+      "naifrog.mf_swarm_surge": "蛙群怒涛",
+      "naifrog.bigstomach": "大胃袋",
+      "naifrog.nainaiphus": "奶奶弗斯"
     },
     "KeyWord": {
       "manual_bulwark": "手册坚壁",
@@ -40,7 +45,10 @@
       "Key_mf_bleed_if_cascade": "被奶蛙结算时：对目标敌人施加 {Number} 层流血。",
       "Key_mf_bleed_always": "对目标敌人施加 {Number} 层流血。",
       "Key_mf_glare_cascade": "被奶蛙结算时：对所有敌人施加 {Number} 层易伤。",
-      "Key_mf_noop": "（本能力没有额外效果。）"
+      "Key_mf_noop": "（本能力没有额外效果。）",
+      "Key_mf_swarm_surge_cascade": "被奶蛙结算时：对所有敌人造成 {Number} 点伤害。",
+      "Key_mf_choose_discard": "将 {Number} 张手牌放进弃牌堆。",
+      "Key_mf_choir_tenacity": "本回合每结算 1 张奶蛙卡，额外获得 {Number} 点坚韧。"
     },
     "Ability": {
       "naifrog.milkfrog_choice": "蛙母的选择",
@@ -49,6 +57,10 @@
     "AbilityDescription": {
       "naifrog.milkfrog_choice": "「奶蛙」拉取时由你选择要结算的奶蛙卡。",
       "naifrog.milkfrog_choice_full": "「奶蛙」拉取时由你选择任意要结算的卡。"
+    },
+    "PickCardConfigure": {
+      "Title_MilkfrogDiscard": "选择要放进弃牌堆的手牌",
+      "Key_MilkfrogDiscard": "弃置"
     }
   }
 }

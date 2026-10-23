@@ -1,0 +1,48 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "nainaiphus",
+  "name": {
+    "zh-Hans": "奶奶弗斯",
+    "en": "Nainaiphus"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "AscensionCurse",
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    },
+    {
+      "custom": "mf_choose_discard",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "keywords": [
+    "Exert"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      },
+      {
+        "index": 1,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

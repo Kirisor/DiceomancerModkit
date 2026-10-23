@@ -49,11 +49,13 @@ public sealed class MilkFrogClass : IModClassProvider
             //   ⚠️ 必须与 mod.json 的 cards 清单一致：引用了不存在的卡会在装配期报错。
             PoolCards = new List<string>
             {
-                // 只列实际存在的卡（17 张）——清单里没有的卡引用了会在装配期报错
-                "mf_bloodkiss", "mf_bloodspawn", "mf_doomcroak", "mf_essence_blood", "mf_essence_mud",
+                "mf_swarm_surge",
+                "bigstomach",
+                // 只列实际存在的卡（不包括衍生物和初始打防13 张）——清单里没有的卡引用了会在装配期报错
+                "mf_bloodkiss", "mf_bloodspawn", "mf_doomcroak", 
                 "mf_glare", "mf_mire_swell", "mf_mother_law", "mf_mudpuppet",
-                "mf_pond_call", "mf_venom_fang", "milkfrogangre", "milkfrogblock", "milkfroglaugh",
-                "milkfrogstrike", "naifrogseek"
+                "mf_pond_call", "mf_venom_fang", "milkfrogangre", "milkfroglaugh",
+                "naifrogseek", "thonasflare"
             }
         };
     }

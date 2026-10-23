@@ -2,7 +2,7 @@
   "$schema": "modkit/mod@1",
   "id": "naifrog",
   "name": "奶蛙",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Kirisor",
   "cards": [
     "cards/manual_art.json",
@@ -20,7 +20,11 @@
     "cards/mf_mudpuppet.json",
     "cards/mf_pond_call.json",
     "cards/mf_venom_fang.json",
-    "cards/milk_frog.json"
+    "cards/milk_frog.json",
+    "cards/thonasflare.json",
+    "cards/mf_swarm_surge.json",
+    "cards/nainaiphus.json",
+    "cards/mf_choir_bulwark.json"
   ],
   "relics": [
     "relics/milk_frog_talisman.json"

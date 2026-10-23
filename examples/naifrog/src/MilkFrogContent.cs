@@ -135,6 +135,17 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         {
             Debug.LogError("[ModKit] 奶蛙：拉取其它奶蛙时出错 —— " + e);
         }
+
+        // 「蛙群壁垒」：本回合内每结算 1 张奶蛙卡，额外获得 N 点坚韧（换回合自动失效）
+        try
+        {
+            int tenacity = MilkFrogTenacity.ActiveAmount;
+            if (tenacity > 0) { MilkFrogTenacity.ApplyTough(tenacity); }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[ModKit] 奶蛙：坚韧结算失败 —— " + e.Message);
+        }
         return UniTask.CompletedTask;
     }
 

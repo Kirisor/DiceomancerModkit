@@ -1,0 +1,49 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_swarm_surge",
+  "name": {
+    "zh-Hans": "蛙群怒涛",
+    "en": "Swarm Surge"
+  },
+  "cost": [
+    "Green",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "deal_damage",
+      "amounts": [
+        10
+      ],
+      "target": "AllOpponents",
+      "mode": "Direct"
+    },
+    {
+      "custom": "mf_swarm_surge_cascade",
+      "amounts": [
+        5
+      ],
+      "target": "AllOpponents"
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 2
+    }
+  ],
+  "upgrade": {
+    "keywordNumbers": [
+      {
+        "keyword": "milk_frog",
+        "number": 3
+      }
+    ]
+  }
+}
