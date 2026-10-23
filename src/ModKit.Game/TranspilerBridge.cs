@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using ModKit.Core;
@@ -301,7 +302,40 @@ namespace ModKit.Game
             ModKitBridge.Install(registry);
 
             var harmony = new Harmony("modkit.bridge");
-            harmony.PatchAll(typeof(BridgeInstaller).Assembly);
+
+            // ★ 逐个补丁类安装，单个失败只跳过它自己。
+            //   2026-10-23 实机事故：某个可选补丁的目标方法在游戏里不存在
+            //   （LocalizedStringDatabase.GetTable(string) 不在该类上声明），
+            //   PatchAll(assembly) 直接抛异常 → 整座桥判定安装失败 → 平台整体停用。
+            //   一个"锦上添花"的补丁不该让整个平台下线。
+            int failedTypes = 0;
+            Type[] allTypes;
+            try { allTypes = typeof(BridgeInstaller).Assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException ex)
+            {
+                var loaded = new List<Type>();
+                foreach (var t in ex.Types) { if (t != null) { loaded.Add(t); } }
+                allTypes = loaded.ToArray();
+            }
+
+            foreach (var type in allTypes)
+            {
+                if (type == null) { continue; }
+                try { harmony.PatchAll(type); }
+                catch (Exception ex)
+                {
+                    failedTypes++;
+                    if (log != null)
+                    {
+                        log.Warn("补丁跳过：" + type.Name + " —— " + ex.GetType().Name +
+                                 "（该功能不生效，其余照常）");
+                    }
+                }
+            }
+            if (failedTypes > 0 && log != null)
+            {
+                log.Warn("本次有 " + failedTypes + " 个补丁类安装失败（不影响平台其它功能）。");
+            }
 
             int patched = 0;
             foreach (var m in harmony.GetPatchedMethods())

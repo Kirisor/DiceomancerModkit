@@ -6,30 +6,47 @@ using Career;
 using HarmonyLib;
 using SaveLoad;
 using ModKit.Core;
-using UnityEngine.Localization.Settings;
-using UnityEngine.Localization.Tables;
 using Utilities;
 
 namespace ModKit.Game
 {
     /// <summary>
-    /// 本地化表被游戏重新加载后，把平台登记的文案补写回去。
+    /// 打开「生涯数据」前，把平台登记的文案补写回 Encyclopedia 表。
     /// </summary>
     /// <remarks>
-    /// 实机症状（2026-10-23）：启动时注入成功，但打开「生涯数据」时
-    /// 职业名显示 <c>No translation found for 'manual_demo.milk_frog' in Encyclopedia</c>
-    /// —— Unity Localization 的表是按需加载的，我们启动时写的那份被换掉了。
+    /// 实机症状（2026-10-23）：启动时注入成功，但打开「生涯数据」时职业名显示
+    /// <c>No translation found for 'manual_demo.milk_frog' in Encyclopedia</c>
+    /// —— Unity Localization 的表是按需加载、用完可释放的，我们启动时写的那份会被换掉。
+    /// <para>
+    /// ★ 这里**不**挂 <c>LocalizedStringDatabase.GetTable(string)</c>：
+    ///   该方法不在 <c>LocalizedStringDatabase</c> 上声明（是基类/接口转发），
+    ///   Harmony 的 <c>DeclaredMethod</c> 解析不到 → 整个 <c>PatchAll</c> 抛异常 →
+    ///   平台被判定"桥安装失败"而整体停用（2026-10-23 实机：游戏按原版运行）。
+    ///   改挂游戏自己的界面方法：生涯数据组装列表之前补写一次，时机确定、签名稳定。
+    /// </para>
     /// </remarks>
-    [HarmonyPatch(typeof(LocalizedStringDatabase), nameof(LocalizedStringDatabase.GetTable), new Type[] { typeof(string) })]
-    internal static class LocalizationTableGuard
+    [HarmonyPatch]
+    internal static class StatisticsLocalizationGuard
     {
-        private static void Postfix(string tableName)
+        private static bool _logged;
+
+        private static MethodBase TargetMethod()
+        {
+            return AccessTools.Method(typeof(Collection.SubCollectionCareers), "SetStatisticsEntries");
+        }
+
+        private static void Prefix()
         {
             try
             {
                 var pump = PlatformRuntime.Localization;
-                if (pump == null || string.IsNullOrEmpty(tableName)) { return; }
-                pump.Reinforce(tableName);
+                if (pump == null) { return; }
+                pump.Reinforce("Encyclopedia");
+                if (!_logged)
+                {
+                    _logged = true;
+                    ModKitLog.Info("生涯数据：打开面板前补写 Encyclopedia 文案（表被游戏重载后也能显示职业名）。");
+                }
             }
             catch { }
         }
@@ -52,12 +69,16 @@ namespace ModKit.Game
     [HarmonyPatch(typeof(SaveLoadManager), nameof(SaveLoadManager.LoadCareerStatistics))]
     internal static class CareerStatisticsMigration
     {
-        /// <summary>旧 classKey → 规范 classKey。</summary>
+        /// <summary>旧 classKey → 规范 classKey（规范键 = 当前 mod id 拼出的 classKey）。</summary>
+        /// <remarks>
+        /// 只收录"平台自己改过 id"造成的旧桶。新增一条即可，键值方向必须是
+        /// **旧 → 新**：迁移后所有数据都落在当前职业的桶里，文案才查得到。
+        /// </remarks>
         private static readonly Dictionary<string, string> Renames =
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
-                { "naifrog.milk_frog", "manual_demo.milk_frog" },
-                { "manual_demo.trial_trio", "manual_demo.milk_frog" },
+                { "manual_demo.milk_frog", "naifrog.milk_frog" },    // mod 改名 manual_demo → naifrog
+                { "manual_demo.trial_trio", "naifrog.milk_frog" },   // 更早的试水职业，并入奶蛙
             };
 
         private static readonly string[] SumFields =

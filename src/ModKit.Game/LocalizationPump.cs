@@ -87,6 +87,19 @@ namespace ModKit.Game
         /// <summary>上一次真正执行注入的语言码。语言不限时跳过，避免重复 AddEntry。</summary>
         private string _lastFlushedLocale;
 
+        /// <summary>
+        /// 进程内**所有** pump 实例登记过的文案（语言码 → 表 → 键 → 文本）。
+        /// </summary>
+        /// <remarks>
+        /// ★ 为什么要跨实例留存：职业名/介绍是 <c>CareerAssembler</c> 用**自己的** pump
+        ///   写进 Encyclopedia 的，而「生涯数据」打开时补写用的是主 pump
+        ///   （<c>PlatformRuntime.Localization</c>）—— 主 pump 的 <c>_pending</c> 里没有职业名，
+        ///   于是表被游戏重载后补写补不到它。这里做一份进程内副本，任何 pump 的
+        ///   <see cref="Reinforce"/> 都能把**全部**已登记文案补回去。
+        /// </remarks>
+        private static readonly Dictionary<string, Dictionary<string, Dictionary<string, string>>> Known =
+            new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(StringComparer.OrdinalIgnoreCase);
+
         public LocalizationPump(IGameLog log)
         {
             _log = log;
@@ -143,6 +156,21 @@ namespace ModKit.Game
             }
 
             entries[key] = text;
+
+            // 进程内副本：表被游戏重载后，任何 pump 的 Reinforce 都能补写这条
+            Dictionary<string, Dictionary<string, string>> knownTables;
+            if (!Known.TryGetValue(localeCode, out knownTables))
+            {
+                knownTables = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+                Known[localeCode] = knownTables;
+            }
+            Dictionary<string, string> knownEntries;
+            if (!knownTables.TryGetValue(table, out knownEntries))
+            {
+                knownEntries = new Dictionary<string, string>(StringComparer.Ordinal);
+                knownTables[table] = knownEntries;
+            }
+            knownEntries[key] = text;
         }
 
         /// <summary>
@@ -166,11 +194,21 @@ namespace ModKit.Game
                 string code = locale != null ? locale.Identifier.Code : null;
                 if (string.IsNullOrEmpty(code)) { return; }
 
-                Dictionary<string, Dictionary<string, string>> tables;
-                if (!_pending.TryGetValue(code, out tables)) { return; }
-
-                Dictionary<string, string> entries;
-                if (!tables.TryGetValue(table, out entries)) { return; }
+                // 优先用**进程内全部登记**（含职业名这类由别的 pump 写的条目），
+                // 其次退回本实例的 _pending。
+                Dictionary<string, Dictionary<string, string>> tables = null;
+                Dictionary<string, string> entries = null;
+                if (!Known.TryGetValue(code, out tables) || !tables.TryGetValue(table, out entries))
+                {
+                    if (_pending.TryGetValue(code, out tables) && tables.TryGetValue(table, out entries))
+                    {
+                        // 有 _pending 但 Known 里没有（旧路径），照旧补写
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
 
                 var database = LocalizationSettings.StringDatabase;
                 if (database == null) { return; }
