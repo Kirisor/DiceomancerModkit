@@ -48,6 +48,19 @@ namespace ModKit.Game
         private const string Ns = "Effects.Special.CardEffect.";
         private const string Prefix = "EffectSpEffect";
 
+        /// <summary>
+        /// 能力效果用的是**另一族**名字：<c>Effects.Special.AbilityEffect.EffectSpAbility&lt;X&gt;</c>。
+        /// </summary>
+        /// <remarks>
+        /// 依据 <c>Utilities/EffectUtils.cs</c>：<c>isAbilityEffect ? "EffectSpAbility"+id + "Effects.Special.AbilityEffect."</c>
+        /// —— 2026-10-23 实机：mod 能力（「蛙母的选择」）的效果写成 <c>[ModEffect("mf_noop")]</c>，
+        /// 游戏去找 <c>EffectSpAbilitymf_noop</c> 而平台只生成 <c>EffectSpEffect&lt;X&gt;</c> 那一族 ⇒
+        /// <c>Activator.CreateInstance(null)</c> 抛异常 ⇒ 能力**发不下去**（卡打了、能力不在身上）。
+        /// 两族共用同一个 Forwarder，所以这里只多认一个命名空间。
+        /// </remarks>
+        private const string AbilityNs = "Effects.Special.AbilityEffect.";
+        private const string AbilityPrefix = "EffectSpAbility";
+
         /// <summary>生成的程序集（只建一次）。</summary>
         private static readonly ModuleBuilder Module = CreateModule();
 
@@ -76,9 +89,13 @@ namespace ModKit.Game
         public static Type TryEmit(string typeName)
         {
             if (string.IsNullOrEmpty(typeName)) { return null; }
-            if (!typeName.StartsWith(Ns + Prefix, StringComparison.Ordinal)) { return null; }
 
-            var id = typeName.Substring(Ns.Length + Prefix.Length);
+            string ns, prefix;
+            if (typeName.StartsWith(Ns + Prefix, StringComparison.Ordinal)) { ns = Ns; prefix = Prefix; }
+            else if (typeName.StartsWith(AbilityNs + AbilityPrefix, StringComparison.Ordinal)) { ns = AbilityNs; prefix = AbilityPrefix; }
+            else { return null; }
+
+            var id = typeName.Substring((ns + prefix).Length);
             if (id.Length == 0) { return null; }
 
             lock (Gate)
@@ -90,7 +107,7 @@ namespace ModKit.Game
                 var authorType = PlatformRuntime.Registry == null ? null : PlatformRuntime.Registry.ResolveEffect(id);
                 if (authorType == null) { return null; }
 
-                var emitted = Emit(id);
+                var emitted = Emit(ns + prefix + id, id);
                 if (emitted == null) { return null; }
 
                 Cache[id] = emitted;
@@ -109,9 +126,9 @@ namespace ModKit.Game
             return emittedType != null && IdByType.TryGetValue(emittedType, out id) ? id : null;
         }
 
-        private static Type Emit(string id)
+        private static Type Emit(string fullName, string id)
         {
-            var tb = Module.DefineType(Ns + Prefix + id,
+            var tb = Module.DefineType(fullName,
                 TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Sealed,
                 typeof(EffectBase));
 

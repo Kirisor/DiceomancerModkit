@@ -40,7 +40,13 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         }
     }
 
-    /// <summary>玩家是否持有某个能力（容忍 mod 前缀写法）。</summary>
+    /// <summary>玩家是否持有某个能力（容忍任意 mod 前缀：按**叶子名**比）。</summary>
+    /// <remarks>
+    /// 实机教训：mod 能力在游戏里注册成 <c>&lt;modId&gt;.&lt;id&gt;</c>（如 <c>naifrog.milkfrog_choice</c>），
+    /// 而作者在卡里写的是短名。只按固定前缀猜（上一版写死 <c>naifrog.</c>）会在 mod 再改名时
+    /// 静默失效 —— 症状是「以母之名」打了、能力也在身上，但奶蛙拉取仍走自动。
+    /// 这里改为逐条比对玩家能力列表的叶子名，任何前缀都能命中。
+    /// </remarks>
     internal static bool HasAbility(string abilityName)
     {
         try
@@ -49,10 +55,15 @@ public sealed class CardKeywordMilkFrog : CardKeyword
             if (player == null) { return false; }
             Ability.AbilityBase _;
             if (player.HasCertainAbility(abilityName, out _)) { return true; }
-            // mod 能力也可能被登记成 "<modId>.<id>"
-            foreach (string prefix in new[] { "naifrog." })
+
+            var list = player.abilities;
+            if (list == null) { return false; }
+            string leaf = LeafOf(abilityName);
+            for (int i = 0; i < list.Count; i++)
             {
-                if (player.HasCertainAbility(prefix + abilityName, out _)) { return true; }
+                var a = list[i];
+                if (a == null || string.IsNullOrEmpty(a.abilityName)) { continue; }
+                if (string.Equals(LeafOf(a.abilityName), leaf, StringComparison.OrdinalIgnoreCase)) { return true; }
             }
         }
         catch (Exception e)
@@ -60,6 +71,34 @@ public sealed class CardKeywordMilkFrog : CardKeyword
             Debug.LogWarning("[ModKit] 奶蛙：查询能力 '" + abilityName + "' 失败 —— " + e.Message);
         }
         return false;
+    }
+
+    /// <summary>取名字的最后一段（<c>naifrog.milkfrog_choice</c> → <c>milkfrog_choice</c>）。</summary>
+    internal static string LeafOf(string name)
+    {
+        if (string.IsNullOrEmpty(name)) { return name; }
+        int dot = name.LastIndexOf('.');
+        return dot >= 0 && dot + 1 < name.Length ? name.Substring(dot + 1) : name;
+    }
+
+    /// <summary>诊断用：玩家身上带 <paramref name="leaf"/> 的那个能力的**完整名**；没有则 null。</summary>
+    internal static string FindAbilityNameByLeaf(string leaf)
+    {
+        try
+        {
+            var player = CharacterPlayer.Instance;
+            if (player == null || player.abilities == null) { return null; }
+            foreach (var a in player.abilities)
+            {
+                if (a == null || string.IsNullOrEmpty(a.abilityName)) { continue; }
+                if (string.Equals(LeafOf(a.abilityName), leaf, StringComparison.OrdinalIgnoreCase))
+                {
+                    return a.abilityName;
+                }
+            }
+        }
+        catch { }
+        return null;
     }
 
     static CardKeywordMilkFrog()
@@ -115,10 +154,21 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         Collect(manager.GetCardGrave(), card, limit, found);
 
         // 蛙母的号令：改成玩家选择（候选来自抽牌堆 + 弃牌堆）
-        if (SelectionMode > 0)
+        int mode = SelectionMode;
+        if (mode > 0)
         {
+            Debug.Log("[ModKit] 奶蛙：蛙母的号令生效（mode=" + mode + "），改为玩家选择。");
             TryPromptSelection(manager, card, limit);
             return;
+        }
+
+        // 诊断：玩家身上明明有「蛙母的号令」能力，却没被认出来 —— 正常情况下不会出现；
+        // 出现就说明能力名比对又漂了（例如游戏/平台改了能力名的拼法）。
+        string stray = FindAbilityNameByLeaf("milkfrog_choice_full");
+        if (stray == null) { stray = FindAbilityNameByLeaf("milkfrog_choice"); }
+        if (stray != null)
+        {
+            Debug.LogWarning("[ModKit] 奶蛙：玩家身上有「" + stray + "」，但 SelectionMode=0 —— 能力名没匹配上。");
         }
 
         if (found.Count == 0) { return; }
