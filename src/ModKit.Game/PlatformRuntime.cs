@@ -73,6 +73,9 @@ namespace ModKit.Game
         /// <summary>已安装的内容注册表。</summary>
         public static ContentRegistry Registry { get { return _registry; } }
 
+        /// <summary>当前这次的文案注入器（本地化表被重新加载时由 Guard 用它补写）。</summary>
+        internal static LocalizationPump Localization;
+
         /// <summary>最近一次运行的哨兵汇总。</summary>
         public static PipelineSummary LastSummary { get; private set; }
 
@@ -364,6 +367,7 @@ namespace ModKit.Game
             try
             {
                 var pump = new LocalizationPump(log);
+                Localization = pump;
 
                 // ★ 卡牌 JSON 里的 name 也要灌进 CardName 表。
                 //   游戏用 so.cardName（= 平台加过 mod 前缀的 id）去查 CardName 表，

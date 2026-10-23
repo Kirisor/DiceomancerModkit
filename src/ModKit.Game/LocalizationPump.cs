@@ -145,6 +145,61 @@ namespace ModKit.Game
             entries[key] = text;
         }
 
+        /// <summary>
+        /// 把某个表的全部登记文案**重新写进当前游戏表**（幂等）。
+        /// </summary>
+        /// <remarks>
+        /// 为什么需要：Unity Localization 的表是**按需加载、用完可释放**的。
+        /// 实机症状（2026-10-23）：启动时注入成功（日志"写入 2 条 / 读回通过 2"），
+        /// 但玩家打开「生涯数据」时职业名仍显示
+        /// <c>No translation found for 'manual_demo.milk_frog' in Encyclopedia</c> ——
+        /// 说明表被重新加载过，我们写的条目随之丢失。
+        /// 因此给 <c>StringDatabase.GetTable</c> 挂 postfix：表一被取出来就补写一遍。
+        /// </remarks>
+        internal void Reinforce(string table)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(table)) { return; }
+
+                var locale = LocalizationSettings.SelectedLocale;
+                string code = locale != null ? locale.Identifier.Code : null;
+                if (string.IsNullOrEmpty(code)) { return; }
+
+                Dictionary<string, Dictionary<string, string>> tables;
+                if (!_pending.TryGetValue(code, out tables)) { return; }
+
+                Dictionary<string, string> entries;
+                if (!tables.TryGetValue(table, out entries)) { return; }
+
+                var database = LocalizationSettings.StringDatabase;
+                if (database == null) { return; }
+                var stringTable = database.GetTable(table);
+                if (stringTable == null) { return; }
+
+                int added = 0;
+                foreach (var kv in entries)
+                {
+                    string existing = null;
+                    try { existing = stringTable.GetEntry(kv.Key) == null ? null : stringTable.GetEntry(kv.Key).Value; }
+                    catch { }
+                    if (string.IsNullOrEmpty(existing))
+                    {
+                        try { stringTable.AddEntry(kv.Key, kv.Value); added++; }
+                        catch { }
+                    }
+                }
+                if (added > 0)
+                {
+                    _log.Info("文案补写：" + table + " 重新写入 " + added + " 条（表被游戏重新加载过）。");
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Warn("文案补写失败：" + table + " —— " + ex.GetType().Name);
+            }
+        }
+
         /// <summary>批量登记一个 <see cref="I18nDef"/>。</summary>
         public void AddI18n(I18nDef def)
         {
