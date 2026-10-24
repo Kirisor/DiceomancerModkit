@@ -30,10 +30,7 @@
       "summon": "EarthElement",
       "effects": [
         {
-          "custom": "mf_summon_family_random",
-          "amounts": [
-            1
-          ]
+          "custom": "mf_summon_family_random"
         }
       ]
     },

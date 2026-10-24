@@ -7,13 +7,20 @@
 //    · SummonBase：GetLife / AddLife / RemoveLife；回合末失 1 生命并触发一次行动，
 //      死亡时把 deathCardInfo 那张卡加入手中（=「精粹」）。
 //    · EffectSpEffectCancer：`for (i < summon.GetLife()) new CommandOrganismResolve(summon, isInsert: true)`
-//      —— 「连续触发直到死亡」就是它：按目标当前生命排队这么多次触发。
+//      ——「连续触发直到死亡」就是它：按目标当前生命排队这么多次触发。
 //    · EffectSpEffectAddLifeToAllSummon：遍历 SummonManager.GetOrganisms() 逐个 AddLife。
 //    · EffectSpEffectGainAllDeBuff：遍历 AbilityDataManager.GetAllEnemyDeBuff()，逐个施加同层数。
-//    · EffectSpEffectSummonRandomBasicElement：从卡上取 Summon 关键词的 effectInfos/number/toCard 组 OrganismInfo。
+//    · EffectSpEffectChangeMaxHealth：new SubCommandChangeMaxHealth(isAdd, amount)。
 //
-//  ★ 召唤物造成的伤害走 IndirectDamage（与**原版召唤物一致**，不吃力量/易伤/暴击）。
-//    若要让它吃乘区，把下面 DamageMode.Indirect 改成 Direct 即可（一处）。
+//  ★★ 重要：**自定义效果不要写数字槽（amounts）**（2026-10-24 实机教训）
+//    游戏的卡面文案渲染会把每个数字槽做成一个独立的 TMP 数字对象，再塞进描述文本里预留的
+//    {Number} 占位符。而自定义效果（[ModEffect]）的描述走平台兜底，**拿不到格式化参数**，
+//    `{Number}` 既不会被替换、数字对象也没有落点 ⇒ 数字会**浮在卡图上**、文本里空一格。
+//    所以本文件的数值全部**写死在代码里**、文案里写死数字，效果**不带 amounts**。
+//    确有需要「数字随卡面变化」的卡，改用原版 builtin（它才吃得到占位符）。
+//
+//  ★ 召唤物伤害走 IndirectDamage（与原版召唤物一致，不吃力量/易伤/暴击）。
+//    要让召唤伤害吃乘区，把 DamageMode.Indirect 改成 Direct（一处）。
 // =============================================================================
 
 using System;
@@ -36,7 +43,7 @@ namespace ManualDemo
         /// <summary>奶蛋？—— 既是召唤物也是「奶之刻」的判定目标。</summary>
         internal const string Question = "mf_naidan_question";
 
-        /// <summary>族的成员（短 id，运行时补 mod 前缀）。17「奶家人」自己不算成员。</summary>
+        /// <summary>族的成员（短 id）。17「奶家人」自己不算成员。</summary>
         internal static readonly string[] Members =
         {
             "mf_mudpuppet",      // 奶蛋（原奶狗）
@@ -46,6 +53,26 @@ namespace ManualDemo
             "mf_milk_king",      // 奶king
             Question             // 奶蛋？
         };
+
+        /// <summary>
+        /// 短 id → 借用的原版召唤物名（决定立绘与显示名）。
+        /// </summary>
+        /// <remarks>
+        /// 游戏的 <c>SummonBase.Initialize</c> 用 <c>OrganismInfo.SummonName</c> 去查
+        /// <c>AssetRefSo.SpriteDict</c> 与 <c>CardName</c> 两张表；模组卡名带前缀，两张表都查不到
+        /// （日志里那行 <c>Sprite not found: naifrog.xxx</c> 就是这么来的）。
+        /// 所以这里直接借原版基础元素的名字与立绘。
+        /// </remarks>
+        internal static readonly Dictionary<string, string> Visual =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "mf_mudpuppet", "EarthElement" },
+                { "mf_bloodspawn", "FireElement" },
+                { "mf_milk_dog", "FireElement" },
+                { "mf_milk_rabbit", "WaterElement" },
+                { "mf_milk_king", "EarthElement" },
+                { Question, "WaterElement" },
+            };
 
         private static readonly Random Rng = new Random();
 
@@ -71,10 +98,30 @@ namespace ManualDemo
             }
         }
 
-        /// <summary>把一张「带 Summon 关键词的卡」召唤出来（照原版 CardKeywordSummon 的取数方式）。</summary>
-        internal static void Spawn(CardSo so)
+        /// <summary>按短 id 取「借用立绘」的原版元素卡（拿名字去查不到时会退回默认）。</summary>
+        private static CardSo GetVisualCard(string shortId)
         {
-            if (so == null || so.CardInfo.cardKeyWordInfos == null) { return; }
+            try
+            {
+                string name;
+                if (!Visual.TryGetValue(shortId, out name) || string.IsNullOrEmpty(name)) { return null; }
+                CardSo so = CardDataManager.Instance.GetCardSoByName(name);
+                if (so == null || string.IsNullOrEmpty(so.cardName) || so.cardName == "EmptyCard") { return null; }
+                return so;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>把一张「带 Summon 关键词的卡」召唤出来（照原版 CardKeywordSummon 的取数方式）。</summary>
+        /// <param name="shortId">卡的短 id（用于查借用立绘）。</param>
+        internal static void Spawn(string shortId)
+        {
+            CardSo so = GetCard(shortId);
+            if (so == null) { return; }
+            if (so.CardInfo.cardKeyWordInfos == null) { return; }
 
             CardKeyWordInfo kw = so.CardInfo.cardKeyWordInfos
                 .FirstOrDefault(k => string.Equals(k.keywordName, "Summon", StringComparison.OrdinalIgnoreCase));
@@ -86,10 +133,14 @@ namespace ManualDemo
                 deathCard = CardDataManager.Instance.GetCardSoByName(kw.keywordCardSoName);
             }
 
+            // 借用原版元素名/立绘：这样 SummonName 能在 SpriteDict 与 CardName 两张表里查到。
+            CardSo visual = GetVisualCard(shortId);
+            string visualName = visual != null ? visual.cardName : so.cardName;
+
             var info = new OrganismInfo
             {
-                SummonName = so.cardName,
-                CardIcon = so.cardArt,
+                SummonName = visualName,
+                CardIcon = visual != null ? visual.cardArt : so.cardArt,
                 ColorEs = so.CardInfo.cardColorEs,
                 EffectInfos = kw.effectInfos,
                 LifeCounter = kw.number,
@@ -115,34 +166,58 @@ namespace ManualDemo
             }
         }
 
-        /// <summary>场上是否有某个短 id 对应的召唤物（按召唤物名 = 卡名匹配）。</summary>
+        /// <summary>场上是否有某个短 id 对应的召唤物。</summary>
+        /// <remarks>
+        /// 召唤物名现在是借用来的原版名（FireElement 等），所以按「立绘名」比较；
+        /// 同时兼容直接以卡名召唤的情况（旧存档里的召唤物）。
+        /// </remarks>
         internal static bool HasSummon(string shortId)
         {
-            string full = Qualify(shortId);
-            return Living().Any(o => string.Equals(o.GetSummonName(), full, StringComparison.Ordinal));
+            string visualName;
+            if (!Visual.TryGetValue(shortId, out visualName)) { visualName = Qualify(shortId); }
+            string cardName = Qualify(shortId);
+
+            return Living().Any(o =>
+            {
+                string n = o.GetSummonName();
+                return string.Equals(n, visualName, StringComparison.Ordinal)
+                    || string.Equals(n, cardName, StringComparison.Ordinal);
+            });
         }
 
-        internal static CardSo RandomMember()
+        internal static string RandomMember()
         {
-            CardSo[] cards = Members.Select(GetCard).Where(c => c != null).ToArray();
-            if (cards.Length == 0) { return null; }
-            return cards[Rng.Next(cards.Length)];
+            string[] ids = Members.Where(id => GetCard(id) != null).ToArray();
+            if (ids.Length == 0) { return null; }
+            return ids[Rng.Next(ids.Length)];
         }
     }
 
-    /// <summary>造成 Amount 点伤害，重复 Amount1 次（每一段都是独立判定/独立乘区）。</summary>
-    /// <remarks>召唤物用它 = 原版召唤物那种间接伤害（不吃乘区）；改成 <see cref="DamageMode.Direct"/> 即吃乘区。</remarks>
-    [ModEffect("mf_repeat_damage")]
-    public sealed class MfRepeatDamage : SyncCardEffect
+    /// <summary>奶狗：造成 3 点伤害 ×2（召唤物行动）。</summary>
+    [ModEffect("mf_dog_bite")]
+    public sealed class MfDogBite : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
-            int damage = Math.Max(0, ctx.Amount);
-            int times = Math.Max(1, ctx.AmountAt(1));
+            Repeat(ctx, 3, 2);
+        }
+
+        internal static void Repeat(EffectContext ctx, int damage, int times)
+        {
             for (int i = 0; i < times; i++)
             {
                 ctx.DealDamage(damage, DamageMode.Indirect, CombatantSelector.Opponent);
             }
+        }
+    }
+
+    /// <summary>奶狗精粹：造成 3 点伤害 ×4。</summary>
+    [ModEffect("mf_dog_bite_essence")]
+    public sealed class MfDogBiteEssence : SyncCardEffect
+    {
+        public override void Apply(EffectContext ctx)
+        {
+            MfDogBite.Repeat(ctx, 3, 4);
         }
     }
 
@@ -152,10 +227,9 @@ namespace ManualDemo
     {
         public override void Apply(EffectContext ctx)
         {
-            CardSo so = MilkFrogFamily.RandomMember();
-            if (so == null) { ctx.Log("奶家人：找不到可召唤的卡。"); return; }
-            MilkFrogFamily.Spawn(so);
-            ctx.Log("奶家人：召唤了「" + so.cardName + "」。");
+            string id = MilkFrogFamily.RandomMember();
+            if (id == null) { ctx.Log("奶家人：找不到可召唤的卡。"); return; }
+            MilkFrogFamily.Spawn(id);
         }
     }
 
@@ -167,26 +241,22 @@ namespace ManualDemo
         {
             foreach (string id in MilkFrogFamily.Members)
             {
-                CardSo so = MilkFrogFamily.GetCard(id);
-                if (so == null) { continue; }
-                MilkFrogFamily.Spawn(so);
+                MilkFrogFamily.Spawn(id);
             }
         }
     }
 
-    /// <summary>按短 id 召唤指定召唤物（奶之刻的 else 分支、奶蛋？精粹）。</summary>
+    /// <summary>召唤「奶蛋？」（奶之刻的 else 分支）。</summary>
     [ModEffect("mf_summon_naidan_question")]
     public sealed class MfSummonQuestion : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
-            CardSo so = MilkFrogFamily.GetCard(MilkFrogFamily.Question);
-            if (so == null) { ctx.Log("奶蛋？：找不到这张卡。"); return; }
-            MilkFrogFamily.Spawn(so);
+            MilkFrogFamily.Spawn(MilkFrogFamily.Question);
         }
     }
 
-    /// <summary>所有召唤物生命 +Amount（原版 Key_AddLifeToAllSummon 同款）。</summary>
+    /// <summary>所有召唤物生命 +3（原版 Key_AddLifeToAllSummon 同款，数值写死在描述里）。</summary>
     [ModEffect("mf_add_all_summon_life")]
     public sealed class MfAddAllSummonLife : SyncCardEffect
     {
@@ -194,8 +264,7 @@ namespace ManualDemo
         {
             SummonBase[] living = MilkFrogFamily.Living();
             if (living.Length == 0) { ctx.Log("奶家人：没有召唤物。"); return; }
-            int amount = Math.Max(0, ctx.Amount);
-            foreach (SummonBase summon in living) { summon.AddLife(amount); }
+            foreach (SummonBase summon in living) { summon.AddLife(3); }
         }
     }
 
@@ -210,7 +279,8 @@ namespace ManualDemo
         {
             string selfName = MilkFrogFamily.Qualify(MilkFrogFamily.Question);
             SummonBase[] candidates = MilkFrogFamily.Living()
-                .Where(o => !string.Equals(o.GetSummonName(), selfName, StringComparison.Ordinal))
+                .Where(o => !string.Equals(o.GetSummonName(), selfName, StringComparison.Ordinal)
+                         && !string.Equals(o.GetSummonName(), "WaterElement", StringComparison.Ordinal))
                 .ToArray();
             if (candidates.Length == 0) { ctx.Log("奶蛋？：没有别的召唤物可以触发。"); return; }
 
@@ -225,24 +295,35 @@ namespace ManualDemo
     }
 
     /// <summary>
-    /// 奶之刻：有「奶蛋？」→ 对所有敌人施加 Amount 层**所有减益** + 造成 Amount1 点伤害；
-    /// 否则召唤「奶蛋？」。
+    /// 奶之刻：有「奶蛋？」→ 对所有敌人施加 1d8 层所有减益 + 1d8 伤害；否则召唤「奶蛋？」。
     /// </summary>
-    /// <remarks>「所有减益」= 原版 EffectSpEffectGainAllDeBuff 的取法：AbilityDataManager.GetAllEnemyDeBuff()。</remarks>
+    /// <remarks>「所有减益」= 原版 EffectSpEffectGainAllDeBuff 的取法：GetAllEnemyDeBuff()。</remarks>
     [ModEffect("mf_milk_clock")]
     public sealed class MfMilkClock : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
+            Apply(ctx, MilkClockLayers(ctx), MilkClockDamage(ctx), "1d8");
+        }
+
+        internal static int MilkClockLayers(EffectContext ctx)
+        {
+            return 1 + ctx.Random.Next(8);   // 1d8
+        }
+
+        internal static int MilkClockDamage(EffectContext ctx)
+        {
+            return 1 + ctx.Random.Next(8);   // 1d8
+        }
+
+        internal static void Apply(EffectContext ctx, int layers, int damage, string diceText)
+        {
             if (!MilkFrogFamily.HasSummon(MilkFrogFamily.Question))
             {
-                CardSo so = MilkFrogFamily.GetCard(MilkFrogFamily.Question);
-                if (so != null) { MilkFrogFamily.Spawn(so); }
+                MilkFrogFamily.Spawn(MilkFrogFamily.Question);
+                ctx.Log("奶之刻：没有「奶蛋？」，改为召唤它。");
                 return;
             }
-
-            int layers = Math.Max(0, ctx.Amount);
-            int damage = Math.Max(0, ctx.AmountAt(1));
 
             try
             {
@@ -269,6 +350,44 @@ namespace ManualDemo
             {
                 ctx.DealDamage(damage, DamageMode.Indirect, CombatantSelector.AllOpponents);
             }
+            ctx.Log("奶之刻：" + diceText + " → " + layers + " 层减益 / " + damage + " 伤害。");
+        }
+    }
+
+    /// <summary>奶之刻（升级）：3d4 层所有减益 + 3d4 伤害。</summary>
+    [ModEffect("mf_milk_clock_up")]
+    public sealed class MfMilkClockUp : SyncCardEffect
+    {
+        public override void Apply(EffectContext ctx)
+        {
+            int layers = Roll3d4(ctx);
+            int damage = Roll3d4(ctx);
+            MfMilkClock.Apply(ctx, layers, damage, "3d4");
+        }
+
+        private static int Roll3d4(EffectContext ctx)
+        {
+            int sum = 0;
+            for (int i = 0; i < 3; i++) { sum += 1 + ctx.Random.Next(4); }
+            return sum;
+        }
+    }
+
+    /// <summary>奶蛋？精粹：扣 8 点生命上限，然后召唤「奶蛋？」。</summary>
+    [ModEffect("mf_essence_question")]
+    public sealed class MfEssenceQuestion : SyncCardEffect
+    {
+        public override void Apply(EffectContext ctx)
+        {
+            try
+            {
+                new SubCommandChangeMaxHealth(false, 8);
+            }
+            catch (Exception e)
+            {
+                ctx.Log("奶蛋？精粹：扣生命上限失败 —— " + e.Message);
+            }
+            MilkFrogFamily.Spawn(MilkFrogFamily.Question);
         }
     }
 }

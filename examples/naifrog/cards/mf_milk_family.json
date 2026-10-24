@@ -28,16 +28,10 @@
   ],
   "effects": [
     {
-      "custom": "mf_add_all_summon_life",
-      "amounts": [
-        3
-      ]
+      "custom": "mf_add_all_summon_life"
     },
     {
-      "custom": "mf_summon_family_random",
-      "amounts": [
-        1
-      ]
+      "custom": "mf_summon_family_random"
     }
   ],
   "upgrade": {

@@ -18,11 +18,7 @@
   ],
   "effects": [
     {
-      "custom": "mf_repeat_damage",
-      "amounts": [
-        3,
-        4
-      ]
+      "custom": "mf_dog_bite_essence"
     }
   ]
 }

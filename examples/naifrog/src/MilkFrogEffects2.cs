@@ -35,8 +35,13 @@ namespace ManualDemo
     [ModEffect("mf_glare_cascade")]
     public sealed class MfGlareCascade : CascadeTriggeredEffect
     {
+        // 诊断：实机反馈「易伤被重复施加」（一次连锁里刷了 8 条），先数清楚到底触发了几次。
+        private static int _calls;
+
         public override void ApplyWhenCascading(EffectContext ctx)
         {
+            _calls++;
+            ctx.Log("蛙群瞪视·连锁易伤：第 " + _calls + " 次触发（本卡层数 " + ctx.Amount + "）。");
             ctx.GiveAbility("Vulnerable", Math.Max(1, ctx.Amount), CombatantSelector.AllOpponents);
         }
     }

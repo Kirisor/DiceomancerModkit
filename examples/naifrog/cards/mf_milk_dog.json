@@ -23,11 +23,7 @@
       "summon": "FireElement",
       "effects": [
         {
-          "custom": "mf_repeat_damage",
-          "amounts": [
-            3,
-            2
-          ]
+          "custom": "mf_dog_bite"
         }
       ]
     }

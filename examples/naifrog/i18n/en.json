@@ -51,13 +51,16 @@
       "Key_mf_swarm_surge_cascade": "When resolved by Milk Frog: deal {Number} damage to all enemies.",
       "Key_mf_choose_discard": "Put {Number} card(s) from your hand into the discard pile.",
       "Key_mf_choir_tenacity": "This turn, each time a Milk Frog card resolves, gain {Number} additional Tough.",
-      "Key_mf_repeat_damage": "Deal {Number} damage, repeated {Number1} times.",
       "Key_mf_summon_family_random": "Summon a random Milk Family member.",
       "Key_mf_summon_family_all": "Summon one of each Milk Family member.",
       "Key_mf_summon_naidan_question": "Summon Milk Egg?.",
-      "Key_mf_add_all_summon_life": "All summons gain {Number} life.",
-      "Key_mf_resolve_random_until_death": "Resolve a random summon repeatedly until it dies.",
-      "Key_mf_milk_clock": "If you have Milk Egg?: apply {Number} layers of every debuff and deal {Number1} damage to all enemies. Otherwise summon Milk Egg?."
+      "Key_mf_add_all_summon_life": "All summons gain 3 life.",
+      "Key_mf_resolve_random_until_death": "Repeatedly resolve a random summon until it dies.",
+      "Key_mf_milk_clock": "If you have Milk Egg?: apply 1d8 layers of every debuff and deal 1d8 damage to all enemies. Otherwise summon Milk Egg?.",
+      "Key_mf_dog_bite": "Deal 3 damage, repeated 2 times.",
+      "Key_mf_dog_bite_essence": "Deal 3 damage, repeated 4 times.",
+      "Key_mf_milk_clock_up": "If you have Milk Egg?: apply 3d4 layers of every debuff and deal 3d4 damage to all enemies. Otherwise summon Milk Egg?.",
+      "Key_mf_essence_question": "Lose 8 max life, then summon Milk Egg?."
     },
     "CardRequirementDes": {
       "naifrog.req_blue": "Green cards",

@@ -27,10 +27,7 @@
       "summon": "EarthElement",
       "effects": [
         {
-          "custom": "mf_resolve_random_until_death",
-          "amounts": [
-            1
-          ]
+          "custom": "mf_resolve_random_until_death"
         }
       ]
     },

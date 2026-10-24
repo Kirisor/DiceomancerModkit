@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 //  ModKit.Game · 召唤物名字挂钩（SummonHook）
 //
 //  解决什么问题
@@ -59,6 +59,8 @@ namespace ModKit.Game
             if (string.IsNullOrEmpty(cardName) || string.IsNullOrEmpty(summonName)) { return; }
 
             Names[cardName] = summonName;
+            int dot = cardName.IndexOf('.');
+            if (dot >= 0) { Names[cardName.Substring(dot + 1)] = summonName; }
             EnsureInstalled();
         }
 
@@ -73,7 +75,7 @@ namespace ModKit.Game
                 if (target == null)
                 {
                     _failed = true;
-                    Debug.LogWarning("[ModKit] 召唤挂钩：找不到 CardKeywordSummon.GetSummonInfo() —— 跳过。" +
+                    ModKitLog.Warn("召唤挂钩：找不到 CardKeywordSummon.GetSummonInfo() —— 跳过；" +
                         "关键词的 summon 字段不会生效（召唤物仍会出现，但没有立绘）。");
                     return;
                 }
@@ -83,13 +85,13 @@ namespace ModKit.Game
                     AccessTools.Method(typeof(SummonHook), nameof(Postfix))));
 
                 _installed = true;
-                Debug.Log("[ModKit] 召唤挂钩已安装：CardKeywordSummon.GetSummonInfo()。" +
-                    "已登记召唤物名 " + Names.Count + " 个。");
+                ModKitLog.Info("召唤挂钩已安装：CardKeywordSummon.GetSummonInfo()，已登记召唤物名 "
+                    + Names.Count + " 个。");
             }
             catch (Exception ex)
             {
                 _failed = true;
-                Debug.LogWarning("[ModKit] 召唤挂钩安装失败：" + ex.Message + "（原版行为不受影响）");
+                ModKitLog.Warn("召唤挂钩安装失败：" + ex.GetType().Name + " - " + ex.Message + "（原版行为不受影响）");
             }
         }
 
@@ -107,7 +109,17 @@ namespace ModKit.Game
                 if (owner == null || string.IsNullOrEmpty(owner.CardName)) { return; }
 
                 string summonName;
-                if (!Names.TryGetValue(owner.CardName, out summonName)) { return; }
+                if (!Names.TryGetValue(owner.CardName, out summonName))
+                {
+                    // 兜底：卡名是 "<modId>.<短id>" 时，也用短 id 查一次（注册侧可能只拿到短 id）。
+                    int dot = owner.CardName.IndexOf('.');
+                    if (dot < 0 || !Names.TryGetValue(owner.CardName.Substring(dot + 1), out summonName))
+                    {
+                        ModKitLog.Warn("召唤挂钩：卡 " + owner.CardName + " 没有登记召唤物名（表里 "
+                            + Names.Count + " 条）。");
+                        return;
+                    }
+                }
                 if (string.IsNullOrEmpty(summonName)) { return; }
 
                 __result.SummonName = summonName;

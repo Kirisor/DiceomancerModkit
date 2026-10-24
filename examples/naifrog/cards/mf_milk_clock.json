@@ -24,42 +24,16 @@
   ],
   "effects": [
     {
-      "custom": "mf_milk_clock",
-      "amounts": [
-        {
-          "dice": {
-            "sides": 8
-          }
-        },
-        {
-          "dice": {
-            "sides": 8
-          }
-        }
-      ]
+      "custom": "mf_milk_clock"
     }
   ],
   "upgrade": {
-    "effectNumbers": [
+    "replaceEffects": [
       {
         "index": 0,
-        "amounts": [
+        "effects": [
           {
-            "dice": {
-              "sides": 4,
-              "count": 3
-            }
-          }
-        ]
-      },
-      {
-        "index": 1,
-        "amounts": [
-          {
-            "dice": {
-              "sides": 4,
-              "count": 3
-            }
+            "custom": "mf_milk_clock_up"
           }
         ]
       }

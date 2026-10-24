@@ -18,10 +18,7 @@
   ],
   "effects": [
     {
-      "custom": "mf_summon_family_all",
-      "amounts": [
-        1
-      ]
+      "custom": "mf_summon_family_all"
     }
   ]
 }

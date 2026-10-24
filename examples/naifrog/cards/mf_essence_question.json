@@ -18,16 +18,7 @@
   ],
   "effects": [
     {
-      "builtin": "change_max_health",
-      "amounts": [
-        -8
-      ]
-    },
-    {
-      "custom": "mf_summon_naidan_question",
-      "amounts": [
-        1
-      ]
+      "custom": "mf_essence_question"
     }
   ]
 }
