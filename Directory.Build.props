@@ -1,8 +1,8 @@
-<Project>
+﻿<Project>
 
   <!-- 全仓库统一版本号：Release tag 与它保持一致 -->
   <PropertyGroup>
-    <Version>0.3.2</Version>
+    <Version>0.4.0</Version>
     <Company>Kirisor</Company>
     <Product>DICEOMANCER ModKit</Product>
     <Copyright>MIT</Copyright>

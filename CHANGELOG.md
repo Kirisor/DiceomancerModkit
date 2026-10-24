@@ -1,6 +1,6 @@
-# 变更记录
+﻿# 变更记录
 
-## 未发布（开发中）
+## v0.4.0
 
 ### 新增
 
@@ -17,10 +17,22 @@
   与战役池重建（`CampaignManager.SetCampaignCardPool`）都按当前职业过滤，
   日志里会打印「本局三色 / 解析职业 / 池内模组卡张数」。
 
-### 奶蛙 mod（开发中）
+- **图鉴关键词说明不再抛异常**：`SummonDescription` / `LimitedDescription` / `KickDescription` /
+  `ChooseDescription` 等模板带 `{Number}` / `{RuleNumber}`，图鉴直接取串时没有参数 ⇒
+  SmartFormat 抛 `Could not evaluate the selector …`，而游戏错误弹窗挂在日志回调上，即使 catch 也会弹。
+  现在按关键词名取规则值、连同关键词数值一起作为参数喂进去。
+- **衍生卡（精粹等）彻底不进卡池**：此前只挡了"开局发放"，卡集合里仍带着它们 ⇒ 战役池会刷出精粹。
+  现在装配期自动识别（任何卡 `toCard` 指向的卡名），集合、职业卡池一并过滤。
+- **图鉴不单列衍生卡**：卡牌页跳过衍生卡，鼠标悬停在父卡上时显示「衍生：<卡名>」与该卡自身卡面文本。
+### 奶蛙 mod v0.3.0（独立发行版 `naifrog-v0.3.0`）
 
-- 「奶家人」族 6 张：奶兔 / 奶狗 / 奶家人 / 奶king / 奶之刻 / 奶蛋？，外加 4 张精粹。
-- 改名：`mf_mudpuppet` 显示为「奶蛋」、`mf_bloodspawn` 显示为「奶鼠」（id 不变）。
+- 「奶家人」召唤族 6 张：奶兔 / 奶狗 / 奶家人 / 奶king / 奶之刻 / 奶蛋？，外加 4 张精粹；
+  卡池 16 → 22 张。
+- 召唤类效果全部照原版实现（`CardKeywordSummon` / `EffectSpEffectCancer` /
+  `EffectSpEffectAddLifeToAllSummon` / `EffectSpEffectGainAllDeBuff`），召唤物借用原版元素立绘。
+- 改名：`mf_mudpuppet` 显示「奶蛋」、`mf_bloodspawn` 显示「奶鼠」（id 不变，旧存档不受影响）。
+- 「抉择」的两个选项改挂到 `Choose` 关键词自带效果上 —— 与原版一致，卡面渲染成「[抉择]：A 或 B」。
+- 修：自定义效果不再带数字槽（数字会浮在卡图外）；奶蛋？精粹改为「扣除 8 点生命上限 + 召唤」。
 
 ## v0.3.2
 

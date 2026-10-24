@@ -2,7 +2,7 @@
   "$schema": "modkit/mod@1",
   "id": "naifrog",
   "name": "奶蛙",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Kirisor",
   "cards": [
     "cards/manual_art.json",
