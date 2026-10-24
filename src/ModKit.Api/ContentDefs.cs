@@ -30,6 +30,16 @@ namespace ModKit.Api
     /// <summary>骰子表达式（映射游戏的 <c>RNumberInfo(isDice: true)</c>）。</summary>
     /// <remarks>
     /// <para>
+    /// 两种写法（二选一）：
+    /// <list type="number">
+    /// <item><b>显示区间</b>：<c>{ "min": 1, "max": 8 }</c> —— 只描述范围。游戏侧统一用 D6，
+    ///   所以它**不是**真正的 1d8，只适合"大概这么多"的写法。</item>
+    /// <item><b>真骰子</b>（2026-10-24 新增，对齐原版 5 种骰):<c>{ "sides": 8 }</c> = 1d8、
+    ///   <c>{ "sides": 4, "count": 3 }</c> = 3d4。sides 只接受 4/6/8/12/20（游戏 <c>DiceType</c> 全集），
+    ///   count 是颗数（1~10，默认 1）。给了 sides 就忽略 min/max。</item>
+    /// </list>
+    /// </para>
+    /// <para>
     /// 注意：游戏 <c>RNumberInfo</c> 的 <c>state</c> 构造参数被完全丢弃、全库无消费点，
     /// 因此平台**不暴露 state**——暴露它只会把作者引向一个无效字段。
     /// </para>
@@ -38,6 +48,12 @@ namespace ModKit.Api
     {
         public int Min { get; set; } = 1;
         public int Max { get; set; } = 6;
+
+        /// <summary>骰子面数：4 / 6 / 8 / 12 / 20。给了它就走"真骰子"路径。</summary>
+        public int? Sides { get; set; }
+
+        /// <summary>骰子颗数（默认 1）。<c>3d4</c> = <c>sides:4, count:3</c>。</summary>
+        public int? Count { get; set; }
     }
 
     /// <summary>一条效果声明：要么是内置语义，要么指向自定义效果类。</summary>
@@ -769,6 +785,21 @@ namespace ModKit.Api
         /// </para>
         /// </remarks>
         public string ColorE { get; set; }
+
+        // ---------------------------------------------------------------------
+        //  触发上限 / 颜色过滤（2026-10-24 补：Core 的解析器早就读这三项，
+        //  但 Api 里一直没有对应字段 ⇒ 源码根本编不过。定义按 Core 的读法补齐：
+        //  colors 是字符串列表、triggerLimit 是整数、triggerLimitType 是字符串名。）
+        // ---------------------------------------------------------------------
+
+        /// <summary>遗物允许触发的颜色集（JSON 名 <c>colors</c>；颜色名与卡牌同一套）。</summary>
+        public List<string> Colors { get; set; }
+
+        /// <summary>触发次数上限（JSON 名 <c>triggerLimit</c>）；null = 不限。</summary>
+        public int? TriggerLimit { get; set; }
+
+        /// <summary>触发上限的计数方式（JSON 名 <c>triggerLimitType</c>，如每回合/每场战斗）。</summary>
+        public string TriggerLimitType { get; set; }
     }
 
     /// <summary>

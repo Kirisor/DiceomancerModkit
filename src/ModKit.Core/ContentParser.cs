@@ -693,7 +693,18 @@ namespace ModKit.Core
                 int min = dice["min"] != null && dice["min"].Type == JTokenType.Integer ? (int)dice["min"] : 1;
                 int max = dice["max"] != null && dice["max"].Type == JTokenType.Integer ? (int)dice["max"] : 6;
 
-                list.Add(new NumberSpec { Dice = new DiceSpec { Min = min, Max = max } });
+                // 真骰子（2026-10-24）：sides = 面数（4/6/8/12/20），count = 颗数（默认 1）。
+                int? sides = dice["sides"] != null && dice["sides"].Type == JTokenType.Integer
+                    ? (int)dice["sides"]
+                    : (int?)null;
+                int? count = dice["count"] != null && dice["count"].Type == JTokenType.Integer
+                    ? (int)dice["count"]
+                    : (int?)null;
+
+                list.Add(new NumberSpec
+                {
+                    Dice = new DiceSpec { Min = min, Max = max, Sides = sides, Count = count }
+                });
             }
             return list;
         }

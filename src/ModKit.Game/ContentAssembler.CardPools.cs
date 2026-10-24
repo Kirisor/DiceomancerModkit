@@ -447,18 +447,28 @@ namespace ModKit.Game
 
                 if (amount.Dice != null)
                 {
-                    // 平台的 DiceSpec 是 min/max，而游戏的 DiceInfo 是**骰子类型**。
-                    // 这里做保守映射：只在 min==max 时退化为固定数，
-                    // 其余情况用 D6（骰子类型里最接近"通用随机数"的一种）。
-                    // TODO(P2)：等平台支持显式骰子类型（D4/D6/D8/D12/D20）后改为透传。
-                    if (amount.Dice.Min == amount.Dice.Max)
+                    // 两种写法：
+                    //   ① sides/count（2026-10-24 新增）→ 真骰子：1d8 / 3d4，直接映射 DiceType；
+                    //   ② min/max → 只描述区间，游戏没有"区间骰"，于是退化成固定值（min==max）或单颗 D6。
+                    var dice = amount.Dice;
+                    int count = dice.Count.HasValue && dice.Count.Value > 0 ? dice.Count.Value : 1;
+                    DiceType? type = dice.Sides.HasValue ? DiceTypeOf(dice.Sides.Value) : (DiceType?)null;
+
+                    if (type.HasValue)
                     {
-                        list.Add(new RNumberInfo(amount.Dice.Min));
+                        var infos = new DiceInfo[count];
+                        for (int i = 0; i < count; i++) { infos[i] = new DiceInfo(type.Value); }
+                        list.Add(new RNumberInfo(0, true, "Standard", infos));
+                    }
+                    else if (dice.Min == dice.Max)
+                    {
+                        list.Add(new RNumberInfo(dice.Min));
                     }
                     else
                     {
-                        list.Add(new RNumberInfo(0, true, "Standard",
-                            new[] { new DiceInfo(DiceType.D6) }));
+                        var infos = new DiceInfo[count];
+                        for (int i = 0; i < count; i++) { infos[i] = new DiceInfo(DiceType.D6); }
+                        list.Add(new RNumberInfo(0, true, "Standard", infos));
                     }
                 }
                 else
@@ -468,6 +478,20 @@ namespace ModKit.Game
             }
 
             return list;
+        }
+
+        /// <summary>面数 → 游戏 <c>DiceType</c>（只认原版那 5 种）。</summary>
+        private static DiceType? DiceTypeOf(int sides)
+        {
+            switch (sides)
+            {
+                case 4: return DiceType.D4;
+                case 6: return DiceType.D6;
+                case 8: return DiceType.D8;
+                case 12: return DiceType.D12;
+                case 20: return DiceType.D20;
+                default: return null;
+            }
         }
 
     }

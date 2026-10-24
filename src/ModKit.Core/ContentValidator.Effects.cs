@@ -220,14 +220,33 @@ namespace ModKit.Core
                 var dice = o["dice"] as JObject;
                 if (dice == null)
                 {
-                    report.Error(id, p, "对象形态必须是 { \"dice\": { \"min\": …, \"max\": … } }。");
+                    report.Error(id, p, "对象形态必须是 { \"dice\": { \"min\": …, \"max\": … } } "
+                        + "或真骰子 { \"dice\": { \"sides\": 8 } } / { \"dice\": { \"sides\": 4, \"count\": 3 } }。");
                     continue;
+                }
+
+                // ---- 真骰子：sides（4/6/8/12/20）+ count（颗数，默认 1）----
+                int sides;
+                if (TryReadInt(dice, "sides", out sides))
+                {
+                    if (sides != 4 && sides != 6 && sides != 8 && sides != 12 && sides != 20)
+                    {
+                        report.Error(id, p + ".dice.sides", "sides 只能是 4 / 6 / 8 / 12 / 20"
+                            + "（对应游戏 DiceType 的 D4/D6/D8/D12/D20）。");
+                    }
+
+                    int count;
+                    if (TryReadInt(dice, "count", out count) && (count < 1 || count > 10))
+                    {
+                        report.Error(id, p + ".dice.count", "count（骰子颗数）必须在 1..10。");
+                    }
+                    continue;   // 给了 sides 就忽略 min/max
                 }
 
                 int min, max;
                 if (!TryReadInt(dice, "min", out min) || !TryReadInt(dice, "max", out max))
                 {
-                    report.Error(id, p + ".dice", "min 与 max 都必须是整数。");
+                    report.Error(id, p + ".dice", "min 与 max 都必须是整数（或用 sides/count 写真骰子）。");
                     continue;
                 }
 
