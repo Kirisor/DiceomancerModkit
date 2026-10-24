@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 //  ModKit.Game · 卡的注册与读回（CardRegistration）—— ContentAssembler 的 partial 分片
 //
 //  ★ 来历：本文件是 2026-10-13 第二批按子域拆分 ContentAssembler.cs 时切出的，
@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Card;
 using Effects;
 using GameData;
@@ -68,6 +69,38 @@ namespace ModKit.Game
             {
                 result.Errors.Add(cardName + "：注册卡失败 —— " + ex.Message);
             }
+        }
+
+        /// <summary>所有 mod 的衍生卡全名（被别的卡 toCard / keywordCardSoName 指向的卡）。</summary>
+        /// <remarks>装配期由 <see cref="CollectDerivedCards"/> 填；图鉴与卡池共用这一份。</remarks>
+        internal static readonly HashSet<string> DerivedCardNames = new HashSet<string>(StringComparer.Ordinal);
+
+        /// <summary>
+        /// 扫出这批卡里的衍生卡：任何卡的**关键词**里 <c>keywordCardSoName</c>（= JSON 的 toCard）
+        /// 指向的卡名，都算衍生卡。
+        /// </summary>
+        /// <remarks>
+        /// 只能识别"由关键词声明"的那一类（精粹/装填弹/建造完成卡都是这种写法）。
+        /// 效果里 <c>add_card</c> 之类动态生成的卡不在此列（游戏侧也没有静态清单）。
+        /// </remarks>
+        private static HashSet<string> CollectDerivedCards(List<CardSo> cards)
+        {
+            var derived = new HashSet<string>(StringComparer.Ordinal);
+            if (cards == null) { return derived; }
+
+            foreach (var so in cards)
+            {
+                if (so == null) { continue; }
+                CardInfo info;
+                try { info = so.CardInfo; } catch { continue; }
+                if (info.cardKeyWordInfos == null) { continue; }
+
+                foreach (var kw in info.cardKeyWordInfos)
+                {
+                    if (!string.IsNullOrEmpty(kw.keywordCardSoName)) { derived.Add(kw.keywordCardSoName); }
+                }
+            }
+            return derived;
         }
 
         /// <summary>
@@ -130,7 +163,17 @@ namespace ModKit.Game
                     }
                 }
 
-                var all = cards.ToArray();
+                // ★ 衍生卡（被别人的 Summon/toCard 指向的卡：精粹、装填弹、建造完成卡…）
+                //   不进**卡池集合** —— 它们只能由效果生成。此前只挡了"开局发放"，
+                //   集合里仍然带着它们，于是战役池/奖励里会冒出精粹卡（2026-10-24 实机反馈）。
+                var derived = CollectDerivedCards(cards);
+                foreach (var name in derived) { DerivedCardNames.Add(name); }
+
+                var all = cards.Where(c => c != null && !derived.Contains(c.cardName)).ToArray();
+                if (all.Length != cards.Count)
+                {
+                    _log.Info("卡池集合：已排除 " + (cards.Count - all.Length) + " 张衍生卡（只由效果生成）。");
+                }
                 var collection = new CardDateCollection
                 {
                     cardCollectionType = CardCollectionType.Standard,

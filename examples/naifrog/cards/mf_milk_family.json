@@ -18,21 +18,21 @@
   "keywords": [
     {
       "name": "Choose",
-      "number": 1
+      "number": 1,
+      "effects": [
+        {
+          "custom": "mf_add_all_summon_life"
+        },
+        {
+          "custom": "mf_summon_family_random"
+        }
+      ]
     },
     {
       "name": "Coordinated",
       "number": 3
     },
     "Exert"
-  ],
-  "effects": [
-    {
-      "custom": "mf_add_all_summon_life"
-    },
-    {
-      "custom": "mf_summon_family_random"
-    }
   ],
   "upgrade": {
     "cost": [
@@ -41,5 +41,6 @@
         "Black"
       ]
     ]
-  }
+  },
+  "effects": []
 }

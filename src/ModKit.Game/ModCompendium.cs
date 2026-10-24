@@ -4,6 +4,7 @@ using System.Linq;
 using Collection;
 using HarmonyLib;
 using Card;
+using GameData;
 using Combat;
 using Relic;
 using TMPro;
@@ -1198,6 +1199,21 @@ namespace ModKit.Game
                     if (!string.IsNullOrEmpty(kwDesc)) { sb.Append(kwDesc).Append('\n'); }
                 }
 
+                // 衍生卡（精粹等）：悬停父卡时才展示，格子列表里不占位。
+                if (have && info.cardKeyWordInfos != null)
+                {
+                    foreach (var kwi in info.cardKeyWordInfos)
+                    {
+                        string child = kwi.keywordCardSoName;
+                        if (string.IsNullOrEmpty(child)) { continue; }
+                        string childName = LocalizedAny("CardName", child);
+                        if (string.IsNullOrEmpty(childName)) { childName = Short(child); }
+                        string childText = DerivedCardText(child);
+                        sb.Append("\n").Append("<b>衍生：").Append(childName).Append("</b>\n");
+                        if (!string.IsNullOrEmpty(childText)) { sb.Append(childText).Append("\n"); }
+                    }
+                }
+
                 var body = sb.ToString().TrimEnd();
                 if (body.Length == 0) { HideInfo(); return; }
                 _tipText.text = body;
@@ -1210,6 +1226,38 @@ namespace ModKit.Game
                 _tipGo.SetActive(true);
             }
             catch (Exception ex) { Warn("说明", "生成解释内容失败 —— " + Describe(ex)); }
+        }
+
+
+        /// <summary>
+        /// 取一张「衍生卡」自己的卡面文本（精粹等）。
+        /// </summary>
+        /// <remarks>
+        /// 图鉴没法直接读卡面描述 —— 游戏把描述拼在卡牌预制体的 TMP 里。这里生成一张
+        /// <c>OwnerShip.Preview</c> 的临时卡，取其中最长的一段 TMP 文本当描述，然后销毁。
+        /// 任何一步失败都返回空串（调用方只显示名字），绝不影响图鉴本身。
+        /// </remarks>
+        private static string DerivedCardText(string cardName)
+        {
+            try
+            {
+                var so = CardDataManager.Instance.GetCardSoByName(cardName);
+                if (so == null || string.IsNullOrEmpty(so.cardName) || so.cardName == "EmptyCard") { return string.Empty; }
+
+                var obj = CardManager.Instance.GenerateCardObjFromCardInfo(so.CardInfo, OwnerShip.Preview);
+                if (obj == null) { return string.Empty; }
+
+                string best = string.Empty;
+                foreach (var t in obj.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    string s = t == null ? null : t.text;
+                    if (!string.IsNullOrEmpty(s) && s.Length > best.Length) { best = s; }
+                }
+
+                try { UnityEngine.Object.Destroy(obj.gameObject); } catch { }
+                return best;
+            }
+            catch { return string.Empty; }
         }
 
         /// <summary>把说明框放到某个世界坐标的旁边（右侧放不下则翻到左侧）。</summary>
@@ -1573,6 +1621,8 @@ namespace ModKit.Game
                 case 0:
                     foreach (var c in _cards.OrderBy(x => x.cardName, StringComparer.Ordinal))
                     {
+                        // 衍生卡（精粹等）不占格子：它们只在父卡悬停时出现。
+                        if (c == null || ContentAssembler.DerivedCardNames.Contains(c.cardName)) { continue; }
                         list.Add(new Entry { Name = Short(c.cardName), Icon = c.cardArt, Card = c });
                     }
                     break;

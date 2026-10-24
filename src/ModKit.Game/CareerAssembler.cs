@@ -193,6 +193,9 @@ namespace ModKit.Game
                             if (!poolCards.Contains(so)) { poolCards.Add(so); }
                         }
                     }
+                    // ★ 衍生卡（精粹等）不进职业卡池 —— 它们只能由效果生成（2026-10-24 实机反馈）。
+                    poolCards.RemoveAll(c => c == null || ContentAssembler.DerivedCardNames.Contains(c.cardName));
+
                     if (poolCards.Count == 0)
                     {
                         foreach (var c in deckCards) { if (!poolCards.Contains(c)) { poolCards.Add(c); } }
