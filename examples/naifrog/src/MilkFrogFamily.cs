@@ -11,6 +11,9 @@
 //    · EffectSpEffectAddLifeToAllSummon：遍历 SummonManager.GetOrganisms() 逐个 AddLife。
 //    · EffectSpEffectGainAllDeBuff：遍历 AbilityDataManager.GetAllEnemyDeBuff()，逐个施加同层数。
 //    · EffectSpEffectChangeMaxHealth：new SubCommandChangeMaxHealth(isAdd, amount)。
+//    · EffectSpEffectTempReduceMaxHp：「最大生命值减少 N，直到战斗结束」—— 改的是同一个
+//      最大生命值 RNumber，但走 SubCommandChangeRNumber(ChangeType.ChaosTemp)，
+//      BattleManager.Win() 里 RollNumberManager.RestoreAllRNumberTempoState() 会还原。
 //
 //  ★★ 重要：**自定义效果不要写数字槽（amounts）**（2026-10-24 实机教训）
 //    游戏的卡面文案渲染会把每个数字槽做成一个独立的 TMP 数字对象，再塞进描述文本里预留的
@@ -33,6 +36,7 @@ using Command;
 using GameData;
 using Keyword;
 using Organism;
+using RollNumber;
 using ModKit.Api;
 
 namespace ManualDemo
@@ -373,19 +377,40 @@ namespace ManualDemo
         }
     }
 
-    /// <summary>奶蛋？精粹：扣 8 点生命上限，然后召唤「奶蛋？」。</summary>
+    /// <summary>奶蛋？精粹：最大生命值减少 8（**直到战斗结束**），然后召唤「奶蛋？」。</summary>
+    /// <remarks>
+    /// 走的是原版「最大生命值减少{Number}，直到战斗结束」那条效果（<c>Key_TempReduceMaxHp</c>）
+    /// 的实现 —— <c>Effects.Special.CardEffect.EffectSpEffectTempReduceMaxHp</c>：
+    /// <code>
+    /// RNumber rn = CharacterPlayer.Instance.GetCurrentPlayerMaxHpRNumber();
+    /// RNumberInfo info = rn.GetRNumberInfo();
+    /// info.oriNumber -= N;
+    /// new SubCommandChangeRNumber(rn, info, SubCommandChangeRNumber.ChangeType.ChaosTemp);
+    /// </code>
+    /// <c>ChaosTemp</c> 会在 RNumber 里记下改动前的数值（<c>isInTempoState</c>），
+    /// 战斗内多次施加都叠在同一个"临时窗口"里；<c>BattleManager.Win()</c> 调
+    /// <c>RollNumberManager.RestoreAllRNumberTempoState()</c> 时一次性还原。
+    /// 对比：直接 <c>SubCommandChangeMaxHealth</c> 是**永久**扣（会写进战役存档的
+    /// <c>CampaignInformation.playerMaxHealth</c>，下个战斗开始也回不来）。
+    /// </remarks>
     [ModEffect("mf_essence_question")]
     public sealed class MfEssenceQuestion : SyncCardEffect
     {
+        /// <summary>每次扣掉的最大生命值（写死：自定义效果的文案拿不到数字槽）。</summary>
+        internal const int MaxHealthLoss = 8;
+
         public override void Apply(EffectContext ctx)
         {
             try
             {
-                new SubCommandChangeMaxHealth(false, 8);
+                RNumber maxHp = CharacterPlayer.Instance.GetCurrentPlayerMaxHpRNumber();
+                RNumberInfo info = maxHp.GetRNumberInfo();
+                info.oriNumber -= MaxHealthLoss;
+                new SubCommandChangeRNumber(maxHp, info, SubCommandChangeRNumber.ChangeType.ChaosTemp);
             }
             catch (Exception e)
             {
-                ctx.Log("奶蛋？精粹：扣生命上限失败 —— " + e.Message);
+                ctx.Log("奶蛋？精粹：临时扣最大生命值失败 —— " + e.GetType().Name + ": " + e.Message);
             }
             MilkFrogFamily.Spawn(MilkFrogFamily.Question);
         }

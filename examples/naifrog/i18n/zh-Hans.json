@@ -68,7 +68,7 @@
       "Key_mf_dog_bite": "造成 3 点伤害，重复 2 次。",
       "Key_mf_dog_bite_essence": "造成 3 点伤害，重复 4 次。",
       "Key_mf_milk_clock_up": "若有「奶蛋？」：对所有敌人施加 3d4 层所有减益，并造成 3d4 点伤害；否则召唤「奶蛋？」。",
-      "Key_mf_essence_question": "扣除 8 点生命上限，并召唤「奶蛋？」。"
+      "Key_mf_essence_question": "最大生命值减少 8，直到战斗结束；然后召唤「奶蛋？」。"
     },
     "Ability": {
       "naifrog.milkfrog_choice": "蛙母的选择",

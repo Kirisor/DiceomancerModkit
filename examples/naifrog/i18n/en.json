@@ -60,7 +60,7 @@
       "Key_mf_dog_bite": "Deal 3 damage, repeated 2 times.",
       "Key_mf_dog_bite_essence": "Deal 3 damage, repeated 4 times.",
       "Key_mf_milk_clock_up": "If you have Milk Egg?: apply 3d4 layers of every debuff and deal 3d4 damage to all enemies. Otherwise summon Milk Egg?.",
-      "Key_mf_essence_question": "Lose 8 max life, then summon Milk Egg?."
+      "Key_mf_essence_question": "Lose 8 max life until the end of combat, then summon Milk Egg?."
     },
     "CardRequirementDes": {
       "naifrog.req_blue": "Green cards",
