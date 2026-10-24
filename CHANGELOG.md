@@ -1,5 +1,27 @@
 # 变更记录
 
+## 未发布（开发中）
+
+### 新增
+
+- **骰子支持真骰型**：`amounts` 里可以写 `{"dice":{"sides":8}}` = 1d8、
+  `{"dice":{"sides":4,"count":3}}` = 3d4（sides 只接受 4/6/8/12/20，count 1~10）。
+  旧的 `{"dice":{"min":…,"max":…}}` 继续可用（行为不变：固定值或单颗 D6）。
+- **`src/ModKit.Api/ClassApi.cs` 补回**：`ClassSpec` / `IModClassProvider` 按已发布 DLL
+  的定义补进仓库，Api 现在可以从源码重建。同时给 `RelicDef` 补了
+  `Colors` / `TriggerLimit` / `TriggerLimitType`（Core 早就在读这三项）。
+
+### 修复
+
+- **模组卡不再漏进原版职业的奖励池**：掉落取池出口（`LootManager.GetCardPoolByInfo`）
+  与战役池重建（`CampaignManager.SetCampaignCardPool`）都按当前职业过滤，
+  日志里会打印「本局三色 / 解析职业 / 池内模组卡张数」。
+
+### 奶蛙 mod（开发中）
+
+- 「奶家人」族 6 张：奶兔 / 奶狗 / 奶家人 / 奶king / 奶之刻 / 奶蛋？，外加 4 张精粹。
+- 改名：`mf_mudpuppet` 显示为「奶蛋」、`mf_bloodspawn` 显示为「奶鼠」（id 不变）。
+
 ## v0.3.2
 
 ### 修复
