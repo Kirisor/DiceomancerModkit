@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Collection;
@@ -1009,6 +1009,78 @@ namespace ModKit.Game
             return string.Empty;
         }
 
+        /// <summary>
+        /// 取「带 SmartFormat 占位符」的关键词说明（<c>{Number}</c> / <c>{RuleNumber}</c> 等）。
+        /// </summary>
+        /// <param name="keywordName">关键词名（<c>Summon</c> / <c>Kick</c> / <c>Limited</c> …）。</param>
+        /// <param name="number">该关键词在本卡上的数值（卡面「召唤2」里的 2）；未知传 0。</param>
+        /// <remarks>
+        /// ★ 为什么不能直接用 <see cref="Localized"/>（2026-10-24 实机）：
+        ///   游戏的 <c>KeyWord</c> 表里，<c>SummonDescription</c> / <c>LimitedDescription</c> /
+        ///   <c>Amplification_Des</c> 这类模板写着 <c>{Number}</c> / <c>{RuleNumber}</c>；
+        ///   <c>LocalizedString.GetLocalizedString()</c> **不传参数**时，SmartFormat 会把
+        ///   <c>{Number}</c> 当成"要解析的选择器"，抛
+        ///   <c>OperationException: Could not evaluate the selector 'Number' at 17</c>。
+        ///   即便我们 catch 住，Unity Localization 已经把这条异常**记进了日志**，
+        ///   而游戏的错误弹窗（"哦不！有错误！"）挂的是日志回调 ⇒ 照样弹框。
+        ///   所以这里必须**喂参数给它**，让它一次格式化成功、不产生异常。
+        /// <para>
+        /// 参数表里同时给出 <c>Number</c>/<c>Number1..3</c>/<c>RuleNumber</c> 与几个常见的
+        /// 空占位符，够覆盖原版关键词的写法；缺的参数用 1/空串兜住，格式化不会再失败。
+        /// </para>
+        /// </remarks>
+        private static string LocalizedKeywordDescription(string keywordName, int number)
+        {
+            if (string.IsNullOrEmpty(keywordName)) { return string.Empty; }
+
+            // 规则值（召唤物每回合掉几点生命、限制抽几张…）—— 按关键词名向游戏要。
+            int ruleNumber = 1;
+            try
+            {
+                var rules = global::Collection.Rules.RuleManager.Instance;
+                if (rules != null)
+                {
+                    int v = rules.GetCurrentValueOfRule(keywordName);
+                    if (v > 0) { ruleNumber = v; }
+                }
+            }
+            catch { }
+
+            int n = number > 0 ? number : 1;
+
+            // 两种命名都试：<name>Description（SummonDescription）与 <name>_Des（Amplification_Des）。
+            foreach (var key in new[] { keywordName + "Description", keywordName + "_Des" })
+            {
+                foreach (var table in new[] { "KeyWord", "EffectDescription" })
+                {
+                    try
+                    {
+                        var args = new object[]
+                        {
+                            new Dictionary<string, object>
+                            {
+                                { "Number", n }, { "Number1", n }, { "Number2", n }, { "Number3", n },
+                                { "RuleNumber", ruleNumber },
+                                { "Mana", "" }, { "State", "" }, { "CardName", "" }, { "AbilityName", "" }
+                            }
+                        };
+                        var s = new UnityEngine.Localization.LocalizedString(table, key).GetLocalizedString(args);
+                        if (!string.IsNullOrEmpty(s) && !IsMissingTranslation(s, key) && s.IndexOf('{') < 0)
+                        {
+                            return s;
+                        }
+                    }
+                    catch { }
+                }
+            }
+
+            // 兜底：退化成"去掉花括号"的纯文本（宁可少个数字，也不再抛一次异常）。
+            var raw = LocalizedAny("KeyWord", keywordName + "Description");
+            if (string.IsNullOrEmpty(raw)) { raw = LocalizedAny("KeyWord", keywordName + "_Des"); }
+            if (string.IsNullOrEmpty(raw)) { return string.Empty; }
+            return System.Text.RegularExpressions.Regex.Replace(raw, "\\{[^{}]*\\}", "");
+        }
+
         private static string RelicDisplayName(string id)
         {
             var loc = LocalizedAny("Relic", id);
@@ -1108,7 +1180,7 @@ namespace ModKit.Game
                     // 名称与说明优先取游戏本地化（KeyWord 表：<id> = 名称，<id>Description = 说明）
                     string[] kvJson = KwJson(kwId);
                     var kwName = (kvJson != null && !string.IsNullOrEmpty(kvJson[0])) ? kvJson[0] : LocalizedAny("KeyWord", kwId);
-                    var kwDesc = (kvJson != null && !string.IsNullOrEmpty(kvJson[1])) ? kvJson[1] : LocalizedAny("KeyWord", kwId + "Description");
+                    var kwDesc = (kvJson != null && !string.IsNullOrEmpty(kvJson[1])) ? kvJson[1] : LocalizedKeywordDescription(kwId, kw.Value);
                     if (string.IsNullOrEmpty(kwName) || string.IsNullOrEmpty(kwDesc))
                     {
                         string[] kv;
@@ -1517,7 +1589,7 @@ namespace ModKit.Game
                         string[] kv = KwJson(k);
                         var kwName = (kv != null && !string.IsNullOrEmpty(kv[0])) ? kv[0] : LocalizedAny("KeyWord", k);
                         if (string.IsNullOrEmpty(kwName)) { kwName = Short(k); }
-                        var kwDesc = (kv != null && !string.IsNullOrEmpty(kv[1])) ? kv[1] : LocalizedAny("KeyWord", k + "Description");
+                        var kwDesc = (kv != null && !string.IsNullOrEmpty(kv[1])) ? kv[1] : LocalizedKeywordDescription(k, 0);
                         list.Add(new Entry { Name = kwName, Sub = Clamp(kwDesc, 26), Info = kwName + "\n" + kwDesc, Desc = kwDesc });
                     }
                     break;
