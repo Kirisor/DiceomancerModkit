@@ -2,7 +2,7 @@
   "$schema": "modkit/card@1",
   "id": "mf_bloodspawn",
   "name": {
-    "zh-Hans": "奶蛋",
+    "zh-Hans": "奶鼠",
     "en": "Blood Spawn"
   },
   "cost": [
@@ -32,15 +32,12 @@
           "amounts": [
             5
           ],
-          "target": "AllOpponents"
+          "target": "RandomOpponent"
         }
       ]
-    },
-    "Exert"
+    }
   ],
   "upgrade": {
-    "removeKeywords": [
-      "Exert"
-    ]
+    "cost": []
   }
 }

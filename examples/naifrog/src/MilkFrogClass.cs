@@ -57,7 +57,10 @@ public sealed class MilkFrogClass : IModClassProvider
                 "mf_bloodkiss", "mf_bloodspawn", "mf_doomcroak",
                 "mf_glare", "mf_mire_swell", "mf_mother_law", "mf_mudpuppet",
                 "mf_pond_call", "mf_venom_fang", "milkfrogangre", "milkfroglaugh",
-                "naifrogseek", "thonasflare", "nainaiphus"
+                "naifrogseek", "thonasflare", "nainaiphus",
+                // 「奶家人」族（2026-10-24）：奶兔 / 奶狗 / 奶家人 / 奶king / 奶之刻 / 奶蛋？
+                "mf_milk_rabbit", "mf_milk_dog", "mf_milk_family",
+                "mf_milk_king", "mf_milk_clock", "mf_naidan_question"
             }
         };
     }

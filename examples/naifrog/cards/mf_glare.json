@@ -6,7 +6,7 @@
     "en": "Swarm Glare"
   },
   "cost": [
-    "Void"
+    "Black"
   ],
   "rarity": "Uncommon",
   "colors": [
@@ -49,8 +49,14 @@
       {
         "index": 1,
         "amounts": [
-          16
+          8
         ]
+      }
+    ],
+    "keywordNumbers": [
+      {
+        "keyword": "milk_frog",
+        "number": 2
       }
     ]
   }

@@ -24,7 +24,17 @@
     "cards/thonasflare.json",
     "cards/mf_swarm_surge.json",
     "cards/nainaiphus.json",
-    "cards/mf_choir_bulwark.json"
+    "cards/mf_choir_bulwark.json",
+    "cards/mf_milk_rabbit.json",
+    "cards/mf_milk_dog.json",
+    "cards/mf_milk_family.json",
+    "cards/mf_milk_king.json",
+    "cards/mf_milk_clock.json",
+    "cards/mf_naidan_question.json",
+    "cards/mf_essence_rabbit.json",
+    "cards/mf_essence_dog.json",
+    "cards/mf_essence_king.json",
+    "cards/mf_essence_question.json"
   ],
   "relics": [
     "relics/milk_frog_talisman.json"

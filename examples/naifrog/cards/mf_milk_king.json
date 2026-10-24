@@ -1,0 +1,51 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_milk_king",
+  "name": {
+    "zh-Hans": "奶king",
+    "en": "Milk King"
+  },
+  "cost": [
+    [
+      "Green",
+      "Black"
+    ],
+    [
+      "Green",
+      "Black"
+    ]
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Feast",
+  "keywords": [
+    {
+      "name": "Summon",
+      "number": 4,
+      "toCard": "mf_essence_king",
+      "summon": "EarthElement",
+      "effects": [
+        {
+          "custom": "mf_summon_family_random",
+          "amounts": [
+            1
+          ]
+        }
+      ]
+    },
+    "Exert"
+  ],
+  "effects": [],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Black"
+      ]
+    ]
+  }
+}

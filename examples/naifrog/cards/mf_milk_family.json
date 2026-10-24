@@ -1,0 +1,51 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_milk_family",
+  "name": {
+    "zh-Hans": "奶家人",
+    "en": "Milk Family"
+  },
+  "cost": [
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "keywords": [
+    {
+      "name": "Choose",
+      "number": 1
+    },
+    {
+      "name": "Coordinated",
+      "number": 3
+    },
+    "Exert"
+  ],
+  "effects": [
+    {
+      "custom": "mf_add_all_summon_life",
+      "amounts": [
+        3
+      ]
+    },
+    {
+      "custom": "mf_summon_family_random",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Black"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_essence_rabbit",
+  "name": {
+    "zh-Hans": "奶兔精粹",
+    "en": "Milk Rabbit Essence"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "keywords": [
+    "Fragile"
+  ],
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "Haste",
+      "target": "Self",
+      "amounts": [
+        4
+      ]
+    }
+  ]
+}

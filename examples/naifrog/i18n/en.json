@@ -4,7 +4,7 @@
   "tables": {
     "CardName": {
       "naifrog.milkfrogstrike": "Milk Frog Strike",
-      "naifrog.milkfroglaugh": "Milk Frog Laugh",
+      "naifrog.milkfroglaugh": "milkfroglaugh",
       "naifrog.milkfrogblock": "Milk Frog Guard",
       "naifrog.naifrogseek": "Milk Frog Think",
       "naifrog.mf_mire_swell": "Mire Swell",
@@ -13,17 +13,27 @@
       "naifrog.mf_venom_fang": "Kin's Grudge",
       "naifrog.mf_pond_call": "Pond Call",
       "naifrog.mf_glare": "Swarm Glare",
-      "naifrog.mf_mudpuppet": "Mud Puppy",
-      "naifrog.mf_bloodspawn": "Blood Egg",
+      "naifrog.mf_mudpuppet": "Mud Puppet",
+      "naifrog.mf_bloodspawn": "Blood Spawn",
       "naifrog.mf_mother_law": "In Mother's Name",
-      "naifrog.mf_essence_mud": "Puppy Essence",
-      "naifrog.mf_essence_blood": "Egg Essence",
+      "naifrog.mf_essence_mud": "Puppet Essence",
+      "naifrog.mf_essence_blood": "Spawn Essence",
       "naifrog.milkfrogangre": "Angry Milk Frog",
       "naifrog.new_card": "New Card",
       "naifrog.thonasflare": "thonasflare",
       "naifrog.mf_swarm_surge": "Swarm Surge",
       "naifrog.bigstomach": "bigstomach",
-      "naifrog.nainaiphus": "Nainaiphus"
+      "naifrog.nainaiphus": "Nainaiphus",
+      "naifrog.mf_milk_rabbit": "Milk Rabbit",
+      "naifrog.mf_milk_dog": "Milk Dog",
+      "naifrog.mf_milk_family": "Milk Family",
+      "naifrog.mf_milk_king": "Milk King",
+      "naifrog.mf_milk_clock": "Milk Clock",
+      "naifrog.mf_naidan_question": "Milk Egg?",
+      "naifrog.mf_essence_rabbit": "Milk Rabbit Essence",
+      "naifrog.mf_essence_dog": "Milk Dog Essence",
+      "naifrog.mf_essence_king": "Milk King Essence",
+      "naifrog.mf_essence_question": "Milk Egg? Essence"
     },
     "KeyWord": {
       "milk_frog": "Milk Frog",
@@ -40,7 +50,14 @@
       "Key_mf_noop": "(no additional effect)",
       "Key_mf_swarm_surge_cascade": "When resolved by Milk Frog: deal {Number} damage to all enemies.",
       "Key_mf_choose_discard": "Put {Number} card(s) from your hand into the discard pile.",
-      "Key_mf_choir_tenacity": "This turn, each time a Milk Frog card resolves, gain {Number} additional Tough."
+      "Key_mf_choir_tenacity": "This turn, each time a Milk Frog card resolves, gain {Number} additional Tough.",
+      "Key_mf_repeat_damage": "Deal {Number} damage, repeated {Number1} times.",
+      "Key_mf_summon_family_random": "Summon a random Milk Family member.",
+      "Key_mf_summon_family_all": "Summon one of each Milk Family member.",
+      "Key_mf_summon_naidan_question": "Summon Milk Egg?.",
+      "Key_mf_add_all_summon_life": "All summons gain {Number} life.",
+      "Key_mf_resolve_random_until_death": "Resolve a random summon repeatedly until it dies.",
+      "Key_mf_milk_clock": "If you have Milk Egg?: apply {Number} layers of every debuff and deal {Number1} damage to all enemies. Otherwise summon Milk Egg?."
     },
     "CardRequirementDes": {
       "naifrog.req_blue": "Green cards",

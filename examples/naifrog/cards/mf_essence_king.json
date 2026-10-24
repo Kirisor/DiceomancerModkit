@@ -1,0 +1,27 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_essence_king",
+  "name": {
+    "zh-Hans": "奶king精粹",
+    "en": "Milk King Essence"
+  },
+  "cost": [],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "keywords": [
+    "Fragile"
+  ],
+  "effects": [
+    {
+      "custom": "mf_summon_family_all",
+      "amounts": [
+        1
+      ]
+    }
+  ]
+}

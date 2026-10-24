@@ -9,17 +9,17 @@
     "Green",
     "Void"
   ],
-  "rarity": "Uncommon",
+  "rarity": "Common",
   "colors": [
     "Green"
   ],
   "resolve": "OnCast",
-  "artTemplate": "DysonSphereProgram",
+  "artTemplate": "Ember",
   "effects": [
     {
       "builtin": "deal_damage",
       "amounts": [
-        10
+        6
       ],
       "target": "AllOpponents",
       "mode": "Direct"
@@ -27,7 +27,7 @@
     {
       "custom": "mf_swarm_surge_cascade",
       "amounts": [
-        5
+        3
       ],
       "target": "AllOpponents"
     }

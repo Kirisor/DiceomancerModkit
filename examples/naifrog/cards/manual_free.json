@@ -19,7 +19,7 @@
     "Limited",
     {
       "name": "milk_frog",
-      "number": 3
+      "number": 2
     }
   ],
   "effects": [
@@ -50,7 +50,7 @@
     "keywordNumbers": [
       {
         "keyword": "milk_frog",
-        "number": 4
+        "number": 3
       }
     ]
   },

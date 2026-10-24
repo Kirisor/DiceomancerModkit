@@ -1,0 +1,39 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_milk_dog",
+  "name": {
+    "zh-Hans": "奶狗",
+    "en": "Milk Dog"
+  },
+  "cost": [
+    "Black"
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "WildMight",
+  "keywords": [
+    {
+      "name": "Summon",
+      "number": 3,
+      "toCard": "mf_essence_dog",
+      "summon": "FireElement",
+      "effects": [
+        {
+          "custom": "mf_repeat_damage",
+          "amounts": [
+            3,
+            2
+          ]
+        }
+      ]
+    }
+  ],
+  "effects": [],
+  "upgrade": {
+    "cost": []
+  }
+}

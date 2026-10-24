@@ -1,0 +1,68 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_milk_clock",
+  "name": {
+    "zh-Hans": "奶之刻",
+    "en": "Milk Clock"
+  },
+  "cost": [
+    "Green",
+    [
+      "Green",
+      "Black"
+    ]
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "TheTower",
+  "keywords": [
+    "Exert"
+  ],
+  "effects": [
+    {
+      "custom": "mf_milk_clock",
+      "amounts": [
+        {
+          "dice": {
+            "sides": 8
+          }
+        },
+        {
+          "dice": {
+            "sides": 8
+          }
+        }
+      ]
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          {
+            "dice": {
+              "sides": 4,
+              "count": 3
+            }
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "amounts": [
+          {
+            "dice": {
+              "sides": 4,
+              "count": 3
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

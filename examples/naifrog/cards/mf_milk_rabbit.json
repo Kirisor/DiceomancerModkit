@@ -1,0 +1,63 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_milk_rabbit",
+  "name": {
+    "zh-Hans": "奶兔",
+    "en": "Milk Rabbit"
+  },
+  "cost": [
+    [
+      "Green",
+      "Black"
+    ]
+  ],
+  "rarity": "Common",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Abyss",
+  "keywords": [
+    {
+      "name": "Summon",
+      "number": 3,
+      "toCard": "mf_essence_rabbit",
+      "summon": "WaterElement",
+      "effects": [
+        {
+          "builtin": "gain_ability",
+          "name": "Haste",
+          "target": "Self",
+          "amounts": [
+            2
+          ]
+        }
+      ]
+    }
+  ],
+  "effects": [],
+  "upgrade": {
+    "removeKeywords": [
+      "Summon"
+    ],
+    "addKeywords": [
+      {
+        "name": "Summon",
+        "number": 3,
+        "toCard": "mf_essence_rabbit",
+        "summon": "WaterElement",
+        "effects": [
+          {
+            "builtin": "gain_ability",
+            "name": "Haste",
+            "target": "Self",
+            "amounts": [
+              3
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
