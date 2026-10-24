@@ -173,9 +173,92 @@ namespace ModKit.Game
             catch { }
         }
 
+        /// <summary>战役池（`CampaignManager.campaignCardPools`）过滤 + 诊断。</summary>
+        /// <remarks>
+        /// 战役池本来应该被「集合 colorEs ⊆ 本局三色」挡住，但那条链依赖两个我们控制不了的量：
+        /// ① 本局三色到底是多少（读档 / 选球 / 序章各写一次）；
+        /// ② 集合的 colorEs 有没有在某次数据重建里被改回空数组（空数组对所有职业都成立）。
+        /// 所以这里不再信任上游：直接把「当前职业不是本 mod 职业」的卡从池里摘掉，
+        /// 并把**实际三色 + 解析出的职业 + 池内模组卡张数 + 摘掉张数**打进日志 ——
+        /// 复现时一眼就能看出是哪一环错了。
+        /// <para>
+        /// 这条也覆盖 `EffectSpEffectJoker` 这类**直接读 `campaignCardPools`** 的效果
+        /// （不走 `GetCardPoolByInfo`，所以取池出口的钩子管不到它）。
+        /// </para>
+        /// </remarks>
+        internal static void FilterCampaignPool(List<CardSo> pool)
+        {
+            if (pool == null || pool.Count == 0 || _byCard.Count == 0) { return; }
+
+            string current = CurrentClassKey();
+            int modCards = 0;
+            int removed = 0;
+            for (int i = pool.Count - 1; i >= 0; i--)
+            {
+                var so = pool[i];
+                ModEntry owner;
+                if (so == null || string.IsNullOrEmpty(so.cardName)) { continue; }
+                if (!_byCard.TryGetValue(so.cardName, out owner) || owner == null) { continue; }
+
+                modCards++;
+                if (string.Equals(owner.ClassKey, current, StringComparison.Ordinal)) { continue; }
+
+                pool.RemoveAt(i);
+                removed++;
+            }
+
+            LogCampaignPool(current, pool.Count, modCards, removed);
+        }
+
+        private static void LogCampaignPool(string current, int remaining, int modCards, int removed)
+        {
+            string colors = CurrentColorsText();
+            string signature = "campaign/" + current + "/" + colors + "/" + remaining + "/" + modCards + "/" + removed;
+            if (signature == _lastLogSignature) { return; }
+            _lastLogSignature = signature;
+            try
+            {
+                ModKitLog.Info("职业隔离：战役池重建 —— 本局三色 " + colors + "，解析职业 " + (current ?? "<未知>")
+                    + "，池内模组卡 " + modCards + " 张，摘除 " + removed + " 张，剩余 " + remaining + " 张。");
+            }
+            catch { }
+        }
+
+        private static string CurrentColorsText()
+        {
+            try
+            {
+                var campaign = CampaignManager.Instance;
+                if (campaign == null) { return "<无战役>"; }
+
+                ColorE[] colors = campaign.GetCampaignUsedColorE();
+                if (colors == null) { return "<null>"; }
+                if (colors.Length == 0) { return "<空>"; }
+
+                return string.Join("+", colors.Select(c => c.ToString()));
+            }
+            catch
+            {
+                return "<读取失败>";
+            }
+        }
+
         // ---------------------------------------------------------------------
         // 挂钩子：只改「随机取卡」这两条入口，不动其它查询
         // ---------------------------------------------------------------------
+
+        /// <summary>战役池重建（`SetCampaignCardPool` 是 private，按名挂）。</summary>
+        /// <remarks>每次开局 / 读档 / 平台手动重建都会走到这里，正好是「池子被重新算一遍」的时机。</remarks>
+        [HarmonyPatch(typeof(CampaignManager), "SetCampaignCardPool")]
+        internal static class PatchSetCampaignCardPool
+        {
+            [HarmonyPostfix]
+            internal static void Postfix(CampaignManager __instance)
+            {
+                if (__instance == null) { return; }
+                FilterCampaignPool(__instance.campaignCardPools);
+            }
+        }
 
         /// <summary>
         /// `LootManager.GetCardPoolByInfo` —— 掉落取池的唯一出口（CareerPool / CampaignPool /
