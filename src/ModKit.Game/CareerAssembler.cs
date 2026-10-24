@@ -216,6 +216,19 @@ namespace ModKit.Game
                         deckAmounts.Count + " 张 / 色组 " + string.Join("+", colorEs.Select(c => c.ToString())) + "）");
                 }
 
+                // ---- 2.2 随机池隔离：把该 mod 的集合/卡登记下来 ----
+                //   掉落里的 `CareerPool` 取的是「所有集合的卡」，不区分职业，只靠掉落包自己的
+                //   颜色条件过滤 ⇒ 模组卡会漏进原版职业的奖励池。这里登记后由
+                //   `ModPoolIsolation` 在「当前职业不是本 mod 的职业」时把它们摘掉。
+                try
+                {
+                    ModPoolIsolation.Register(modId, classKey, colorEs, modCards);
+                }
+                catch (Exception ex)
+                {
+                    log.Warn("随机池隔离：登记失败 —— " + ex.Message);
+                }
+
                 // ---- 2.5 职业隔离：把该 mod 的「通用卡集合」的 colorEs 收紧成职业三色 ----
                 //   原版图鉴（SubCollectionCards.GetCardsByClass）按「集合的 colorEs ⊆ 该职业三色」筛集合，
                 //   而**空数组是任意集合的子集** ⇒ 六个职业页会把 mod 卡全部收录。
