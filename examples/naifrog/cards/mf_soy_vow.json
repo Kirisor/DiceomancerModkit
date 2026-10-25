@@ -1,0 +1,39 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_soy_vow",
+  "name": {
+    "zh-Hans": "豆奶之誓",
+    "en": "Soy Vow"
+  },
+  "cost": [
+    "Green",
+    "Green"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "custom": "mf_soy_vow",
+      "amounts": [
+        1
+      ]
+    }
+  ],
+  "keywords": [
+    "Exert"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          2
+        ]
+      }
+    ]
+  }
+}

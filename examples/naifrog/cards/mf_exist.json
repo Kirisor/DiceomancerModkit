@@ -1,0 +1,34 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_exist",
+  "name": {
+    "zh-Hans": "奶蛙存在吗？",
+    "en": "Do Milkfrogs Exist?"
+  },
+  "cost": [
+    [
+      "Green",
+      "Purple"
+    ]
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green",
+    "Purple"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Abyss",
+  "effects": [
+    {
+      "custom": "mf_grant_exist"
+    }
+  ],
+  "upgrade": {
+    "addKeywords": [
+      {
+        "name": "milk_frog",
+        "number": 1
+      }
+    ]
+  }
+}

@@ -37,7 +37,16 @@
     "cards/mf_essence_question.json",
     "cards/mf_dynasty.json",
     "cards/mf_all_summons.json",
-    "cards/mf_settle_all.json"
+    "cards/mf_settle_all.json",
+    "cards/mf_holy_frog.json",
+    "cards/mf_mother_fear.json",
+    "cards/mf_mourning.json",
+    "cards/mf_peach.json",
+    "cards/mf_soy_love.json",
+    "cards/mf_call_family.json",
+    "cards/mf_exist.json",
+    "cards/mf_soy_ruin.json",
+    "cards/mf_soy_vow.json"
   ],
   "relics": [
     "relics/milk_frog_talisman.json"
@@ -54,6 +63,7 @@
   "abilities": [
     "abilities/milkfrog_choice.json",
     "abilities/milkfrog_choice_full.json",
-    "abilities/mf_dynasty_aura.json"
+    "abilities/mf_dynasty_aura.json",
+    "abilities/mf_exist_watch.json"
   ]
 }

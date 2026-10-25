@@ -1,0 +1,56 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mother_fear",
+  "name": {
+    "zh-Hans": "生母之惧",
+    "en": "Mother's Dread"
+  },
+  "cost": [
+    "Green",
+    "Black"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DarkElement",
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "Powerless",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent"
+    },
+    {
+      "builtin": "gain_ability",
+      "name": "ThinSkin",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent"
+    },
+    {
+      "builtin": "gain_ability",
+      "name": "Blind",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent"
+    }
+  ],
+  "keywords": [
+    "Perishable"
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Black"
+      ]
+    ]
+  }
+}

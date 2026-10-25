@@ -1,0 +1,46 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_holy_frog",
+  "name": {
+    "zh-Hans": "圣奶蛙降临大地",
+    "en": "The Holy Milkfrog Descends"
+  },
+  "cost": [
+    "Green",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Block",
+  "effects": [
+    {
+      "builtin": "heal",
+      "amounts": [
+        4
+      ]
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 3
+    }
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Void"
+      ]
+    ],
+    "keywordNumbers": [
+      {
+        "keyword": "milk_frog",
+        "number": 4
+      }
+    ]
+  }
+}

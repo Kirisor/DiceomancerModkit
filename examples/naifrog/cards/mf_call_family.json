@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_call_family",
+  "name": {
+    "zh-Hans": "呼叫奶家人",
+    "en": "Call the Family"
+  },
+  "cost": [
+    "Green",
+    "Void"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "LongView",
+  "effects": [
+    {
+      "custom": "mf_call_family"
+    }
+  ],
+  "keywords": [
+    "Exert"
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Void"
+      ],
+      [
+        "Green",
+        "Void"
+      ]
+    ]
+  }
+}

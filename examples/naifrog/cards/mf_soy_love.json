@@ -1,0 +1,37 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_soy_love",
+  "name": {
+    "zh-Hans": "豆奶之恋",
+    "en": "Soy Romance"
+  },
+  "cost": [
+    "Green"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DarkElement",
+  "effects": [
+    {
+      "custom": "mf_soy_love",
+      "amounts": [
+        2
+      ],
+      "target": "Opponent"
+    }
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          4
+        ]
+      }
+    ]
+  }
+}

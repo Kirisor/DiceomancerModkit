@@ -1,0 +1,39 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_soy_ruin",
+  "name": {
+    "zh-Hans": "豆奶之殇",
+    "en": "Soy Requiem"
+  },
+  "cost": [
+    "Black",
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "TheTower",
+  "effects": [
+    {
+      "custom": "mf_soy_ruin",
+      "amounts": [
+        3
+      ]
+    }
+  ],
+  "keywords": [
+    "Exert"
+  ],
+  "upgrade": {
+    "effectNumbers": [
+      {
+        "index": 0,
+        "amounts": [
+          5
+        ]
+      }
+    ]
+  }
+}

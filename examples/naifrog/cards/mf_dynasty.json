@@ -19,12 +19,7 @@
   "artTemplate": "DysonSphereProgram",
   "effects": [
     {
-      "builtin": "gain_ability",
-      "name": "mf_dynasty_aura",
-      "amounts": [
-        1
-      ],
-      "target": "Self"
+      "custom": "mf_grant_dynasty"
     }
   ],
   "upgrade": {

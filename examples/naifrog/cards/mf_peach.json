@@ -1,0 +1,57 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_peach",
+  "name": {
+    "zh-Hans": "黄桃罐头",
+    "en": "Canned Peaches"
+  },
+  "cost": [
+    "Green",
+    "Black"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "Feast",
+  "effects": [
+    {
+      "builtin": "block",
+      "amounts": [
+        6
+      ]
+    },
+    {
+      "custom": "mf_peach_cascade",
+      "amounts": [
+        6
+      ]
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 2
+    },
+    "Exert"
+  ],
+  "upgrade": {
+    "replaceEffects": [
+      {
+        "index": 0,
+        "effects": [
+          {
+            "builtin": "gain_ability",
+            "name": "Fortified",
+            "amounts": [
+              6
+            ],
+            "target": "Self"
+          }
+        ]
+      }
+    ]
+  }
+}

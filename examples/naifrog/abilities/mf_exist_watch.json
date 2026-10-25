@@ -1,0 +1,19 @@
+{
+  "$schema": "modkit/ability@1",
+  "id": "mf_exist_watch",
+  "name": {
+    "zh-Hans": "奶蛙存在吗？",
+    "en": "Do Milkfrogs Exist?"
+  },
+  "type": "Buff",
+  "owner": "Player",
+  "addToPool": false,
+  "isUnique": false,
+  "artTemplate": "Power",
+  "trigger": "BattleStart",
+  "effects": [
+    {
+      "custom": "mf_noop"
+    }
+  ]
+}

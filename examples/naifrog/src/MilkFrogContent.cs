@@ -125,7 +125,7 @@ public sealed class CardKeywordMilkFrog : CardKeyword
     /// <see cref="MilkFrogCascade.IsResolving"/>（连锁结算命令自己开合的窗口）。
     /// 这样其它卡只要继承 <see cref="CascadeTriggeredEffect"/> 就能共用同一个触发点。
     /// </remarks>
-    public override UniTask CardResolvePhaseAfterEffect(CardBase card)
+    public override async UniTask CardResolvePhaseAfterEffect(CardBase card)
     {
         try
         {
@@ -146,7 +146,19 @@ public sealed class CardKeywordMilkFrog : CardKeyword
         {
             Debug.LogWarning("[ModKit] 奶蛙：坚韧结算失败 —— " + e.Message);
         }
-        return UniTask.CompletedTask;
+
+        // 「奶蛙存在吗？」：每当你触发奶蛙关键词（即本卡结算）时，抽 1 张并随机弃 1 张。
+        try
+        {
+            if (ManualDemo.MilkFrogGrants.HasExistWatch())
+            {
+                await ManualDemo.MilkFrogGrants.ExistWatchAsync();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[ModKit] 奶蛙存在吗：触发失败 —— " + e.Message);
+        }
     }
 
     private void PullOthers(CardBase card)

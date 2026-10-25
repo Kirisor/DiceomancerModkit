@@ -8,7 +8,7 @@
   "cost": [
     "Green"
   ],
-  "rarity": "Common",
+  "rarity": "Uncommon",
   "colors": [
     "Green"
   ],
@@ -16,7 +16,7 @@
   "artTemplate": "Reconsider",
   "effects": [
     {
-      "custom": "mf_grave_swell",
+      "custom": "mf_mire_whirl",
       "amounts": [
         1
       ]

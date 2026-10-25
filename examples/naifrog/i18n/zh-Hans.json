@@ -36,7 +36,16 @@
       "naifrog.mf_essence_question": "奶蛋？精粹",
       "naifrog.mf_dynasty": "奶蛙王朝",
       "naifrog.mf_all_summons": "应奶尽奶",
-      "naifrog.mf_settle_all": "笑到最后"
+      "naifrog.mf_settle_all": "笑到最后",
+      "naifrog.mf_holy_frog": "圣奶蛙降临大地",
+      "naifrog.mf_mother_fear": "生母之惧",
+      "naifrog.mf_mourning": "奶之哀",
+      "naifrog.mf_peach": "黄桃罐头",
+      "naifrog.mf_soy_love": "豆奶之恋",
+      "naifrog.mf_call_family": "呼叫奶家人",
+      "naifrog.mf_exist": "奶蛙存在吗？",
+      "naifrog.mf_soy_ruin": "豆奶之殇",
+      "naifrog.mf_soy_vow": "豆奶之誓"
     },
     "KeyWord": {
       "manual_bulwark": "手册坚壁",
@@ -73,17 +82,27 @@
       "Key_mf_milk_clock_up": "若有「奶蛋？」：对所有敌人施加 3d4 层所有减益，并造成 3d4 点伤害；否则召唤「奶蛋？」。",
       "Key_mf_essence_question": "最大生命值减少 8，直到战斗结束；然后召唤「奶蛋？」。",
       "Key_mf_all_summons": "触发所有召唤物的效果，直到它们全部死亡。",
-      "Key_mf_settle_all": "结算抽牌堆中所有带「奶蛙」的牌。"
+      "Key_mf_settle_all": "结算抽牌堆中所有带「奶蛙」的牌。",
+      "Key_mf_grant_dynasty": "获得：新召唤的「奶家人」，每个数字都 +3（含次数）。",
+      "Key_mf_grant_exist": "获得：每当你触发「奶蛙」关键词时，抽 1 张牌并随机弃 1 张牌。",
+      "Key_mf_peach_cascade": "被奶蛙结算时：获得 {Number} 点加固。",
+      "Key_mf_call_family": "抽 3 张牌；每抽到 1 张绿色牌，获得 1 点绿色法力。",
+      "Key_mf_soy_love": "目标每有 1 层流血，对其施加 {Number} 层燃烧。",
+      "Key_mf_soy_ruin": "移除所有敌人的减益效果；每移除 1 层，所有敌人失去 {Number} 点生命。",
+      "Key_mf_soy_vow": "移除所有敌人的减益效果；每移除 1 层，获得 {Number} 层随机增益。",
+      "Key_mf_mire_whirl": "造成 {Number} 倍目标减益层数的伤害。"
     },
     "Ability": {
       "naifrog.milkfrog_choice": "蛙母的选择",
       "naifrog.milkfrog_choice_full": "蛙母的全权",
-      "naifrog.mf_dynasty_aura": "奶蛙王朝"
+      "naifrog.mf_dynasty_aura": "奶蛙王朝",
+      "naifrog.mf_exist_watch": "奶蛙存在吗？"
     },
     "AbilityDescription": {
       "naifrog.milkfrog_choice": "「奶蛙」拉取时由你选择要结算的奶蛙卡。",
       "naifrog.milkfrog_choice_full": "「奶蛙」拉取时由你选择任意要结算的卡。",
-      "naifrog.mf_dynasty_aura": "新召唤的「奶家人」，每个数字都 +3（含次数）。"
+      "naifrog.mf_dynasty_aura": "新召唤的「奶家人」，每个数字都 +3（含次数）。",
+      "naifrog.mf_exist_watch": "每当你触发「奶蛙」关键词时，抽 1 张牌并随机弃 1 张牌。"
     },
     "PickCardConfigure": {
       "Title_MilkfrogDiscard": "选择要放进弃牌堆的手牌",

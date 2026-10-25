@@ -1,0 +1,48 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_mourning",
+  "name": {
+    "zh-Hans": "奶之哀",
+    "en": "Mourning of Milk"
+  },
+  "cost": [
+    [
+      "Green",
+      "Black"
+    ],
+    "Black"
+  ],
+  "rarity": "Uncommon",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "MindSpike",
+  "effects": [
+    {
+      "custom": "MultiDamage",
+      "amounts": [
+        5,
+        4
+      ],
+      "target": "Opponent"
+    },
+    {
+      "builtin": "gain_ability",
+      "name": "Vulnerable",
+      "amounts": [
+        4
+      ],
+      "target": "Self"
+    }
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Black"
+      ]
+    ]
+  }
+}
