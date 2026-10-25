@@ -152,6 +152,14 @@ namespace ManualDemo
                 LifeCounter = kw.number,
                 deathCardInfo = deathCard == null ? default(CardInfo) : deathCard.CardInfo
             };
+
+            // 「奶蛙王朝」：生命与每个常量数字 +3（含次数）——照原版「多就是好，大就是棒」的 RNumber 路线。
+            // 「奶蛋？」不算「奶家人」，不吃这份加成。
+            if (!string.Equals(shortId, Question, StringComparison.Ordinal))
+            {
+                MilkFrogDynasty.Boost(info);
+            }
+
             new SubCommandOrganismSpawn(info);
         }
 
@@ -199,13 +207,17 @@ namespace ManualDemo
         }
     }
 
-    /// <summary>奶狗：造成 3 点伤害 ×2（召唤物行动）。</summary>
+    /// <summary>奶狗：造成 N 点伤害 ×M 次（召唤物行动）。数字来自卡上的数字槽，王朝 +3 会一起涨。</summary>
     [ModEffect("mf_dog_bite")]
     public sealed class MfDogBite : SyncCardEffect
     {
         public override void Apply(EffectContext ctx)
         {
-            Repeat(ctx, 3, 2);
+            int damage = ctx.AmountAt(0);
+            if (damage <= 0) { damage = 3; }
+            int times = ctx.AmountAt(1);
+            if (times <= 0) { times = 2; }
+            Repeat(ctx, damage, times);
         }
 
         internal static void Repeat(EffectContext ctx, int damage, int times)

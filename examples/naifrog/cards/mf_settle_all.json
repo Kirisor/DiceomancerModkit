@@ -1,0 +1,49 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_settle_all",
+  "name": {
+    "zh-Hans": "笑到最后",
+    "en": "Last Laugh"
+  },
+  "cost": [
+    "Green",
+    [
+      "Green",
+      "Black"
+    ],
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "GoodStrike",
+  "effects": [
+    {
+      "custom": "mf_settle_all"
+    }
+  ],
+  "keywords": [
+    {
+      "name": "milk_frog",
+      "number": 4
+    }
+  ],
+  "upgrade": {
+    "cost": [
+      "Green",
+      [
+        "Green",
+        "Black"
+      ]
+    ],
+    "keywordNumbers": [
+      {
+        "keyword": "milk_frog",
+        "number": 5
+      }
+    ]
+  }
+}

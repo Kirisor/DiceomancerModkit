@@ -34,7 +34,10 @@
     "cards/mf_essence_rabbit.json",
     "cards/mf_essence_dog.json",
     "cards/mf_essence_king.json",
-    "cards/mf_essence_question.json"
+    "cards/mf_essence_question.json",
+    "cards/mf_dynasty.json",
+    "cards/mf_all_summons.json",
+    "cards/mf_settle_all.json"
   ],
   "relics": [
     "relics/milk_frog_talisman.json"
@@ -50,6 +53,7 @@
   "entryAssembly": "naifrog.dll",
   "abilities": [
     "abilities/milkfrog_choice.json",
-    "abilities/milkfrog_choice_full.json"
+    "abilities/milkfrog_choice_full.json",
+    "abilities/mf_dynasty_aura.json"
   ]
 }

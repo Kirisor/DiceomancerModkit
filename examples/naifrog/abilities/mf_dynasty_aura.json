@@ -1,0 +1,19 @@
+{
+  "$schema": "modkit/ability@1",
+  "id": "mf_dynasty_aura",
+  "name": {
+    "zh-Hans": "奶蛙王朝",
+    "en": "Milkfrog Dynasty"
+  },
+  "type": "Buff",
+  "owner": "Player",
+  "addToPool": false,
+  "isUnique": false,
+  "artTemplate": "Power",
+  "trigger": "BattleStart",
+  "effects": [
+    {
+      "custom": "mf_noop"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_dynasty",
+  "name": {
+    "zh-Hans": "奶蛙王朝",
+    "en": "Milkfrog Dynasty"
+  },
+  "cost": [
+    "Green",
+    "Green",
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Green",
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "DysonSphereProgram",
+  "effects": [
+    {
+      "builtin": "gain_ability",
+      "name": "mf_dynasty_aura",
+      "amounts": [
+        1
+      ],
+      "target": "Self"
+    }
+  ],
+  "upgrade": {
+    "cost": [
+      "Green",
+      [
+        "Green",
+        "Black"
+      ]
+    ]
+  }
+}

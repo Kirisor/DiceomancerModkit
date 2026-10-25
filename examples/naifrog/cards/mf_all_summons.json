@@ -1,0 +1,38 @@
+{
+  "$schema": "modkit/card@1",
+  "id": "mf_all_summons",
+  "name": {
+    "zh-Hans": "应奶尽奶",
+    "en": "Milked Dry"
+  },
+  "cost": [
+    "Black",
+    "Black"
+  ],
+  "rarity": "Rare",
+  "colors": [
+    "Black"
+  ],
+  "resolve": "OnCast",
+  "artTemplate": "TheTower",
+  "effects": [
+    {
+      "custom": "mf_all_summons"
+    }
+  ],
+  "keywords": [
+    "Exert"
+  ],
+  "upgrade": {
+    "cost": [
+      [
+        "Green",
+        "Black"
+      ],
+      "Black"
+    ],
+    "removeKeywords": [
+      "Exert"
+    ]
+  }
+}

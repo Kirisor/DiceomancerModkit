@@ -33,7 +33,10 @@
       "naifrog.mf_essence_rabbit": "奶兔精粹",
       "naifrog.mf_essence_dog": "奶狗精粹",
       "naifrog.mf_essence_king": "奶king精粹",
-      "naifrog.mf_essence_question": "奶蛋？精粹"
+      "naifrog.mf_essence_question": "奶蛋？精粹",
+      "naifrog.mf_dynasty": "奶蛙王朝",
+      "naifrog.mf_all_summons": "应奶尽奶",
+      "naifrog.mf_settle_all": "笑到最后"
     },
     "KeyWord": {
       "manual_bulwark": "手册坚壁",
@@ -65,18 +68,22 @@
       "Key_mf_add_all_summon_life": "所有召唤物生命 +3。",
       "Key_mf_resolve_random_until_death": "随机触发一个召唤物，重复触发直到它死亡。",
       "Key_mf_milk_clock": "若有「奶蛋？」：对所有敌人施加 1d8 层所有减益，并造成 1d8 点伤害；否则召唤「奶蛋？」。",
-      "Key_mf_dog_bite": "造成 3 点伤害，重复 2 次。",
+      "Key_mf_dog_bite": "造成 {Number} 点伤害，重复 {Number1} 次。",
       "Key_mf_dog_bite_essence": "造成 3 点伤害，重复 4 次。",
       "Key_mf_milk_clock_up": "若有「奶蛋？」：对所有敌人施加 3d4 层所有减益，并造成 3d4 点伤害；否则召唤「奶蛋？」。",
-      "Key_mf_essence_question": "最大生命值减少 8，直到战斗结束；然后召唤「奶蛋？」。"
+      "Key_mf_essence_question": "最大生命值减少 8，直到战斗结束；然后召唤「奶蛋？」。",
+      "Key_mf_all_summons": "触发所有召唤物的效果，直到它们全部死亡。",
+      "Key_mf_settle_all": "结算抽牌堆中所有带「奶蛙」的牌。"
     },
     "Ability": {
       "naifrog.milkfrog_choice": "蛙母的选择",
-      "naifrog.milkfrog_choice_full": "蛙母的全权"
+      "naifrog.milkfrog_choice_full": "蛙母的全权",
+      "naifrog.mf_dynasty_aura": "奶蛙王朝"
     },
     "AbilityDescription": {
       "naifrog.milkfrog_choice": "「奶蛙」拉取时由你选择要结算的奶蛙卡。",
-      "naifrog.milkfrog_choice_full": "「奶蛙」拉取时由你选择任意要结算的卡。"
+      "naifrog.milkfrog_choice_full": "「奶蛙」拉取时由你选择任意要结算的卡。",
+      "naifrog.mf_dynasty_aura": "新召唤的「奶家人」，每个数字都 +3（含次数）。"
     },
     "PickCardConfigure": {
       "Title_MilkfrogDiscard": "选择要放进弃牌堆的手牌",

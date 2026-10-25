@@ -33,7 +33,10 @@
       "naifrog.mf_essence_rabbit": "Milk Rabbit Essence",
       "naifrog.mf_essence_dog": "Milk Dog Essence",
       "naifrog.mf_essence_king": "Milk King Essence",
-      "naifrog.mf_essence_question": "Milk Egg? Essence"
+      "naifrog.mf_essence_question": "Milk Egg? Essence",
+      "naifrog.mf_dynasty": "Milkfrog Dynasty",
+      "naifrog.mf_all_summons": "Milked Dry",
+      "naifrog.mf_settle_all": "Last Laugh"
     },
     "KeyWord": {
       "milk_frog": "Milk Frog",
@@ -57,10 +60,12 @@
       "Key_mf_add_all_summon_life": "All summons gain 3 life.",
       "Key_mf_resolve_random_until_death": "Repeatedly resolve a random summon until it dies.",
       "Key_mf_milk_clock": "If you have Milk Egg?: apply 1d8 layers of every debuff and deal 1d8 damage to all enemies. Otherwise summon Milk Egg?.",
-      "Key_mf_dog_bite": "Deal 3 damage, repeated 2 times.",
+      "Key_mf_dog_bite": "Deal {Number} damage, repeated {Number1} times.",
       "Key_mf_dog_bite_essence": "Deal 3 damage, repeated 4 times.",
       "Key_mf_milk_clock_up": "If you have Milk Egg?: apply 3d4 layers of every debuff and deal 3d4 damage to all enemies. Otherwise summon Milk Egg?.",
-      "Key_mf_essence_question": "Lose 8 max life until the end of combat, then summon Milk Egg?."
+      "Key_mf_essence_question": "Lose 8 max life until the end of combat, then summon Milk Egg?.",
+      "Key_mf_all_summons": "Resolve every summon's effect until all of them die.",
+      "Key_mf_settle_all": "Resolve every Milk Frog card in your draw pile."
     },
     "CardRequirementDes": {
       "naifrog.req_blue": "Green cards",
@@ -68,11 +73,13 @@
     },
     "Ability": {
       "naifrog.milkfrog_choice": "Mother's Choice",
-      "naifrog.milkfrog_choice_full": "Mother's Full Decree"
+      "naifrog.milkfrog_choice_full": "Mother's Full Decree",
+      "naifrog.mf_dynasty_aura": "Milkfrog Dynasty"
     },
     "AbilityDescription": {
       "naifrog.milkfrog_choice": "When Milk Frog pulls, you choose which Milk Frog cards resolve.",
-      "naifrog.milkfrog_choice_full": "When Milk Frog pulls, you choose any cards to resolve."
+      "naifrog.milkfrog_choice_full": "When Milk Frog pulls, you choose any cards to resolve.",
+      "naifrog.mf_dynasty_aura": "Newly summoned Milk Family members get +3 to every number (including repeat counts)."
     },
     "Relic": {
       "naifrog.milk_frog_talisman": "Milk Frog Talisman",
