@@ -176,12 +176,34 @@ E="$STAGE/example-mod"
 MOD="${EXAMPLE_SRC:-$GAME/BepInEx/DiceomancerMods/naifrog}"
 if [ -d "$MOD" ]; then
   mkdir -p "$E/naifrog"
-  for item in mod.json cards relics keywords i18n art sfx src naifrog.dll; do
+  # 清单里声明的每一类文件都必须在这里，少一类就会「包能装、内容缺、游戏里 NRE」：
+  # abilities/ 漏掉时，引用能力的卡（如以母之名）实例化直接空引用、图鉴只剩缩略图。
+  for item in mod.json cards relics keywords abilities i18n colors.json art sfx src naifrog.dll; do
     [ -e "$MOD/$item" ] && cp -r "$MOD/$item" "$E/naifrog/" 2>/dev/null || true
   done
   # 只剔除备份与笔记；dll/src 是职业与关键词行为的实现，必须保留（否则没有职业球）
   find "$E" -name "*.bak" -delete 2>/dev/null || true
   find "$E" -name "*.pdb" -delete 2>/dev/null || true
+  # 清单完整性：mod.json 声明了但包内不存在的文件，直接判打包失败，避免发布残包
+  if ! "$PY" - "$E/naifrog" <<'PY'
+import json, os, sys
+root = sys.argv[1]
+with open(os.path.join(root, "mod.json"), encoding="utf-8") as fh:
+    manifest = json.load(fh)
+missing, total = [], 0
+for key in ("cards", "relics", "keywords", "i18n", "abilities"):
+    for rel in manifest.get(key, []):
+        total += 1
+        if not os.path.exists(os.path.join(root, rel)):
+            missing.append(rel)
+if missing:
+    print("  [FAIL] missing declared files: " + ", ".join(missing))
+    sys.exit(1)
+print("  [OK] manifest: %d declared files all present" % total)
+PY
+  then
+    exit 1
+  fi
   if [ ! -f "$E/naifrog/naifrog.dll" ]; then
     echo "  ! mod 缺少 naifrog.dll —— 职业球不会出现"
   fi
