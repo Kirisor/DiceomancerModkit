@@ -11,10 +11,10 @@
 set -e
 
 MOD_DIR="$(cd "$(dirname "$0")" && pwd)"
-GAME_ROOT="${DICEOMANCER_DIR:-G:/deepseek space/DICEOMANCER}"
+. "$MOD_DIR/../../tools/env.sh"
+
+GAME_ROOT="$DICEOMANCER_DIR"
 MANAGED="$GAME_ROOT/Diceomancer_Data/Managed"
-DOTNET="${DOTNET:-G:/deepseek space/dotnet-sdk/dotnet.exe}"
-CSC="${CSC:-G:/deepseek space/dotnet-sdk/sdk/10.0.401/Roslyn/bincore/csc.dll}"
 
 OUT="$MOD_DIR/_build/naifrog.dll"
 mkdir -p "$MOD_DIR/_build"

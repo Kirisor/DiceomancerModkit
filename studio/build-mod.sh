@@ -13,13 +13,13 @@
 
 set -u
 
-GAME="/g/deepseek space/DICEOMANCER"
+. "$(cd "$(dirname "$0")/.." && pwd)/tools/env.sh"
+
+GAME="$DICEOMANCER_DIR"
 MODS_ROOT="${2:-$GAME/BepInEx/DiceomancerMods}"
 MOD_ID="${1:-manual_demo}"
 MOD_DIR="$MODS_ROOT/$MOD_ID"
 
-DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
-CSC="/g/deepseek space/dotnet-sdk/sdk/10.0.401/Roslyn/bincore/csc.dll"
 MG="$GAME/Diceomancer_Data/Managed"
 PLUGINS="$GAME/BepInEx/plugins"
 OUT="$MOD_DIR/$MOD_ID.dll"

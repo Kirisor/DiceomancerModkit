@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 打包发布物：ModKit 平台包 / ModKit Studio 包 / 示例 mod
 #
-# 用法：bash /g/Modkit/studio/pack.sh [版本号]
-# 产出：/g/Modkit/dist/
+# 用法：bash studio/pack.sh [版本号]
+# 产出：<仓库根>/dist/
 #
 # 说明：
 #   · 平台包只含运行必需文件（4 个 dll + 配置 + 许可），不含任何游戏素材；
@@ -11,20 +11,33 @@
 
 set -eu
 
+. "$(cd "$(dirname "$0")/.." && pwd)/tools/env.sh"
+
 VERSION="${1:-0.1.0}"
 SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需下载 .NET 运行时包）；0 = 框架依赖
 WITH_BEPINEX="${WITH_BEPINEX:-0}"
 EXAMPLE_SRC="${EXAMPLE_SRC:-}"    # 示例 mod 源目录；留空则用游戏目录里的 naifrog       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
-ROOT="/g/Modkit"
-GAME="/g/deepseek space/DICEOMANCER"
-DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
+ROOT="$MODKIT_ROOT"
+GAME="$DICEOMANCER_DIR"
 DIST="$ROOT/dist"
 STAGE="$DIST/stage"
 
 rm -rf "$DIST"
 mkdir -p "$DIST" "$STAGE"
 
-PY="/c/Users/admin/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe"
+# 打包用 Python（需要 zipfile）；没有 python 时提示显式指定 PY=<python 路径>
+if [ -z "${PY:-}" ]; then
+  for cand in python3 python "$HOME/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe"; do
+    if command -v "$cand" >/dev/null 2>&1 || [ -x "$cand" ]; then
+      PY="$cand"
+      break
+    fi
+  done
+fi
+if [ -z "${PY:-}" ]; then
+  echo "✗ 找不到 python：设 PY=<python 可执行文件路径> 后重试" >&2
+  exit 1
+fi
 
 zip_dir () {  # zip_dir <输出zip> <源目录>
   "$PY" - "$1" "$2" <<'PY'

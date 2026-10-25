@@ -2,9 +2,12 @@
 # 绕开 NuGet 客户端：手动用 curl 下载运行时包，再从本地目录还原 + 自包含发布
 set -u
 
-DOTNET="/g/deepseek space/dotnet-sdk/dotnet.exe"
-LOCAL="/g/Modkit/nuget-local"
-OUT="/g/Modkit/dist/stage/ModKit-Studio"
+. "$(cd "$(dirname "$0")/.." && pwd)/tools/env.sh"
+
+LOCAL="$MODKIT_ROOT/nuget-local"
+OUT="$MODKIT_ROOT/dist/stage/ModKit-Studio"
+RESTORE_LOG="$MODKIT_ROOT/restore.log"
+PUBLISH_LOG="$MODKIT_ROOT/publish-sc.log"
 VER="10.0.12"
 BASE="https://api.nuget.org/v3-flatcontainer"
 
@@ -37,13 +40,13 @@ echo "  本地目录: $(du -sh "$LOCAL" | cut -f1)"
 
 echo
 echo "=== 2) 还原（本地目录 + 官方源）==="
-cd /g/Modkit/studio
+cd "$MODKIT_ROOT/studio"
 if ! "$DOTNET" restore ModKit.Studio.csproj -r win-x64 \
       -p:RestoreSources="$LOCAL" \
       -p:RestoreDisableParallel=true \
-      > /g/Modkit/restore.log 2>&1; then
+      > "$RESTORE_LOG" 2>&1; then
   echo "  ✗ 还原失败"
-  grep -E "error|错误" /g/Modkit/restore.log | head -8 | sed 's/^/    /'
+  grep -E "error|错误" "$RESTORE_LOG" | head -8 | sed 's/^/    /'
   exit 1
 fi
 echo "  ✓ 还原成功"
@@ -54,9 +57,9 @@ rm -rf "$OUT"
 if ! "$DOTNET" publish ModKit.Studio.csproj -c Release -r win-x64 --self-contained true \
       --no-restore \
       -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
-      -p:DebugType=none -o "$OUT" > /g/Modkit/publish-sc.log 2>&1; then
+      -p:DebugType=none -o "$OUT" > "$PUBLISH_LOG" 2>&1; then
   echo "  ✗ 发布失败"
-  tail -12 /g/Modkit/publish-sc.log | sed 's/^/    /'
+  tail -12 "$PUBLISH_LOG" | sed 's/^/    /'
   exit 1
 fi
 
