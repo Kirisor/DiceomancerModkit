@@ -47,7 +47,10 @@ namespace ManualDemo
         /// <summary>奶蛋？—— 既是召唤物也是「奶之刻」的判定目标。</summary>
         internal const string Question = "mf_naidan_question";
 
-        /// <summary>族的成员（短 id）。17「奶家人」自己不算成员。</summary>
+        /// <summary>
+        /// 族的成员（短 id）。「奶家人」自己与「奶蛋？」都不算成员：
+        /// 「奶蛋？」是单独的召唤物，只由直接召唤它的效果产生（奶之刻的 else 分支、奶蛋？自己的精粹）。
+        /// </summary>
         internal static readonly string[] Members =
         {
             "mf_mudpuppet",      // 奶蛋（原奶狗）
@@ -55,7 +58,6 @@ namespace ManualDemo
             "mf_milk_dog",       // 奶狗
             "mf_milk_rabbit",    // 奶兔
             "mf_milk_king",      // 奶king
-            Question             // 奶蛋？
         };
 
         /// <summary>
