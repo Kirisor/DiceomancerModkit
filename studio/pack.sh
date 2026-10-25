@@ -27,8 +27,8 @@ mkdir -p "$DIST" "$STAGE"
 
 # 打包用 Python（需要 zipfile）；没有 python 时提示显式指定 PY=<python 路径>
 if [ -z "${PY:-}" ]; then
-  for cand in python3 python "$HOME/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe"; do
-    if command -v "$cand" >/dev/null 2>&1 || [ -x "$cand" ]; then
+  for cand in python python3 "$HOME/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe"; do
+    if "$cand" -c "import sys" >/dev/null 2>&1; then
       PY="$cand"
       break
     fi
