@@ -58,6 +58,16 @@ namespace ModKit.Game
         public static bool Installed { get { return _registry != null; } }
 
         /// <summary>
+        /// 已安装的注册表。
+        /// </summary>
+        /// <remarks>
+        /// ★ 2026-10-26：继续游戏时存档反序列化发生在平台流水线之前，
+        /// 那时 <see cref="PlatformRuntime.Registry"/> 还是 null；自定义效果的适配类生成
+        /// 必须能退回这里取作者类型，否则 Type.GetType 落空 → 启动崩溃。
+        /// </remarks>
+        public static ContentRegistry InstalledRegistry { get { return _registry; } }
+
+        /// <summary>
         /// 替代 <c>Type.GetType(string)</c>。
         /// </summary>
         /// <remarks>

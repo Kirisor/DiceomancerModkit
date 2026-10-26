@@ -104,7 +104,10 @@ namespace ModKit.Game
                 if (Cache.TryGetValue(id, out cached)) { return cached; }
 
                 // 作者必须真的登记过这个 id；否则不生成（让游戏走原本的 null 路径，保持原版报错语义）
-                var authorType = PlatformRuntime.Registry == null ? null : PlatformRuntime.Registry.ResolveEffect(id);
+                // ★ 早退兜底：反序列化存档时流水线还没跑，PlatformRuntime.Registry 为 null，
+                //   退回 Transpiler 桥安装时用的注册表 —— 它已经预加载过 mod 程序集。
+                var registry = PlatformRuntime.Registry ?? ModKitBridge.InstalledRegistry;
+                var authorType = registry == null ? null : registry.ResolveEffect(id);
                 if (authorType == null) { return null; }
 
                 var emitted = Emit(ns + prefix + id, id);

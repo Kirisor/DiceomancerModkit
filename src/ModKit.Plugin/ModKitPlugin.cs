@@ -21,9 +21,11 @@
 // =============================================================================
 
 using System;
+using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using ModKit.Core;
 using ModKit.Game;
 using Utilities;
 
@@ -218,7 +220,18 @@ namespace ModKit.Plugin
             // 必须在任何内容类被实例化之前完成，否则解析落空 → EffectUtils 第 41 行 NRE。
             try
             {
-                var registry = ContentRegistryFactory.BuildFromAppDomain(log);
+                // ★ 2026-10-26 时序修复：先把各 mod 的入口程序集预加载进来。
+                //   继续游戏时 GameManager.Start 会**立刻**反序列化存档并重建卡牌，
+                //   卡上的关键词效果要按类名解析成游戏类型；若注册表里还没有 mod 程序集，
+                //   Type.GetType 落空 → Activator.CreateInstance(null) → 启动即崩。
+                //   预加载只做文件 + 反射，不碰游戏数据，可以在 Awake 安全执行。
+                var preloaded = ModAssemblyPreload.Load(CfgModsRoot.Value, log);
+
+                var assemblies = new List<System.Reflection.Assembly>();
+                assemblies.AddRange(AppDomain.CurrentDomain.GetAssemblies());
+                assemblies.AddRange(preloaded);
+
+                var registry = ContentRegistry.Build(assemblies, delegate (string s) { log.Info(s); });
                 int patched = BridgeInstaller.Install(registry, log);
                 log.Info("Transpiler 桥安装完成，命中 " + patched + " 个工厂。");
             }
