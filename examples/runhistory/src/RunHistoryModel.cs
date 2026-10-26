@@ -83,9 +83,6 @@ namespace RunHistory
         /// <summary>章节（<c>ChapterMapName</c> 的字符串形式）。</summary>
         public string chapter;
 
-        /// <summary>节点在地图上的列深度（<c>Node.depth</c>）。</summary>
-        public int depth;
-
         /// <summary>该节点是否被紫雾腐化。</summary>
         public bool corrupted;
 

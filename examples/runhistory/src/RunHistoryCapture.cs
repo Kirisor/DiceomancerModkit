@@ -76,14 +76,29 @@ namespace RunHistory
         }
 
         /// <summary>继续游戏。由 <c>CampaignManager.DeserializeCampaignInfo</c> 之后调用。</summary>
-        internal static void OnContinue()
+        /// <remarks>
+        /// ★ 两道闸，都是为了不产出"垃圾局"（2026-10-26 首次实机验证后补）：
+        ///   ① 只认 <c>CampaignMode.Gaming</c> —— 已经打完的战役（Defeated/Victory）在主菜单
+        ///      点"继续"时也会走一次反序列化，那时不该新建一局；
+        ///   ② seed 为 0 直接跳过 —— 没有战役时 <c>GetCampaignSeed()</c> 返回 0，
+        ///      实测会凭空生成一条 "seed 0 / 空牌组" 的假记录。
+        /// </remarks>
+        internal static void OnContinue(Combat.CampaignInformation campaignInfo = null)
         {
             try
             {
                 var campaign = CampaignManager.Instance;
                 if (campaign == null) { return; }
 
+                if (campaignInfo != null && campaignInfo.campaignMode != Combat.CampaignMode.Gaming)
+                {
+                    RunHistoryPlugin.Log.LogDebug("战绩：本次反序列化的战役已结束（" +
+                        campaignInfo.campaignMode + "），不记战绩。");
+                    return;
+                }
+
                 int seed = campaign.GetCampaignSeed();
+                if (seed == 0) { return; }
                 var record = RunHistoryStore.FindBySeed(seed);
                 bool recovered = false;
 
@@ -148,7 +163,6 @@ namespace RunHistory
                 {
                     node.nodeType = info.nodeType.ToString();
                     node.nodeId = NodeIdText(info.nodeID);
-                    node.depth = info.depth;
                 }
 
                 node.sincePrevSeconds = SincePrevSeconds();

@@ -25,8 +25,12 @@ namespace RunHistory
     [HarmonyPatch(typeof(Combat.CampaignManager), "DeserializeCampaignInfo")]
     internal static class HookContinue
     {
+        /// <summary>
+        /// 只把"正在进行的战役"交给采集：已经打完的战役点继续也会走这里，
+        /// 那不该算作新的一局（否则每个通关/阵亡的档都会多一条垃圾记录）。
+        /// </summary>
         [HarmonyPostfix]
-        private static void Postfix() { RunHistoryCapture.OnContinue(); }
+        private static void Postfix(Combat.CampaignInformation __0) { RunHistoryCapture.OnContinue(__0); }
     }
 
     [HarmonyPatch(typeof(World.WorldManager), "MapEngage")]
