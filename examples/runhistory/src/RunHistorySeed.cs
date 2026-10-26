@@ -6,14 +6,20 @@
 //       → `WorldRandomSeedUtil.GetChapterSeed()` = 战役种子 + 章节偏移（Plain+33333 / Forest+66666 / City+99999）
 //       → 节点类型洗牌、精英分布、首领挑选、以及每个节点的遭遇（GetMapNodeSeed = 章节种子 + 节点坐标）
 //    ② **一个没有设置种子的静态 System.Random**：`Utilities.ShufflingExtension.rng`
-//       → `list.Random()` / `list.Shuffle()`：主要用在 `ChapterMapGeneratorPlain` 挑段落预制体（6 处）
-//    所以只覆盖①的话，同一张图的**段落组合**仍然每次不同 —— 必须把②也按同一个种子重置。
+//       → `list.Random()` / `list.Shuffle()`：段落预制体的挑选、节点之间的连边、
+//         普通路段/城市的节点类型、`PoolElement.PopRandomElement()`
+//    所以只覆盖①的话，同一张图的**段落组合/连边/节点类型**仍然每次不同。
+//
+//  ★ ②必须按「状态复制」重置，不能只换字段（v0.2.0 就栽在这里）：
+//    `rng` 是 `static readonly`，`FieldInfo.SetValue` 在 Mono 上可能不生效，
+//    而且即使换了实例，也不保证别处拿的仍是旧引用。
+//    见 `RunHistoryRandomState`：直接把 `new Random(seed)` 的内部状态拷进原实例，并回读校验。
 //
 //  ★ 生效时机（关键）：
 //    `_campaignRandomSeed` 由 `CampaignManager.NewGameLaunchInitialize()` 里的
 //    `GenerateNewSeed()` 赋值（那一刻还没有生成任何地图）；之后才进 Main 场景
-//    → `WorldManager.GenerateNewWorld()` → `GenerateMap()`。
-//    所以：在 `GenerateNewSeed` 之后覆盖种子、在 `GenerateNewWorld` 之前重置洗牌器。
+//    → `WorldManager.GenerateNewWorld()` → `ChapterMapGeneratorBase.GenerateMap()`。
+//    重置做两次：`GenerateNewWorld` 之前（热身）、`GenerateMap` 之前（决定性，紧挨着真正取随机数的地方）。
 //
 //  ★ 一次性语义：待用种子只在**下一次开局**生效，用掉即清除（写盘，重启也保留）。
 // =============================================================================
@@ -32,9 +38,6 @@ namespace RunHistory
 
         private static readonly FieldInfo CampaignSeedField = SafeField(
             typeof(Combat.CampaignManager), "_campaignRandomSeed");
-
-        private static readonly FieldInfo ShufflerRngField = SafeField(
-            typeof(Utilities.ShufflingExtension), "rng");
 
         private static int? _pending;
 
@@ -117,36 +120,47 @@ namespace RunHistory
             }
         }
 
-        /// <summary>`WorldManager.GenerateNewWorld()` 之前：把未播种的全局洗牌随机源也按同一个种子重置。</summary>
+        /// <summary>
+        /// `WorldManager.GenerateNewWorld()` 之前：把未播种的全局洗牌随机源按同一个种子重置。
+        /// （只是热身；真正决定性的一次在 `ChapterMapGeneratorBase.GenerateMap()` 之前。）
+        /// </summary>
         internal static void BeforeWorldGeneration()
+        {
+            ReseedForMap("世界生成前");
+        }
+
+        /// <summary>
+        /// 把地图生成用到的所有随机源对齐到当前战役种子。
+        /// `reason` 只进日志/转储，方便区分是哪一钩子起的效。
+        /// </summary>
+        internal static void ReseedForMap(string reason)
         {
             try
             {
                 var campaign = Combat.CampaignManager.Instance;
-                if (campaign == null) { return; }
-                int seed = campaign.GetCampaignSeed();
-
-                if (ShufflerRngField == null)
+                if (campaign == null)
                 {
-                    RunHistoryPlugin.Log.LogWarning("战绩：找不到 ShufflingExtension.rng，段落组合可能每次不同。");
+                    RunHistoryPlugin.Log.LogWarning("战绩：重置随机源时 CampaignManager 尚未就绪（原因：" + reason + "）。");
                     return;
                 }
-
-                // readonly static 字段：Mono 下反射可以写；失败就只记日志（地图仍按战役种子生成，只是段落组合不定）
-                ShufflerRngField.SetValue(null, new System.Random(seed));
-
-                // Unity 的随机源也顺手对齐，避免有别的路径混用
-                try { UnityEngine.Random.InitState(seed); } catch { }
-
-                if (RunHistoryPlugin.CfgVerbose != null && RunHistoryPlugin.CfgVerbose.Value)
-                {
-                    RunHistoryPlugin.Log.LogInfo("战绩：世界生成前已把全局洗牌随机源重置为 seed=" + seed + "。");
-                }
+                RunHistoryRandomState.Reseed(campaign.GetCampaignSeed(), reason);
             }
             catch (Exception ex)
             {
-                RunHistoryPlugin.Log.LogWarning("战绩：重置洗牌随机源失败 —— " + ex.GetType().Name + ": " + ex.Message);
+                RunHistoryPlugin.Log.LogWarning("战绩：重置随机源失败（" + reason + "）—— " +
+                    ex.GetType().Name + ": " + ex.Message);
             }
+        }
+
+        /// <summary>当前战役种子（拿不到返回 0）。</summary>
+        internal static int CurrentSeed()
+        {
+            try
+            {
+                var campaign = Combat.CampaignManager.Instance;
+                return campaign == null ? 0 : campaign.GetCampaignSeed();
+            }
+            catch { return 0; }
         }
 
         // ---------------- 内部 ----------------
