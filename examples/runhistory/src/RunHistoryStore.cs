@@ -69,6 +69,12 @@ namespace RunHistory
             }
         }
 
+        /// <summary>丢掉内存里的索引，下次访问时重新读盘（面板打开时用，能立刻看到刚打完的局）。</summary>
+        internal static void ReloadIndex()
+        {
+            lock (Gate) { _index = null; }
+        }
+
         private static RunIndex LoadOrRebuildIndex()
         {
             string path = Path.Combine(DataDir, IndexName);

@@ -16,6 +16,7 @@ using System;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
 
 namespace RunHistory
 {
@@ -65,11 +66,33 @@ namespace RunHistory
                 new Harmony("diceomancer.runhistory").PatchAll(typeof(RunHistoryPlugin).Assembly);
                 Logger.LogInfo(PluginName + " v" + PluginVersion + " 已就绪｜数据目录：" +
                     RunHistoryStore.DataDir);
+
+                // 面板宿主：**不能**在 Awake 里 new GameObject —— 插件 Awake 时还没有活动场景，
+                // Unity 会拒绝 DontDestroyOnLoad，对象随第一个场景加载被销毁（平台侧踩过同一个坑）。
+                // 正确做法：订阅 sceneLoaded，等场景就绪后再建。
+                UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+                Logger.LogInfo("战绩：已订阅 sceneLoaded（面板宿主将在场景就绪后创建）。");
             }
             catch (Exception ex)
             {
                 // FailOpen：装不上钩子就整个停用，绝不影响游戏启动
                 Logger.LogError("战绩：安装采集钩子失败，本 mod 已停用 —— " + ex);
+            }
+        }
+
+        private static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene,
+            UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            try
+            {
+                if (RunHistoryUiHost.Instance != null) { return; }
+                var go = new GameObject("RunHistory.Host");
+                UnityEngine.Object.DontDestroyOnLoad(go);
+                go.AddComponent<RunHistoryUiHost>();
+            }
+            catch (Exception ex)
+            {
+                Log.LogWarning("战绩：创建面板宿主失败 —— " + ex.GetType().Name + ": " + ex.Message);
             }
         }
     }
