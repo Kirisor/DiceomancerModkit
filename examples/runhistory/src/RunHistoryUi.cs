@@ -74,23 +74,20 @@ namespace RunHistory
         {
             try
             {
-                bool inMenu = IsDeskHub(out string sceneName);
-                if (sceneName != _lastScene)
+                string reason;
+                bool atDesk = IsAtDesk(out reason);
+
+                if (atDesk != _lastInMenu)
                 {
-                    _lastScene = sceneName;
-                    Debug.Log("[RunHistory] 当前场景 = " + sceneName + "（桌面界面才显示入口）");
+                    _lastInMenu = atDesk;
+                    Debug.Log("[RunHistory] " + (atDesk
+                        ? "在桌面 → 显示「战绩」入口（" + reason + "）"
+                        : "离开桌面 → 隐藏入口与面板（" + reason + "）"));
                 }
 
-                if (inMenu != _lastInMenu)
+                if (atDesk)
                 {
-                    _lastInMenu = inMenu;
-                    Debug.Log("[RunHistory] " + (inMenu ? "进入桌面界面 → 显示「战绩」入口" : "离开桌面界面 → 隐藏入口与面板"));
-                }
-
-                if (inMenu)
-                {
-                    // ★ 画布**只在这个场景里建**：这里的相机才是画布该对着的那台。
-                    //   （在标题界面建的话，画布会被摆到另一台相机前面，进桌面后可能看不见。）
+                    // ★ 画布**只在桌面时建**：这时的相机才是画布该对着的那台。
                     EnsureCanvas();
                     EnsureEntry();
 
@@ -99,7 +96,7 @@ namespace RunHistory
                     {
                         _canvas.worldCamera = cam;
                     }
-                    // 每拍跟随主相机：桌面界面的相机会移动/切换，画布不跟就会飘出视野
+                    // 每拍跟随主相机：桌面的相机会移动/切换，画布不跟就会飘出视野
                     PlaceCanvasInFrontOfCamera(cam);
 
                     if (_entryGo != null && !_entryGo.activeSelf) { _entryGo.SetActive(true); }
@@ -116,18 +113,92 @@ namespace RunHistory
             }
         }
 
-        private static bool IsDeskHub(out string sceneName)
+        // ---------------- 「桌面」判定 ----------------
+
+        /// <summary>主菜单房间（桌面）那个组件。它管着 `deskScene` 的开关。</summary>
+        private static SmallGames.WorldBetween.SmallGameMainMenu _menu;
+
+        /// <summary>`SmallGameMainMenu.deskScene`（私有字段，反射取一次）。</summary>
+        private static GameObject _deskScene;
+
+        private static float _nextDeskSearch;
+        private static bool _deskWarned;
+
+        /// <summary>
+        /// 是否正处在「桌面」（房间本体），而不是图鉴 / 升级 / 选职业 / 小游戏 / 地图 / 战斗。
+        /// </summary>
+        /// <remarks>
+        /// ★ 判据是游戏自己的开关，不是猜的场景名：
+        ///   `SmallGames.WorldBetween.SmallGameMainMenu` 持有 <c>deskScene</c>，
+        ///   进任何子界面时 `deskScene.SetActive(false)`（<c>EnterSubGame</c>），
+        ///   返回时才 `SetActive(true)`（<c>BackFromSubSmallGame</c>）。
+        ///   所以「桌面可见」这一条就同时排除了：图鉴（Book）、升级、选职业、小游戏、
+        ///   以及开局后的地图/战斗界面（那些也把桌面藏起来）。
+        ///   拿不到这个组件时**一律不显示** —— 宁可少一个入口，也不要在战斗里糊一块牌子。
+        /// </remarks>
+        private static bool IsAtDesk(out string reason)
         {
-            sceneName = "";
+            reason = "";
             try
             {
-                var scene = SceneManager.GetActiveScene();
-                sceneName = string.IsNullOrEmpty(scene.name) ? (scene.path ?? "") : scene.name;
-                return scene.name == "Main"
-                    || (!string.IsNullOrEmpty(scene.path) &&
-                        scene.path.EndsWith("/Main.unity", StringComparison.OrdinalIgnoreCase));
+                // 缓存会随场景卸载而失效 → 定期重找（每 2 秒最多一次，避免每拍全场景扫描）
+                if (_menu == null || _deskScene == null)
+                {
+                    if (Time.realtimeSinceStartup < _nextDeskSearch)
+                    {
+                        reason = "等待主菜单房间组件";
+                        return false;
+                    }
+                    _nextDeskSearch = Time.realtimeSinceStartup + 2f;
+                    _menu = null;
+                    _deskScene = null;
+
+                    foreach (var candidate in Resources.FindObjectsOfTypeAll<SmallGames.WorldBetween.SmallGameMainMenu>())
+                    {
+                        if (candidate == null || candidate.gameObject == null) { continue; }
+                        if (!candidate.gameObject.scene.IsValid()) { continue; }   // 跳过资产里的模板
+                        var field = typeof(SmallGames.WorldBetween.SmallGameMainMenu).GetField("deskScene",
+                            System.Reflection.BindingFlags.Instance |
+                            System.Reflection.BindingFlags.NonPublic |
+                            System.Reflection.BindingFlags.Public);
+                        var desk = field == null ? null : field.GetValue(candidate) as GameObject;
+                        if (desk == null) { continue; }
+                        _menu = candidate;
+                        _deskScene = desk;
+                        break;
+                    }
+
+                    if (_menu == null)
+                    {
+                        if (!_deskWarned)
+                        {
+                            _deskWarned = true;
+                            Debug.Log("[RunHistory] 暂未找到主菜单房间（SmallGameMainMenu.deskScene），入口不显示。");
+                        }
+                        reason = "没找到主菜单房间";
+                        return false;
+                    }
+                }
+
+                if (!_menu.gameObject.activeInHierarchy) { reason = "主菜单房间未激活"; return false; }
+                if (!_deskScene.activeInHierarchy) { reason = "桌面已隐藏（图鉴/升级/选职业/地图/战斗）"; return false; }
+
+                string scene = "";
+                try
+                {
+                    var active = SceneManager.GetActiveScene();
+                    scene = string.IsNullOrEmpty(active.name) ? (active.path ?? "") : active.name;
+                }
+                catch { }
+
+                reason = "桌面可见｜场景=" + scene;
+                return true;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                reason = "判定异常：" + ex.GetType().Name;
+                return false;
+            }
         }
 
         // ---------------- 画布与入口 ----------------
