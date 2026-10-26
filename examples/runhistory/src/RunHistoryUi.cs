@@ -509,6 +509,123 @@ namespace RunHistory
             var next = NewButton(_listPage.transform, "下一页 >", RowA, Ink, 28f,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(260f, 40f), new Vector2(200f, 60f));
             next.onClick.AddListener(delegate { ChangePage(1); });
+
+            // 种子：状态行 + 打开输入键盘
+            _seedStatusText = NewText(_listPage.transform, "", 22f, Dim,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(44f, 52f), new Vector2(700f, 40f), false);
+
+            var seedBtn = NewButton(_listPage.transform, "种子…", RowA, Ink, 26f,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(44f, 96f), new Vector2(150f, 52f));
+            seedBtn.onClick.AddListener(OpenSeedPad);
+
+            BuildSeedPad();
+            RefreshSeedStatus();
+        }
+
+        // ---------------- 种子输入（自建数字键盘，不依赖文本输入框） ----------------
+
+        private static GameObject _seedPadGo;
+        private static TextMeshProUGUI _seedValueText;
+        private static TextMeshProUGUI _seedStatusText;
+        private static TextMeshProUGUI _seedHintText;
+        private static string _seedTyped = "";
+
+        /// <summary>
+        /// 为什么是自建键盘而不是 TMP_InputField：这个项目用的是新版 Input System，
+        /// 文本输入框在 WorldSpace 画布里能不能收到键盘事件没有把握；
+        /// 而按钮点击走的是 EventSystem 射线，与官方 UI 同一套，确定能用。
+        /// </summary>
+        private static void BuildSeedPad()
+        {
+            _seedPadGo = new GameObject("SeedPad", typeof(RectTransform));
+            _seedPadGo.transform.SetParent(_panelGo.transform, false);
+            var rt = _seedPadGo.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(520f, 700f);
+
+            NewImage(_seedPadGo.transform, PanelPaper, new Vector2(0f, 0f), new Vector2(1f, 1f),
+                Vector2.zero, Vector2.zero, "Bg");
+
+            NewText(_seedPadGo.transform, "输入种子", 36f, Ink,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -44f), new Vector2(360f, 48f));
+
+            _seedValueText = NewText(_seedPadGo.transform, "—", 44f, Ink,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(420f, 60f));
+
+            _seedHintText = NewText(_seedPadGo.transform, "只能用数字；区间 1 ~ 2,147,483,647", 20f, Dim,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -166f), new Vector2(460f, 34f));
+
+            // 3 列 × 4 行：1-9 / 0 / 退格 / 清空
+            string[] keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "退格", "清空" };
+            for (int i = 0; i < keys.Length; i++)
+            {
+                int col = i % 3, row = i / 3;
+                string key = keys[i];
+                var btn = NewButton(_seedPadGo.transform, key, RowA, Ink, 30f,
+                    new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(-170f + col * 170f, -230f - row * 96f), new Vector2(150f, 82f));
+                btn.onClick.AddListener(delegate { SeedKey(key); });
+            }
+
+            var apply = NewButton(_seedPadGo.transform, "用这个种子", Chip, Ink, 28f,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-120f, 100f), new Vector2(210f, 62f));
+            apply.onClick.AddListener(ApplySeedPad);
+
+            var close = NewButton(_seedPadGo.transform, "关闭", RowA, Ink, 28f,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(120f, 100f), new Vector2(150f, 62f));
+            close.onClick.AddListener(CloseSeedPad);
+
+            _seedPadGo.SetActive(false);
+        }
+
+        private static void OpenSeedPad()
+        {
+            if (_seedPadGo == null) { return; }
+            _seedTyped = RunHistorySeed.Pending.HasValue ? RunHistorySeed.Pending.Value.ToString() : "";
+            RefreshSeedPadValue();
+            _seedPadGo.SetActive(true);
+        }
+
+        private static void CloseSeedPad()
+        {
+            if (_seedPadGo != null) { _seedPadGo.SetActive(false); }
+        }
+
+        private static void SeedKey(string key)
+        {
+            if (key == "清空") { _seedTyped = ""; }
+            else if (key == "退格") { if (_seedTyped.Length > 0) { _seedTyped = _seedTyped.Substring(0, _seedTyped.Length - 1); } }
+            else if (_seedTyped.Length < 10) { _seedTyped += key; }
+            RefreshSeedPadValue();
+        }
+
+        private static void RefreshSeedPadValue()
+        {
+            if (_seedValueText != null) { _seedValueText.text = _seedTyped.Length == 0 ? "—" : _seedTyped; }
+        }
+
+        private static void ApplySeedPad()
+        {
+            int seed;
+            if (_seedTyped.Length == 0 || !int.TryParse(_seedTyped, out seed) || seed <= 0)
+            {
+                if (_seedHintText != null) { _seedHintText.text = "请输入 1 以上的整数"; }
+                return;
+            }
+            RunHistorySeed.SetPending(seed, "手动输入");
+            CloseSeedPad();
+            RefreshSeedStatus();
+        }
+
+        private static void RefreshSeedStatus()
+        {
+            if (_seedStatusText == null) { return; }
+            _seedStatusText.text = RunHistorySeed.Pending.HasValue
+                ? "待用种子 " + RunHistorySeed.Pending.Value + "　·　下一次开局生效（用掉即清除）"
+                : "待用种子：无";
         }
 
         private static TextMeshProUGUI Col(Transform parent, float x, float size)

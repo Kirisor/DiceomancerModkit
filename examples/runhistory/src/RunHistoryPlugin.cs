@@ -25,7 +25,7 @@ namespace RunHistory
     {
         public const string PluginGuid = "diceomancer.runhistory";
         public const string PluginName = "Diceomancer 战绩（运行历史）";
-        public const string PluginVersion = "0.1.1";
+        public const string PluginVersion = "0.2.0";
 
         internal static ConfigEntry<bool> CfgEnabled;
 
@@ -63,9 +63,11 @@ namespace RunHistory
             try
             {
                 RunHistoryStore.Configure(CfgDataDir.Value);
+                RunHistorySeed.Load();
                 new Harmony("diceomancer.runhistory").PatchAll(typeof(RunHistoryPlugin).Assembly);
                 Logger.LogInfo(PluginName + " v" + PluginVersion + " 已就绪｜数据目录：" +
-                    RunHistoryStore.DataDir);
+                    RunHistoryStore.DataDir + "｜待用种子：" +
+                    (RunHistorySeed.Pending.HasValue ? RunHistorySeed.Pending.Value.ToString() : "无"));
 
                 // 面板宿主：**不能**在 Awake 里 new GameObject —— 插件 Awake 时还没有活动场景，
                 // Unity 会拒绝 DontDestroyOnLoad，对象随第一个场景加载被销毁（平台侧踩过同一个坑）。

@@ -27,6 +27,7 @@ namespace RunHistory
 
         private static TextMeshProUGUI _detailTitle;
         private static TextMeshProUGUI _detailMeta;
+        private static TextMeshProUGUI _detailToast;
         private static GameObject _detailContent;
         private static TextMeshProUGUI _detailPageText;
         private static Button _detailPrev;
@@ -54,6 +55,14 @@ namespace RunHistory
             var back = NewButton(_detailPage.transform, "← 返回列表", RowA, Ink, 26f,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(44f, -32f), new Vector2(180f, 54f));
             back.onClick.AddListener(ShowList);
+
+            // 用这局的种子重开（写进"待用种子"，回桌面按开始游戏时生效）
+            var reuse = NewButton(_detailPage.transform, "用这局种子重开", Chip, Ink, 26f,
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-44f, -32f), new Vector2(250f, 54f));
+            reuse.onClick.AddListener(ReuseSeedFromDetail);
+
+            _detailToast = NewText(_detailPage.transform, "", 22f, Dim,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(252f, -128f), new Vector2(1200f, 30f), false);
 
             _detailTitle = NewText(_detailPage.transform, "", 42f, Ink,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(250f, -44f), new Vector2(1100f, 54f), false);
@@ -141,6 +150,7 @@ namespace RunHistory
                 RefreshDetailHeader();
                 BuildRouteChips();
                 RefreshDetailContent();
+                if (_detailToast != null) { _detailToast.text = ""; }
 
                 if (_listPage != null) { _listPage.SetActive(false); }
                 if (_panelTitle != null) { _panelTitle.gameObject.SetActive(false); }   // 详情页有自己的大标题，别叠
@@ -149,6 +159,28 @@ namespace RunHistory
             catch (Exception ex)
             {
                 Debug.LogWarning("[RunHistory] 详情页渲染失败 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 把这一局的种子设为「待用种子」：回桌面按「开始游戏」时，游戏生成的那个种子会被它替换掉。
+        /// </summary>
+        private static void ReuseSeedFromDetail()
+        {
+            try
+            {
+                if (_detail == null) { return; }
+                RunHistorySeed.SetPending(_detail.seed, "来自战绩 " + _detail.runId);
+                RefreshSeedStatus();
+                if (_detailToast != null)
+                {
+                    _detailToast.text = "已设为待用种子 " + _detail.seed +
+                        "　·　回桌面按「开始游戏」时生效（用掉即清除）";
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[RunHistory] 设种子失败 —— " + ex.GetType().Name + ": " + ex.Message);
             }
         }
 

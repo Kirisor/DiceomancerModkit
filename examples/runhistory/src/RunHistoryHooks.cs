@@ -53,4 +53,26 @@ namespace RunHistory
         [HarmonyPrefix]
         private static void Prefix() { RunHistoryCapture.MarkAbandon(); }
     }
+
+    /// <summary>
+    /// 种子覆盖：`GenerateNewSeed()` 是开局时给 `_campaignRandomSeed` 赋值的地方
+    /// （在 `NewGameLaunchInitialize` 的第一行），此后地图才按它生成。
+    /// </summary>
+    [HarmonyPatch(typeof(Combat.CampaignManager), "GenerateNewSeed")]
+    internal static class HookSeedGenerated
+    {
+        [HarmonyPostfix]
+        private static void Postfix() { RunHistorySeed.AfterSeedGenerated(); }
+    }
+
+    /// <summary>
+    /// 世界生成前：把 `ShufflingExtension` 那个**未播种**的静态 System.Random 也按同一个种子重置，
+    /// 否则同一张图的段落组合每次都不一样（`ChapterMapGeneratorPlain` 有 6 处 `.Random()`）。
+    /// </summary>
+    [HarmonyPatch(typeof(World.WorldManager), "GenerateNewWorld")]
+    internal static class HookWorldGeneration
+    {
+        [HarmonyPrefix]
+        private static void Prefix() { RunHistorySeed.BeforeWorldGeneration(); }
+    }
 }
