@@ -46,6 +46,10 @@ namespace ModKit.Game
             {
                 if (modCards == null || modCards.Count == 0) { return; }
 
+                // ★ 存档还没反序列化（继续游戏的"提前装配"路径）：此刻牌堆还是空的，
+                //   等一下重建卡牌时会直接用真正的 CardSo —— 不需要、也不该在这里补挂。
+                if (PlatformRuntime.PreDeserializeAssembly) { return; }
+
                 var cm = CardManager.Instance;
                 if (cm == null) { return; }
 

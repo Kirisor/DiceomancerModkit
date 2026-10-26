@@ -240,6 +240,11 @@ namespace ModKit.Plugin
                 //   作者自写效果的类型永远生成不出来 ⇒ Activator.CreateInstance(null) 崩溃。
                 PlatformRuntime.InstallEarlyTypeFallbacks(log);
 
+                // 记下配置项：继续游戏的"提前装配"发生在 InitializeGame 内部（Game 层），
+                // 那边拿不到插件的 ConfigEntry，所以在这里把值传进去。
+                PlatformRuntime.RememberRunSettings(
+                    CfgModsRoot.Value, CfgStrictMode.Value, CfgDumpCapabilities.Value);
+
                 int patched = BridgeInstaller.Install(registry, log);
                 log.Info("Transpiler 桥安装完成，命中 " + patched + " 个工厂。");
             }

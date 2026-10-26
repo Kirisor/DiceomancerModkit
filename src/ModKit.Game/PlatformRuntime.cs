@@ -31,7 +31,10 @@
 using System;
 using System.Collections.Generic;
 using Card;
+using Combat;
+using Combat.BattleWorld;
 using Relic;
+using Utilities;
 using ModKit.Api;
 using ModKit.Core;
 
@@ -98,6 +101,98 @@ namespace ModKit.Game
         {
             if (log != null) { ModKitLog.Sink = log; }
             ModKit.Core.ContentRegistry.EmitFallback = EffectBaseAdapterEmitter.TryEmit;
+        }
+
+        // ---------------- 继续游戏：反序列化之前的同步装配 ----------------
+
+        private static string _modsRootOverride;
+        private static bool _strictMode;
+        private static bool _dumpCapabilities;
+
+        /// <summary>
+        /// 流水线是否正在"存档反序列化之前"执行（此时还没有玩家卡，不需要也不该做补挂）。
+        /// </summary>
+        internal static bool PreDeserializeAssembly { get; private set; }
+
+        /// <summary>记下插件配置项，供 <see cref="TryAssembleBeforeContinueDeserialize"/> 使用。</summary>
+        /// <remarks>
+        /// Game 层不能引用 Plugin 层（方向是 Plugin → Game），所以由插件在 Awake 把值传进来。
+        /// </remarks>
+        public static void RememberRunSettings(string modsRoot, bool strictMode, bool dumpCapabilities)
+        {
+            _modsRootOverride = modsRoot;
+            _strictMode = strictMode;
+            _dumpCapabilities = dumpCapabilities;
+        }
+
+        /// <summary>
+        /// 继续游戏：在 `ManaManagerInitialize` 之后、`DeserializeCampaignInfo` 之前同步装配内容。
+        /// </summary>
+        /// <remarks>
+        /// ★ 为什么是"同步"：`InitializeGame` ①②③④⑤⑥ 全在同一帧里跑完，`Update` 驱动的
+        ///   就绪轮询器插不进去。原版之所以没事，是因为它在 ① 就从资产把内容全加载好了；
+        ///   平台内容必须在 ⑥ 之前进到同样的位置。
+        /// <para>
+        /// ★ 幂等与回退：跑过就跳过；若这里抛异常，会把幂等闸拆掉，让就绪轮询器按老路再试一次
+        ///   （宁可晚一点装配，也不要"半装配 + 永不再试"）。
+        /// </para>
+        /// </remarks>
+        public static void TryAssembleBeforeContinueDeserialize()
+        {
+            if (_ran) { return; }
+
+            try
+            {
+                var sm = SystemManager.Instance;
+                if (sm == null) { return; }
+
+                // 只对继续游戏生效：新游戏的内容创建在反序列化之后，现有轮询路径一直是对的。
+                if (sm.initializeGameMode != GameManager.InitializeGameMode.ContinueGame) { return; }
+
+                string missing = FirstMissingPrerequisite();
+                if (missing != null)
+                {
+                    ModKitLog.Info("继续游戏：提前装配的前置条件未满足（" + missing + "）—— 交给就绪轮询器。");
+                    return;
+                }
+
+                ModKitLog.Info("继续游戏：内容装配提前到 InitializeGame 内部执行" +
+                    "（ManaManagerInitialize 之后、存档反序列化之前）—— 这就是原版从资产加载内容的同一时刻。");
+
+                PreDeserializeAssembly = true;
+                try { RunOnce(_modsRootOverride, _strictMode, _dumpCapabilities); }
+                finally { PreDeserializeAssembly = false; }
+            }
+            catch (Exception ex)
+            {
+                // 拆掉幂等闸：让就绪轮询器还能再试一次（半装配 + 永不再试是最坏结果）
+                _ran = false;
+                LastSummary = null;
+                PreDeserializeAssembly = false;
+                ModKitLog.Error("提前装配失败，已回退为就绪轮询器：" +
+                    ex.GetType().Name + ": " + ex.Message);
+            }
+        }
+
+        /// <summary>提前装配的前置条件（等价于就绪轮询器的判定，外加装配真正会用到的几个单例）。</summary>
+        private static string FirstMissingPrerequisite()
+        {
+            if (GameData.DataManager.Instance == null) { return "DataManager.Instance 为 null"; }
+
+            var dm = GameData.DataManager.Instance;
+            if (dm.GetRelicDataManager() == null) { return "RelicDataManager 为 null"; }
+            if (dm.GetAbilityDataManager() == null) { return "AbilityDataManager 为 null"; }
+
+            if (GameData.CardDataManager.Instance == null) { return "CardDataManager.Instance 为 null"; }
+            if (CardManager.Instance == null) { return "CardManager.Instance 为 null"; }
+            if (CampaignManager.Instance == null) { return "CampaignManager.Instance 为 null"; }
+
+            var bmwm = BattleMultipleWorldsManager.Instance;
+            if (bmwm == null) { return "BattleMultipleWorldsManager.Instance 为 null"; }
+            if (bmwm.GetCurrentBattleField() == null) { return "GetCurrentBattleField() 为 null"; }
+            if (ManaManager.Instance == null) { return "ManaManager.Instance 为 null"; }
+
+            return null;
         }
 
         /// <summary>
