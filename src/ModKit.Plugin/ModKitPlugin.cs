@@ -232,6 +232,14 @@ namespace ModKit.Plugin
                 assemblies.AddRange(preloaded);
 
                 var registry = ContentRegistry.Build(assemblies, delegate (string s) { log.Info(s); });
+
+                // ★ 2026-10-26 时序修复（第二半，缺了它上一轮的修复等于没做完）：
+                //   把**效果适配层**也提前接上。ContentRegistry.Resolve 的"现生成适配类"
+                //   这一步是委托挂钩（EmitFallback），原来只在流水线里赋值 ——
+                //   而继续游戏时存档反序列化发生在流水线**之前** ⇒ 挂钩为 null ⇒
+                //   作者自写效果的类型永远生成不出来 ⇒ Activator.CreateInstance(null) 崩溃。
+                PlatformRuntime.InstallEarlyTypeFallbacks(log);
+
                 int patched = BridgeInstaller.Install(registry, log);
                 log.Info("Transpiler 桥安装完成，命中 " + patched + " 个工厂。");
             }

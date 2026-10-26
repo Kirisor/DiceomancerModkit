@@ -18,6 +18,13 @@ OUT_DIR="${1:-$MODKIT_ROOT/dist/platform}"
 
 mkdir -p "$OUT_DIR"
 
+# ModKit.Game 的引用来源：优先用**刚编出来的**那份（dist 里），否则退回已安装的那份。
+# 为什么：插件会直接调用 Game 层新增的入口（如 PlatformRuntime.InstallEarlyTypeFallbacks），
+# 若一直对着游戏目录里的旧 dll 编，改完 Game 层再加插件调用就会编译失败。
+GAME_DLL="$OUT_DIR/ModKit.Game.dll"
+if [ ! -f "$GAME_DLL" ]; then GAME_DLL="$PLUGINS/ModKit.Game.dll"; fi
+echo "reference ModKit.Game: $GAME_DLL"
+
 "$DOTNET" exec "$CSC" \
   -nologo -target:library -nostdlib+ -langversion:9 -optimize+ -deterministic \
   -out:"$OUT_DIR/ModKit.Plugin.dll" \
@@ -33,7 +40,7 @@ mkdir -p "$OUT_DIR"
   -r:"$CORE/0Harmony.dll" \
   -r:"$PLUGINS/ModKit.Api.dll" \
   -r:"$PLUGINS/ModKit.Core.dll" \
-  -r:"$PLUGINS/ModKit.Game.dll" \
+  -r:"$GAME_DLL" \
   "$MODKIT_ROOT"/src/ModKit.Plugin/*.cs
 
 echo "built: $OUT_DIR/ModKit.Plugin.dll ($(stat -c%s "$OUT_DIR/ModKit.Plugin.dll") bytes)"

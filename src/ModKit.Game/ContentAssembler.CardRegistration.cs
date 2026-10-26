@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 //  ModKit.Game · 卡的注册与读回（CardRegistration）—— ContentAssembler 的 partial 分片
 //
 //  ★ 来历：本文件是 2026-10-13 第二批按子域拆分 ContentAssembler.cs 时切出的，
@@ -194,6 +194,11 @@ namespace ModKit.Game
                 _log.Info("已注册卡集合：" + collectionName + "（" + all.Length + " 张）");
 
                 RefreshCampaignCardPool(result, modId);
+
+                // ★ 继续游戏补挂：存档反序列化发生在流水线之前，那时 mod 的 CardSo 还不存在，
+                //   玩家的卡会挂到 EmptyCard 上（卡面空白）。现在 SO 注册好了，回头补挂。
+                //   新游戏里没有"已存在的玩家卡"，这一步什么都不做（幂等）。
+                SaveCardRepair.RelinkContinuedCards(cards);
             }
             catch (Exception ex)
             {

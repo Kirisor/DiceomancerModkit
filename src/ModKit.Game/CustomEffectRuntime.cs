@@ -61,6 +61,22 @@ namespace ModKit.Game
         private const string AbilityNs = "Effects.Special.AbilityEffect.";
         private const string AbilityPrefix = "EffectSpAbility";
 
+        /// <summary>
+        /// 非特殊效果（<c>Effects.Effect&lt;名&gt;</c>）这一族。
+        /// </summary>
+        /// <remarks>
+        /// ★ 2026-10-26：为什么连这一族也要接 —— 游戏对**非**特殊效果也是同一个
+        /// <c>Type.GetType</c> 工厂（<c>"Effects." + "Effect" + effectName</c>）。
+        /// 存档里只要出现一个"作者自写效果但没走 SpecialEffect 分支"的写法，
+        /// 就会在同一处落空并抛 <c>Activator.CreateInstance(null)</c>。
+        /// 让这一族也能落到适配层，是"继续游戏永不崩"的一部分。
+        /// </remarks>
+        private const string PlainNs = "Effects.";
+        private const string PlainPrefix = "Effect";
+
+        /// <summary>兜底空壳的 id（存档里出现平台产不出的效果名时用它顶上）。</summary>
+        private const string PlaceholderId = "ModKitPlaceholder";
+
         /// <summary>生成的程序集（只建一次）。</summary>
         private static readonly ModuleBuilder Module = CreateModule();
 
@@ -84,7 +100,19 @@ namespace ModKit.Game
         /// </summary>
         /// <remarks>
         /// 由 <see cref="ContentRegistry.EmitFallback"/> 调用（Core 层不引用游戏类型，所以用委托挂钩）。
-        /// 只处理 `Effects.Special.CardEffect.EffectSpEffect&lt;X&gt;` 这一族；其它名字一律返回 null（保持原版语义）。
+        /// 处理三族名字：<c>Effects.Special.CardEffect.EffectSpEffect&lt;X&gt;</c> /
+        /// <c>Effects.Special.AbilityEffect.EffectSpAbility&lt;X&gt;</c> /
+        /// <c>Effects.Effect&lt;X&gt;</c>。
+        /// <para>
+        /// ★ 2026-10-26 改为**总是生成**（不再要求 id 已登记）。原因是一条实机崩溃：
+        ///   继续游戏时存档反序列化发生在流水线之前，那时注册表虽已建好，
+        ///   但效果适配层当时**根本没被接上**（<see cref="ContentRegistry.EmitFallback"/>
+        ///   只在流水线里赋值）⇒ 解析落空 ⇒ <c>Activator.CreateInstance(null)</c> ⇒ 启动崩溃。
+        ///   现在适配层在插件 Awake 就接好；并且即使这一刻查不到作者类，也生成一个
+        ///   **延迟解析**的适配类：它的 <c>ApplyEffectForTarget</c> 在**结算时**才去找作者类，
+        ///   而那时流水线早已跑完 ⇒ 继续游戏里的卡效果照常生效。
+        ///   真的找不到时由 <see cref="CustomEffectForwarder.Run"/> 记一条 ERROR（响亮，不静默）。
+        /// </para>
         /// </remarks>
         public static Type TryEmit(string typeName)
         {
@@ -93,6 +121,7 @@ namespace ModKit.Game
             string ns, prefix;
             if (typeName.StartsWith(Ns + Prefix, StringComparison.Ordinal)) { ns = Ns; prefix = Prefix; }
             else if (typeName.StartsWith(AbilityNs + AbilityPrefix, StringComparison.Ordinal)) { ns = AbilityNs; prefix = AbilityPrefix; }
+            else if (typeName.StartsWith(PlainNs + PlainPrefix, StringComparison.Ordinal)) { ns = PlainNs; prefix = PlainPrefix; }
             else { return null; }
 
             var id = typeName.Substring((ns + prefix).Length);
@@ -101,24 +130,65 @@ namespace ModKit.Game
             lock (Gate)
             {
                 Type cached;
-                if (Cache.TryGetValue(id, out cached)) { return cached; }
+                if (Cache.TryGetValue(typeName, out cached)) { return cached; }
 
-                // 作者必须真的登记过这个 id；否则不生成（让游戏走原本的 null 路径，保持原版报错语义）
                 // ★ 早退兜底：反序列化存档时流水线还没跑，PlatformRuntime.Registry 为 null，
                 //   退回 Transpiler 桥安装时用的注册表 —— 它已经预加载过 mod 程序集。
                 var registry = PlatformRuntime.Registry ?? ModKitBridge.InstalledRegistry;
                 var authorType = registry == null ? null : registry.ResolveEffect(id);
-                if (authorType == null) { return null; }
 
-                var emitted = Emit(ns + prefix + id, id);
+                Type emitted;
+                try { emitted = Emit(typeName, id); }
+                catch (Exception ex)
+                {
+                    // 生成失败不能让异常从这里逃出去（那会把"解析落空"升级成另一种崩溃）
+                    ModKitLog.Error("自定义效果：生成适配类失败 " + typeName + " —— " + ex.GetType().Name + ": " + ex.Message);
+                    return null;
+                }
                 if (emitted == null) { return null; }
 
-                Cache[id] = emitted;
+                Cache[typeName] = emitted;
                 IdByType[emitted] = id;
 
-                ModKitLog.Info("自定义效果：已生成游戏侧适配类 " + typeName
-                    + "（作者类 " + authorType.FullName + "）");
+                if (authorType != null)
+                {
+                    ModKitLog.Info("自定义效果：已生成游戏侧适配类 " + typeName
+                        + "（作者类 " + authorType.FullName + "）");
+                }
+                else
+                {
+                    ModKitLog.Warn("自定义效果：生成适配类时注册表里还没有 id=" + id + "（" + typeName +
+                        "）—— 按延迟解析生成，结算时再找作者类。");
+                }
                 return emitted;
+            }
+        }
+
+        /// <summary>
+        /// 兜底空壳：给"存档里出现了平台产不出的效果名"用的**占位实现**。
+        /// </summary>
+        /// <remarks>
+        /// 只在效果工厂已经抛过异常（类型解析落空）时使用：宁可让这一条效果空转并记 ERROR，
+        /// 也不要让玩家卡在"继续游戏就崩"。它不做任何事 —— 行为是**降级**，不是伪装成功。
+        /// </remarks>
+        public static Type PlaceholderType
+        {
+            get
+            {
+                const string name = Ns + Prefix + PlaceholderId;
+                lock (Gate)
+                {
+                    Type cached;
+                    if (Cache.TryGetValue(name, out cached)) { return cached; }
+
+                    Type emitted;
+                    try { emitted = Emit(name, PlaceholderId); }
+                    catch { return null; }
+                    if (emitted == null) { return null; }
+                    Cache[name] = emitted;
+                    IdByType[emitted] = PlaceholderId;
+                    return emitted;
+                }
             }
         }
 
@@ -170,11 +240,15 @@ namespace ModKit.Game
             try
             {
                 var id = EffectBaseAdapterEmitter.IdOf(self == null ? null : self.GetType());
-                var authorType = id == null || PlatformRuntime.Registry == null
-                    ? null : PlatformRuntime.Registry.ResolveEffect(id);
+                // ★ 延迟解析：适配类可能在**流水线之前**就生成好了（继续游戏时反序列化存档），
+                //   所以这里每次都重新取注册表 —— 结算时 PlatformRuntime.Registry 一定已在，
+                //   退化路径再回落到桥安装时那份（与 TryEmit 同一套取值顺序）。
+                var registry = PlatformRuntime.Registry ?? ModKitBridge.InstalledRegistry;
+                var authorType = id == null || registry == null
+                    ? null : registry.ResolveEffect(id);
                 if (authorType == null)
                 {
-                    ModKitLog.Error("自定义效果：找不到作者类（id=" + (id ?? "?") + "）");
+                    ModKitLog.Error("自定义效果：找不到作者类（id=" + (id ?? "?") + "）—— 该效果本次空转。");
                     return UniTask.CompletedTask;
                 }
 

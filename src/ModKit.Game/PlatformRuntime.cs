@@ -83,6 +83,24 @@ namespace ModKit.Game
         public static bool HasRun { get { return _ran; } }
 
         /// <summary>
+        /// 把**效果适配层**提前接到注册表上（可在插件 Awake 调用，早于任何内容实例化）。
+        /// </summary>
+        /// <remarks>
+        /// ★ 2026-10-26 实机崩溃的最后一环：<see cref="ContentRegistry.Resolve"/> 的第 4 步
+        ///   "让游戏层现生成类型"是一个**委托挂钩**（<c>ContentRegistry.EmitFallback</c>），
+        ///   而它原来只在流水线里赋值。继续游戏时存档反序列化发生在流水线之前 ⇒
+        ///   挂钩是 null ⇒ 作者自写效果的类型永远生成不出来 ⇒ 游戏那行
+        ///   <c>Activator.CreateInstance(Type.GetType(...))</c> 拿到 null ⇒ 启动崩溃。
+        ///   这里只做"接线"，不碰任何游戏数据，所以放在 Awake 安全。
+        ///   流水线里会再赋值一次（幂等，同一个委托）。
+        /// </remarks>
+        public static void InstallEarlyTypeFallbacks(IGameLog log)
+        {
+            if (log != null) { ModKitLog.Sink = log; }
+            ModKit.Core.ContentRegistry.EmitFallback = EffectBaseAdapterEmitter.TryEmit;
+        }
+
+        /// <summary>
         /// 跑一次完整流水线。**幂等**：重复调用直接返回上次的汇总。
         /// </summary>
         /// <remarks>
