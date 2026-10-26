@@ -25,6 +25,8 @@ mkdir -p "$OUT_DIR"
   -r:"$MANAGED/UnityEngine.CoreModule.dll" \
   -r:"$MANAGED/UnityEngine.UIModule.dll" \
   -r:"$MANAGED/UnityEngine.UI.dll" \
+  -r:"$MANAGED/UnityEngine.PhysicsModule.dll" \
+  -r:"$MANAGED/UnityEngine.Physics2DModule.dll" \
   -r:"$MANAGED/Unity.TextMeshPro.dll" \
   -r:"$MANAGED/Unity.Localization.dll" \
   -r:"$MANAGED/Newtonsoft.Json.dll" \

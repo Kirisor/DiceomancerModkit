@@ -143,6 +143,7 @@ namespace RunHistory
                 RefreshDetailContent();
 
                 if (_listPage != null) { _listPage.SetActive(false); }
+                if (_panelTitle != null) { _panelTitle.gameObject.SetActive(false); }   // 详情页有自己的大标题，别叠
                 if (_detailPage != null) { _detailPage.SetActive(true); }
             }
             catch (Exception ex)
@@ -409,6 +410,8 @@ namespace RunHistory
                 name = name.Substring(0, name.Length - 1);
             }
 
+            // 格子 = 上面是图、下面一行名字（墨色字写在面板纸面上，不再往卡图上压黑条）
+            float artH = isCard ? 120f : 96f;
             var cell = new GameObject("Tile", typeof(RectTransform));
             cell.transform.SetParent(_detailContent.transform, false);
             var rt = cell.GetComponent<RectTransform>();
@@ -416,10 +419,25 @@ namespace RunHistory
             rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
             rt.anchoredPosition = new Vector2(x, y);
-            rt.sizeDelta = new Vector2(96f, 136f);
+            rt.sizeDelta = new Vector2(96f, artH + 30f);
 
-            var img = cell.AddComponent<Image>();
-            img.raycastTarget = true;
+            // 透明底板：只负责接收射线（悬停用）
+            var hit = cell.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+            hit.raycastTarget = true;
+
+            // 图
+            var artGo = new GameObject("Art", typeof(RectTransform));
+            artGo.transform.SetParent(cell.transform, false);
+            var artRt = artGo.GetComponent<RectTransform>();
+            artRt.anchorMin = new Vector2(0f, 1f);
+            artRt.anchorMax = new Vector2(0f, 1f);
+            artRt.pivot = new Vector2(0f, 1f);
+            artRt.anchoredPosition = Vector2.zero;
+            artRt.sizeDelta = new Vector2(96f, artH);
+
+            var img = artGo.AddComponent<Image>();
+            img.raycastTarget = false;
             img.color = isCard ? new Color(0.84f, 0.80f, 0.73f, 1f) : new Color(0.78f, 0.74f, 0.66f, 1f);
 
             var sprite = ResolveSprite(name, isCard);
@@ -433,20 +451,17 @@ namespace RunHistory
             if (upgraded)
             {
                 // 升级态：左上角一枚小方标
-                var mark = NewImage(cell.transform, new Color(0.85f, 0.68f, 0.22f, 1f),
+                var mark = NewImage(artGo.transform, new Color(0.85f, 0.68f, 0.22f, 1f),
                     new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(22f, 22f), "Up");
                 NewText(mark.transform, "↑", 18f, Color.white,
                     new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
             }
 
-            // 名字压在格子底部的一条半透明带上（放在格子外面会和下一行打架）
-            NewImage(cell.transform, new Color(0f, 0f, 0f, 0.55f),
-                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 1f), new Vector2(0f, 26f), "NameBg");
-
+            // 名字（图下面那 30px）：墨色、单行、超长省略
             var label = NewText(cell.transform, DisplayName(name, isCard),
-                isCard ? 14f : 16f, Color.white,
-                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 14f), new Vector2(-4f, 24f));
-            label.enableWordWrapping = true;
+                isCard ? 15f : 16f, Ink,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -(artH + 3f)), new Vector2(2f, 26f));
+            label.enableWordWrapping = false;
             label.overflowMode = TextOverflowModes.Ellipsis;
 
             // 悬停高亮：这张卡/这件遗物是在第几个节点拿到的

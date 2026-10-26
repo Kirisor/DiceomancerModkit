@@ -49,6 +49,7 @@ namespace RunHistory
         private static Canvas _canvas;
         private static GameObject _entryGo;
         private static GameObject _panelGo;
+        private static TextMeshProUGUI _panelTitle;
         private static GameObject _listPage;
         private static GameObject _detailPage;
 
@@ -222,6 +223,7 @@ namespace RunHistory
                 ShowList();
                 _panelGo.SetActive(true);
                 _open = true;
+                BlockOtherUI(true);
                 PlaceCanvasInFrontOfCamera(Camera.main);
                 Debug.Log("[RunHistory] 面板已打开（" + RunHistoryStore.Index.entries.Count + " 局）");
             }
@@ -237,8 +239,103 @@ namespace RunHistory
             {
                 if (_panelGo != null) { _panelGo.SetActive(false); }
                 _open = false;
+                BlockOtherUI(false);
             }
             catch { }
+        }
+
+        // ---------------- 输入隔断 ----------------
+
+        private static readonly List<Behaviour> _mutedRaycasters = new List<Behaviour>();
+        private static readonly List<Collider> _mutedColliders = new List<Collider>();
+        private static readonly List<Collider2D> _mutedColliders2D = new List<Collider2D>();
+        private static GameObject _blockerGo;
+
+        /// <summary>
+        /// 开面板时把**别的画布的射线**与**场景里的碰撞体**关掉，并在自己画布最底层垫一张几乎透明的挡板。
+        /// </summary>
+        /// <remarks>
+        /// ★ 这是照抄「模组图鉴」的做法（那边叫"硬隔断"，已实机验证）：
+        ///   只加一张全屏挡板不够 —— WorldSpace 画布下面还有原版 UI 画布与 2D 碰撞体，
+        ///   点击会同时打到它们（症状：隔着面板点到了下面的「升级 / 进阶 / 图鉴」）。
+        ///   所以逐个关：其它 Canvas 的 GraphicRaycaster + 所有 Collider/Collider2D，并记账，关面板时原样恢复。
+        /// </remarks>
+        private static void BlockOtherUI(bool block)
+        {
+            try
+            {
+                if (block)
+                {
+                    _mutedColliders.Clear();
+                    foreach (var col in Resources.FindObjectsOfTypeAll<Collider>())
+                    {
+                        if (col == null || !col.enabled || !col.gameObject.scene.IsValid()) { continue; }
+                        col.enabled = false;
+                        _mutedColliders.Add(col);
+                    }
+                    foreach (var col in Resources.FindObjectsOfTypeAll<Collider2D>())
+                    {
+                        if (col == null || !col.enabled || !col.gameObject.scene.IsValid()) { continue; }
+                        col.enabled = false;
+                        _mutedColliders2D.Add(col);
+                    }
+
+                    _mutedRaycasters.Clear();
+                    foreach (var cv in Resources.FindObjectsOfTypeAll<Canvas>())
+                    {
+                        if (cv == null || cv == _canvas || !cv.gameObject.scene.IsValid()) { continue; }
+                        if (!cv.gameObject.activeInHierarchy) { continue; }
+                        var rc = cv.GetComponent<GraphicRaycaster>();
+                        if (rc == null || !rc.enabled) { continue; }
+                        rc.enabled = false;
+                        _mutedRaycasters.Add(rc);
+                    }
+
+                    if (_blockerGo == null && _canvasGo != null)
+                    {
+                        _blockerGo = new GameObject("Blocker", typeof(RectTransform));
+                        _blockerGo.transform.SetParent(_canvasGo.transform, false);
+                        _blockerGo.transform.SetAsFirstSibling();   // 垫最底层：自己面板的点击优先
+                        var brt = _blockerGo.GetComponent<RectTransform>();
+                        brt.anchorMin = Vector2.zero;
+                        brt.anchorMax = Vector2.one;
+                        brt.offsetMin = Vector2.zero;
+                        brt.offsetMax = Vector2.zero;
+                        var img = _blockerGo.AddComponent<Image>();
+                        img.color = new Color(0f, 0f, 0f, 0.004f);   // 肉眼不可见但接收射线
+                        img.raycastTarget = true;
+                    }
+                    if (_blockerGo != null) { _blockerGo.SetActive(true); }
+
+                    Debug.Log("[RunHistory] 已开启输入隔断（屏蔽 " + _mutedRaycasters.Count +
+                        " 个画布射线 / " + _mutedColliders.Count + " 个3D碰撞体 / " +
+                        _mutedColliders2D.Count + " 个2D碰撞体）");
+                }
+                else
+                {
+                    if (_blockerGo != null) { _blockerGo.SetActive(false); }
+                    for (int i = 0; i < _mutedRaycasters.Count; i++)
+                    {
+                        var rc = _mutedRaycasters[i] as GraphicRaycaster;
+                        if (rc != null) { rc.enabled = true; }
+                    }
+                    _mutedRaycasters.Clear();
+                    for (int i = 0; i < _mutedColliders.Count; i++)
+                    {
+                        if (_mutedColliders[i] != null) { _mutedColliders[i].enabled = true; }
+                    }
+                    _mutedColliders.Clear();
+                    for (int i = 0; i < _mutedColliders2D.Count; i++)
+                    {
+                        if (_mutedColliders2D[i] != null) { _mutedColliders2D[i].enabled = true; }
+                    }
+                    _mutedColliders2D.Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[RunHistory] 输入隔断切换失败 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
         }
 
         private static void EnsurePanel()
@@ -257,13 +354,13 @@ namespace RunHistory
             NewImage(_panelGo.transform, PanelPaper, new Vector2(0f, 0f), new Vector2(1f, 1f),
                 Vector2.zero, Vector2.zero, "Bg");
 
-            // 标题
-            NewText(_panelGo.transform, "战 绩", 52f, Ink,
+            // 标题（详情页打开时隐藏：详情页自己有一行大标题，两者会叠在一起）
+            _panelTitle = NewText(_panelGo.transform, "战 绩", 52f, Ink,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(400f, 60f));
 
-            // 关闭
-            var close = NewButton(_panelGo.transform, "✕", new Color(0.80f, 0.74f, 0.66f, 1f), Ink, 34f,
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-40f, -30f), new Vector2(64f, 64f));
+            // 关闭（用汉字而不是 ✕ —— 游戏的 TMP 字体没有 ✕ 的字形，会显示成方框）
+            var close = NewButton(_panelGo.transform, "关闭", new Color(0.80f, 0.74f, 0.66f, 1f), Ink, 26f,
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-36f, -30f), new Vector2(104f, 56f));
             close.onClick.AddListener(ClosePanel);
 
             BuildListPage();
@@ -331,14 +428,14 @@ namespace RunHistory
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -420f), new Vector2(1200f, 60f));
 
             // 翻页
-            var prev = NewButton(_listPage.transform, "‹ 上一页", RowA, Ink, 28f,
+            var prev = NewButton(_listPage.transform, "< 上一页", RowA, Ink, 28f,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-260f, 40f), new Vector2(200f, 60f));
             prev.onClick.AddListener(delegate { ChangePage(-1); });
 
             _pageText = NewText(_listPage.transform, "", 28f, Ink,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(300f, 60f));
 
-            var next = NewButton(_listPage.transform, "下一页 ›", RowA, Ink, 28f,
+            var next = NewButton(_listPage.transform, "下一页 >", RowA, Ink, 28f,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(260f, 40f), new Vector2(200f, 60f));
             next.onClick.AddListener(delegate { ChangePage(1); });
         }
@@ -369,6 +466,7 @@ namespace RunHistory
         {
             if (_detailPage != null) { _detailPage.SetActive(false); }
             if (_listPage != null) { _listPage.SetActive(true); }
+            if (_panelTitle != null) { _panelTitle.gameObject.SetActive(true); }
             RefreshList();
         }
 
@@ -545,10 +643,15 @@ namespace RunHistory
         }
 
         /// <summary>职业显示名：先查本地化表，查不到就显示内部名（mod 职业也可能只有内部名）。</summary>
+        /// <remarks>
+        /// ★ 原版职业的中文名在 <c>Encyclopedia</c> 表里，键就是内部名
+        ///   （实测 <c>Encyclopedia/Standard_Class_PRV = 莽战士</c>），不是 CardName 也不是 UI 表。
+        ///   之前只试了 ClassName/Card/UI，所以显示成了 <c>Standard_Class_PRV</c>。
+        /// </remarks>
         private static string ClassLabel(string className)
         {
             if (string.IsNullOrEmpty(className)) { return "（未知职业）"; }
-            foreach (var table in new[] { "ClassName", "Card", "UI" })
+            foreach (var table in new[] { "Encyclopedia", "Card", "UI" })
             {
                 try
                 {
