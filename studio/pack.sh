@@ -17,12 +17,20 @@ VERSION="${1:-0.1.0}"
 SELF_CONTAINED="${SELF_CONTAINED:-0}"   # 1 = 自包含（需下载 .NET 运行时包）；0 = 框架依赖
 WITH_BEPINEX="${WITH_BEPINEX:-0}"
 EXAMPLE_SRC="${EXAMPLE_SRC:-}"    # 示例 mod 源目录；留空则用游戏目录里的 naifrog       # 1 = 把 BepInEx 也打进 Studio 的 payload（供一键部署安装）
+# 1 = 只打奶蛙 mod：跳过平台包与 Studio 包，且**不清空** dist/。
+# 为什么必须能只打 mod：平台包取的是游戏目录里当前安装的 dll，
+# 同一版本号重打会得到与已发布资产不同的内容（不可复现）。
+MOD_ONLY="${MOD_ONLY:-0}"
 ROOT="$MODKIT_ROOT"
 GAME="$DICEOMANCER_DIR"
 DIST="$ROOT/dist"
 STAGE="$DIST/stage"
 
-rm -rf "$DIST"
+if [ "$MOD_ONLY" = "1" ]; then
+  echo "（MOD_ONLY=1：只打奶蛙 mod，保留 dist/ 里已有的平台包与 Studio 包）"
+else
+  rm -rf "$DIST"
+fi
 mkdir -p "$DIST" "$STAGE"
 
 # 打包用 Python（需要 zipfile）；没有 python 时提示显式指定 PY=<python 路径>
@@ -54,6 +62,7 @@ PY
 }
 
 # ============================================================
+if [ "$MOD_ONLY" != "1" ]; then
 echo "=== 1/3 ModKit 平台包 ==="
 P="$STAGE/ModKit-Platform"
 mkdir -p "$P/BepInEx/plugins" "$P/BepInEx/config"
@@ -168,6 +177,7 @@ fi
 echo "  payload 大小: $(du -sh "$PAY" | cut -f1)"
 
 zip_dir "$DIST/ModKit-Studio-$VERSION-win-x64.zip" "$S"
+fi   # if [ "$MOD_ONLY" != "1" ] （平台包 + Studio 包）
 
 # ============================================================
 echo
@@ -223,13 +233,17 @@ fi
 echo
 echo "=== 校验和 ==="
 cd "$DIST"
-for z in *.zip; do
+SUMS_OUT="SHA256SUMS.txt"
+SUMS_GLOB="*.zip"
+if [ "$MOD_ONLY" = "1" ]; then SUMS_OUT="SHA256SUMS-naifrog.txt"; SUMS_GLOB="Naifrog-Mod-*.zip"; fi
+for z in $SUMS_GLOB; do
+  [ -e "$z" ] || continue
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$z"
   else
     "$PY" -c "import sys,hashlib;d=open(sys.argv[1],'rb').read();print(hashlib.sha256(d).hexdigest()+'  '+sys.argv[1])" "$z"
   fi
-done | tee SHA256SUMS.txt | sed 's/^/  /'
+done | tee "$SUMS_OUT" | sed 's/^/  /'
 
 rm -rf "$STAGE"
 echo

@@ -20,7 +20,9 @@ OUT="$MOD_DIR/_build/naifrog.dll"
 mkdir -p "$MOD_DIR/_build"
 
 echo "== 编译 $MOD_DIR/src/*.cs"
-"$DOTNET" exec "$CSC" -nologo -target:library -nostdlib+ -langversion:9 -optimize+ \
+# -deterministic：同样源码必须产出同样的字节。少了它，每次重编只是 PE 时间戳/MVID
+# 不同、哈希就变，导致「发布包里的 dll」与「作者实测的那一份」对不上，无法用哈希核对。
+"$DOTNET" exec "$CSC" -nologo -target:library -nostdlib+ -langversion:9 -optimize+ -deterministic \
   -out:"$OUT" \
   -r:"$MANAGED/mscorlib.dll" \
   -r:"$MANAGED/System.dll" \
