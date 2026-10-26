@@ -73,9 +73,6 @@ namespace RunHistory
         {
             try
             {
-                EnsureCanvas();
-                EnsureEntry();
-
                 bool inMenu = IsDeskHub(out string sceneName);
                 if (sceneName != _lastScene)
                 {
@@ -91,8 +88,20 @@ namespace RunHistory
 
                 if (inMenu)
                 {
+                    // ★ 画布**只在这个场景里建**：这里的相机才是画布该对着的那台。
+                    //   （在标题界面建的话，画布会被摆到另一台相机前面，进桌面后可能看不见。）
+                    EnsureCanvas();
+                    EnsureEntry();
+
+                    var cam = Camera.main;
+                    if (cam != null && _canvas != null && _canvas.worldCamera != cam)
+                    {
+                        _canvas.worldCamera = cam;
+                    }
+                    // 每拍跟随主相机：桌面界面的相机会移动/切换，画布不跟就会飘出视野
+                    PlaceCanvasInFrontOfCamera(cam);
+
                     if (_entryGo != null && !_entryGo.activeSelf) { _entryGo.SetActive(true); }
-                    if (_open) { PlaceCanvasInFrontOfCamera(Camera.main); }
                 }
                 else
                 {
