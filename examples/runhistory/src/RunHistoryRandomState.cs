@@ -1,18 +1,19 @@
 // =============================================================================
 //  Run History（战绩）· 把游戏里那个「没播种的随机源」按种子按住
 //
-//  ★ 为什么需要这个文件（v0.2.0 失败的教训）：
-//    v0.2.0 用 `FieldInfo.SetValue` 直接给 `ShufflingExtension.rng`（`static readonly`）
-//    换一个新实例 —— 这在 Unity 的 Mono 上**不保证生效**（readonly 静态字段可能被
-//    运行时挡住，或者写进去也不影响已缓存的引用）。日志里看不到报错，但地图照样每次不同。
+//  ★ 两次踩坑记录（别再退回这两条路）：
+//    v0.2.0：`FieldInfo.SetValue` 给 `ShufflingExtension.rng`（`static readonly`）换新实例。
+//    v0.2.1：换实例后**回读校验**，日志写「校验=一致」，以为成功 —— 地图照样每次不同。
+//    结论：换字段对游戏无效。`ShufflingExtension.Random<T>` 与 `rng` 同在一个程序集里，
+//    Mono 会把 `static readonly` 的引用内联进调用点，游戏代码用的一直是**最初那个对象**；
+//    而反射读字段拿到的是新对象，于是校验「一致」却完全没按住真正的随机流。
 //
-//  ★ 所以这里改走「状态复制」：不换实例，把 `new System.Random(seed)` 的**内部状态**
-//    （_seedArray / _inext / _inextp …）原样拷贝进游戏正在用的那个实例上。
-//    这条路不依赖 readonly 能不能写 —— 它改的是对象内容，不是字段。
+//  ★ 正确做法：**不换实例，只改对象**。
+//    把 `new System.Random(seed)` 的内部状态（SeedArray / inext / inextp …）原样拷进
+//    那个一直在被使用的实例上。内联的老引用和字段读出的引用是同一个对象，两条路一起成立。
 //    字段名在 Mono 与 .NET Framework 上不同，所以全部走反射枚举，不写死名字。
 //
-//  ★ 每次都回读校验：把当前状态和 `new Random(seed)` 逐字段比对，结果写进日志。
-//    「校验=一致」是硬证据；不一致就必须报告，而不是假装成功。
+//  ★ 每次回读校验（比的是**被播种的那个对象**，不是字段里的新对象）。
 // =============================================================================
 
 using System;
@@ -81,37 +82,35 @@ namespace RunHistory
                 return false;
             }
 
-            // ① 先试换实例（能成最好：状态天然正确）
-            var fresh = new System.Random(seed);
-            string replaceState;
-            try
-            {
-                _rngField.SetValue(null, fresh);
-                bool took = ReferenceEquals(_rngField.GetValue(null), fresh);
-                replaceState = took ? "成功" : "未生效";
-                if (took) { rng = fresh; }
-            }
+            // ★ 只**就地复制状态**，绝不换实例。
+            //   v0.2.0 / v0.2.1 都是靠 `SetValue` 换实例 —— 字段读回来确实指向新实例、
+            //   「校验=一致」，但地图照样每次都不同。说明游戏代码里真正被调用的还是**原来那个对象**：
+            //   Mono 会把同程序集内 `static readonly` 的引用内联进调用点，换字段对它无效。
+            //   改对象内容则两条路都覆盖 —— 内联的老引用与字段读出来的引用是同一个对象。
+            bool copied;
+            try { copied = CopyState(rng, seed); }
             catch (Exception ex)
             {
-                replaceState = "被拒(" + ex.GetType().Name + ")";
+                RunHistoryPlugin.Log.LogWarning("战绩：复制随机源状态失败 —— " + ex.GetType().Name + ": " + ex.Message);
+                copied = false;
             }
 
-            // ② 无论如何都做状态复制（换实例没成的话，这就是唯一的路）
-            string copyState = "未尝试";
-            if (!ReferenceEquals(rng, fresh))
+            // 若字段被旧版本换成了别的实例，指回刚播种的这个对象（保持单一真源）
+            try
             {
-                try { copyState = CopyState(rng, seed) ? "成功" : "失败"; }
-                catch (Exception ex) { copyState = "异常(" + ex.GetType().Name + ")"; }
+                object current = _rngField.GetValue(null);
+                if (!ReferenceEquals(current, rng)) { _rngField.SetValue(null, rng); }
             }
+            catch { }
 
-            // ③ Unity 的全局随机源也对齐（森林/城市的 RandomByWeight 走它）
-            try { UnityEngine.Random.InitState(seed); } catch { }
+            // Unity 的全局随机源也对齐（森林/城市的 RandomByWeight 走它）
+            ReseedUnity(seed);
 
-            // ④ 回读校验：现在是 new Random(seed) 的状态吗？
+            // 回读校验：现在这个对象是 new Random(seed) 的状态吗？
             bool ok = false;
             try { ok = StateEquals(rng, new System.Random(seed)); } catch { }
             LastOk = ok;
-            LastReport = "字段替换=" + replaceState + "｜状态复制=" + copyState + "｜校验=" + (ok ? "一致" : "不一致");
+            LastReport = "就地重置=" + (copied ? "成功" : "失败") + "｜校验=" + (ok ? "一致" : "不一致");
 
             string line = "战绩：地图随机源按 seed " + seed + " 重置（" + reason + "）｜" + LastReport;
             if (ok) { RunHistoryPlugin.Log.LogInfo(line); }

@@ -96,6 +96,12 @@ namespace RunHistory
     {
         [HarmonyPrefix]
         private static void Prefix() { RunHistorySeed.ReseedForMap("地图生成前"); }
+
+        [HarmonyPostfix]
+        private static void Postfix(World.ChapterMapGenerator.ChapterMapGeneratorBase __instance)
+        {
+            RunHistoryMapProbe.LogPlainPicks(__instance);
+        }
     }
 
     /// <summary>

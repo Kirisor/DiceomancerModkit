@@ -31,10 +31,11 @@
 | `Utilities.ShufflingExtension.rng`（**没有播种**的静态 `System.Random`） | 段落预制体的挑选、节点之间的连边、普通路段/城市的节点类型、`PopRandomElement()` | 在 `ChapterMapGeneratorBase.GenerateMap()` 之前按同一个种子**复制状态**重置，并回读校验 |
 | `UnityEngine.Random`（引擎全局） | 森林/城市的 `RandomByWeight()` 节点类型权重、节点坐标 ±0.05 抖动 | 地图生成前、每个段落生成前各 `InitState` 一次 |
 
-> ⚠️ 第二行是 v0.2.0 踩过的坑：`rng` 是 `static readonly`，`FieldInfo.SetValue` 换实例
-> 在 Mono 上不保证生效（日志里还不报错），地图照样每次都不同。
-> v0.2.1 改成**把 `new Random(seed)` 的内部状态拷进原实例**，并把比对结果写进日志：
-> `校验=一致` 才算真的按住了。
+> ⚠️ 第二行是 v0.2.0–v0.2.1 踩过的坑：`rng` 是 `static readonly`，换实例
+> （`FieldInfo.SetValue`）**对游戏无效** —— 反射回读"校验=一致"，地图却照样每次不同。
+> 原因是 `ShufflingExtension.Random<T>` 与 `rng` 同在一个程序集，Mono 把 `static readonly`
+> 的引用内联进了调用点，游戏用的始终是**最初那个对象**。
+> v0.2.2 改成**就地复制 `new Random(seed)` 的内部状态**（不换实例），日志打「就地重置=成功｜校验=一致」。
 
 用法：
 
@@ -48,13 +49,17 @@
 
 ```
 战绩：本次开局使用指定种子 123456（原种子已被替换；章节地图将由此种子生成）。
-战绩：地图随机源按 seed 123456 重置（地图生成前）｜字段替换=未生效｜状态复制=成功｜校验=一致
+战绩：地图随机源按 seed 123456 重置（地图生成前）｜就地重置=成功｜校验=一致
+战绩：Plain 段落挑选｜候选 road=[0:…, 1:…] mid=[0:…, 1:…]｜选中 NE=… SE=… SM=… NM=… NF=… SF=…｜按种子应取 road#2,road#0,mid#1,mid#0,road#3,road#1（seed 123456）
 战绩：地图已生成（新世界）｜ChapterPlain｜段 11 / 节点 41｜指纹 3f2a1c9d｜明细 maps\20261027-014033-346776178-ChapterPlain.json
 ```
 
-**怎么验证"同种子同图"**：用同一个种子连开两局，比较两行 `指纹`。
-一样就是一样；不一样的话，`BepInEx/RunHistory/maps/` 下两份 json 可以逐段/逐节点 diff
-（段落类型、节点类型、连边都在里面；坐标抖动不进指纹）。
+**怎么验证"同种子同图"**：
+
+1. 「选中」与「按种子应取」是否一致 —— 一致即说明游戏的随机流确实被播种了；
+2. 同一个种子连开两局，比较两行 `指纹`；
+3. 万一还不同，`BepInEx/RunHistory/maps/` 下两份 json 可逐段/逐节点 diff
+   （段落类型、节点类型、连边都在里面；坐标抖动不进指纹）。
 
 
 ## 为什么是独立插件
