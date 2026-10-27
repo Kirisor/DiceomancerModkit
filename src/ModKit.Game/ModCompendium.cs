@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Collection;
@@ -82,6 +82,15 @@ namespace ModKit.Game
         private static readonly Color Ink = new Color(0.25f, 0.20f, 0.16f, 1f);
         private static readonly Color PanelPaper = new Color(0.94f, 0.91f, 0.85f, 0.99f);
         private static readonly Color BorderInk = new Color(0.25f, 0.20f, 0.16f, 1f);
+
+        // ---- 与「战绩」面板同一套控件语言（见 examples/runhistory/src/RunHistoryUi.cs）----
+        // 区别只在于这里是圆角纸页：描边交给 UiSkin.RowRound 的 4px 内置描边，
+        // 我们只补「投影 + 面色 + 悬停压暗」，让按钮/页签真的凸起来、可以被一眼认出来。
+        private static readonly Color Face = new Color(0.88f, 0.83f, 0.75f, 1f);      // 次按钮面
+        private static readonly Color Accent = new Color(0.94f, 0.79f, 0.45f, 1f);    // 主按钮/当前页签
+        private static readonly Color Hair = new Color(0.25f, 0.20f, 0.16f, 0.22f);   // 细分隔线
+        private static readonly Color RuleInk = new Color(0.25f, 0.20f, 0.16f, 0.55f);
+        private static readonly Color ButtonShadow = new Color(0f, 0f, 0f, 0.20f);
 
         // ------------------------------------------------------------------
         //  装配
@@ -335,12 +344,16 @@ namespace ModKit.Game
             rt.anchoredPosition = new Vector2(-30f, -110f);
             rt.sizeDelta = new Vector2(240f, 96f);
 
-            var img = _entryGo.AddComponent<Image>();
-            img.color = Paper;
-            img.raycastTarget = true;
+            // 桌面上的入口牌：与面板里的按钮同一套语言（圆角描边 + 投影），
+            // 原来是一块没有边界的纸色方块，贴在书桌木纹上几乎看不出是按钮。
+            NewImage(_entryGo.transform, ButtonShadow, Vector2.zero, Vector2.one,
+                new Vector2(2f, -6f), Vector2.zero, "Shadow", raycast: false);
+            var face = NewImage(_entryGo.transform, Paper, Vector2.zero, Vector2.one,
+                Vector2.zero, Vector2.zero, "Face", raycast: true);
 
             var btn = _entryGo.AddComponent<Button>();
-            btn.targetGraphic = img;
+            btn.targetGraphic = face;
+            btn.colors = TintColors();
             btn.onClick.AddListener(Toggle);
 
             _entryText = NewText(_entryGo.transform, "模组图鉴", 34f, Ink, new Vector2(0f, 0f), new Vector2(1f, 1f),
@@ -478,6 +491,12 @@ namespace ModKit.Game
                 }
             }
 
+            // 页签带与内容之间的两条分隔线（在内容之前建 ⇒ 画在内容下面）。
+            // 底部**不画横线**：卡牌页第二行的名字/副标题正好落在那个高度（-807~-847），
+            // 横线会从字里穿过去；页脚改用一块圆角小牌承载页码。
+            NewRule(_panelGo.transform, -104f, 40f, RuleInk, 2f);
+            NewRule(_panelGo.transform, -112f, 40f, Hair, 1f);
+
             // ④ 左侧分类书签（mod 专属，探出面板左边缘）
             var modTab = NewButton(_panelGo.transform, "模组", new Vector2(0f, 0.5f),
                 new Vector2(30f, 180f), new Vector2(120f, 56f), out _);
@@ -508,49 +527,29 @@ namespace ModKit.Game
                 nrt.anchoredPosition = new Vector2(-20f, 0f);
                 _nextButton.onClick.AddListener(() => { _page++; Refresh(); });
             }
-            ApplyTexture(_prevButton != null ? _prevButton.GetComponent<Image>() : null, ArrowTexturePath, "翻页箭头");
-            ApplyTexture(_nextButton != null ? _nextButton.GetComponent<Image>() : null, ArrowTexturePath, "翻页箭头");
+            // 翻页按钮只用文字（贴图会盖掉圆角描边的面，反而看不清这里是按钮）
 
-            // 升级版开关（卡牌页专用）
-
+            // 升级版开关（卡牌页专用；放在页脚带左侧）
             _upgradedButton = NewButton(_panelGo.transform, UpgradedLabel(), new Vector2(0f, 0f), Vector2.zero,
-
                 new Vector2(170f, 60f), out _);
-
             if (_upgradedButton != null)
-
             {
-
                 var urt = _upgradedButton.transform as RectTransform;
-
                 urt.pivot = new Vector2(0f, 0f);
-
                 urt.anchoredPosition = new Vector2(180f, 18f);
-
                 _upgradedButton.onClick.AddListener(() =>
-
                 {
-
                     _showUpgraded = !_showUpgraded;
-
                     UpdateUpgradedLabel();
-
                     Refresh();
-
                 });
-
-                ApplyTexture(_upgradedButton.GetComponent<Image>(), ArrowTexturePath, "升级开关");
-
             }
 
-
             _jumpText = NewText(_panelGo.transform, "", 26f, Ink, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-
-
                 new Vector2(0f, -150f), new Vector2(1200f, 40f));
 
-
-
+            // 页码保持裸文字：它下面正好是卡牌页第二行卡片的位置，
+            // 加底板反而会在卡片上压出一块纸色方块（真实卡片是 3D 对象，UI 会透出来）。
             _pageText = NewText(_panelGo.transform, "", 28f, Ink, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 25f), new Vector2(320f, 44f));
             BuildInfoStrip();
@@ -621,7 +620,7 @@ namespace ModKit.Game
             }
 
             _panelGo.SetActive(false);
-            if (_log != null) { _log.Info("模组图鉴：面板已建立（左右两页，卡牌页每页 8 格 / 遗物页每页 12 格）。"); }
+            if (_log != null) { _log.Info("模组图鉴：面板已建立（左右两页，卡牌页每页 8 格 / 遗物页每页 12 格；版式=圆角描边按钮 + 页签高亮 + 双分隔线）。"); }
         }
 
         /// <summary>给 Image 挂上 Resources 里的素材。路径为空或加载失败时保持纯色。</summary>
@@ -638,8 +637,13 @@ namespace ModKit.Game
             img.color = Color.white;
         }
 
+        /// <summary>
+        /// 按钮 = 投影 + 圆角描边面（<see cref="UiSkin.RowRound"/>，自带 4px 深棕描边）+ 文字。
+        /// 旧版是「纯纸色方块 + Outline(2,-2)」：Outline 只是往右下脏一圈，看着像重影，
+        /// 按钮和纸面同色、没有边界，所以在面板上不突出。
+        /// </summary>
         private static Button NewButton(Transform parent, string text, Vector2 anchor, Vector2 pos,
-            Vector2 size, out TextMeshProUGUI label)
+            Vector2 size, out TextMeshProUGUI label, Color? face = null)
         {
             var go = new GameObject("Btn_" + text, typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -650,16 +654,81 @@ namespace ModKit.Game
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
 
-            var img = go.AddComponent<Image>();
-            img.color = Paper;
-            var outline = go.AddComponent<Outline>();
-            outline.effectColor = new Color(0.45f, 0.35f, 0.25f, 1f);
-            outline.effectDistance = new Vector2(2f, -2f);
-
             var btn = go.AddComponent<Button>();
+
+            // 投影：往右下偏 2~5px
+            var shadow = NewImage(go.transform, ButtonShadow, Vector2.zero, Vector2.one,
+                new Vector2(2f, -5f), Vector2.zero, "Shadow");
+            shadow.raycastTarget = false;
+
+            var img = NewImage(go.transform, face ?? Face, Vector2.zero, Vector2.one,
+                Vector2.zero, Vector2.zero, "Face");
+            img.raycastTarget = true;   // 整块都能点
+
             btn.targetGraphic = img;
+            btn.colors = TintColors();
+
             label = NewText(go.transform, text, 30f, Ink, new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
             return btn;
+        }
+
+        /// <summary>按钮的"面色"图（页签高亮时改它的颜色）。</summary>
+        private static Image FaceOf(Button btn)
+        {
+            if (btn == null) { return null; }
+            try
+            {
+                var t = btn.transform.Find("Face");
+                return t == null ? null : t.GetComponent<Image>();
+            }
+            catch { return null; }
+        }
+
+        /// <summary>悬停/按下只压暗、不漂白，保持纸的手感。</summary>
+        private static ColorBlock TintColors()
+        {
+            var colors = ColorBlock.defaultColorBlock;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.97f, 0.96f, 0.93f, 1f);
+            colors.pressedColor = new Color(0.84f, 0.80f, 0.74f, 1f);
+            colors.selectedColor = Color.white;
+            colors.disabledColor = new Color(1f, 1f, 1f, 0.35f);
+            colors.fadeDuration = 0.08f;
+            return colors;
+        }
+
+        /// <summary>统一的图片构件：默认套 <see cref="UiSkin.RowRound"/> 的圆角描边。</summary>
+        private static Image NewImage(Transform parent, Color color, Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pos, Vector2 size, string name, bool rounded = true, bool raycast = false)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.pivot = (anchorMin == anchorMax) ? anchorMin : new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+
+            var img = go.AddComponent<Image>();
+            img.color = color;
+            img.raycastTarget = raycast;
+            if (rounded)
+            {
+                img.sprite = UiSkin.RowRound;
+                img.type = Image.Type.Sliced;
+            }
+            return img;
+        }
+
+        /// <summary>一条贴边的细线（分隔带用）。</summary>
+        private static Image NewRule(Transform parent, float topY, float insetX, Color color, float thickness = 2f)
+        {
+            var img = NewImage(parent, color, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, topY), new Vector2(-2f * insetX, thickness), "Rule", rounded: false);
+            img.rectTransform.pivot = new Vector2(0.5f, 1f);
+            img.rectTransform.anchoredPosition = new Vector2(0f, topY);
+            return img;
         }
 
         private static TextMeshProUGUI NewText(Transform parent, string text, float size, Color color,
@@ -1549,6 +1618,19 @@ namespace ModKit.Game
                 if (_page < 0) { _page = 0; }
 
                 if (_titleText != null) { _titleText.text = "模组图鉴 · " + TabTitles[_tab]; }
+
+                // 当前页签用金色面 + 粗体，其它页签留纸色 —— 不然四个按钮长得一模一样，看不出在哪一页
+                for (int i = 0; i < _tabButtons.Length; i++)
+                {
+                    bool active = i == _tab;
+                    var tabFace = FaceOf(_tabButtons[i]);
+                    if (tabFace != null) { tabFace.color = active ? Accent : Face; }
+                    if (_tabTexts[i] != null) { _tabTexts[i].fontStyle = active ? FontStyles.Bold : FontStyles.Normal; }
+                }
+
+                // 升级版开关按下后同样是金色面（和页签同一套"当前状态"表达）
+                var upgradedFace = FaceOf(_upgradedButton);
+                if (upgradedFace != null) { upgradedFace.color = _showUpgraded ? Accent : Face; }
                 if (_pageText != null) { _pageText.text = (_page + 1) + " / " + pages + "　共 " + entries.Count + " 项"; }
                 if (_upgradedButton != null)
                 {
