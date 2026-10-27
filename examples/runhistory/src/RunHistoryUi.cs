@@ -33,15 +33,37 @@ namespace RunHistory
         private static readonly Color Paper = new Color(0.96f, 0.93f, 0.86f, 1f);
         private static readonly Color Ink = new Color(0.25f, 0.20f, 0.16f, 1f);
         private static readonly Color PanelPaper = new Color(0.94f, 0.91f, 0.85f, 0.99f);
-        private static readonly Color RowA = new Color(0.90f, 0.86f, 0.79f, 1f);
-        private static readonly Color RowB = new Color(0.86f, 0.82f, 0.75f, 1f);
+        private static readonly Color RowA = new Color(0.95f, 0.92f, 0.86f, 1f);
+        private static readonly Color RowB = new Color(0.89f, 0.85f, 0.78f, 1f);
         private static readonly Color Chip = new Color(0.82f, 0.77f, 0.69f, 1f);
         private static readonly Color Highlight = new Color(0.99f, 0.85f, 0.45f, 1f);
         private static readonly Color Dim = new Color(0.45f, 0.40f, 0.35f, 1f);
 
+        // ---- 描边与层次（手绘账本的思路：纸面 + 墨线框 + 细线分隔 + 抬起有影） ----
+        private static readonly Color BorderInk = new Color(0.25f, 0.20f, 0.16f, 0.78f);
+        private static readonly Color Hair = new Color(0.25f, 0.20f, 0.16f, 0.22f);
+        private static readonly Color InnerLight = new Color(1f, 1f, 1f, 0.35f);
+        private static readonly Color ShadowInk = new Color(0f, 0f, 0f, 0.28f);
+        private static readonly Color ButtonShadow = new Color(0f, 0f, 0f, 0.20f);
+        private static readonly Color Face = new Color(0.88f, 0.83f, 0.75f, 1f);     // 次按钮面
+        private static readonly Color FaceHot = new Color(0.82f, 0.76f, 0.67f, 1f);  // 悬停/按下
+        private static readonly Color Accent = new Color(0.94f, 0.79f, 0.45f, 1f);   // 主按钮面
+        private static readonly Color FooterBg = new Color(0.90f, 0.86f, 0.78f, 1f);
+
         private const float PanelW = 1600f;
         private const float PanelH = 900f;
         private const int RowsPerPage = 8;
+
+        // ---- 列表版式（表头与数据共用同一张列位移表，避免错位） ----
+        private const float RowX = 40f;              // 行左边缘
+        private const float RowW = PanelW - 80f;     // 行宽
+        private const float RowH = 72f;              // 行高
+        private const float RowPitch = 78f;          // 行距（行之间留 6px 走分割线）
+        private const float RowsTop = -146f;         // 第一行顶边（8 行 → 末行底边 -764，页脚上沿 -782）
+        private const float ColHeadY = -102f;        // 表头文字顶边
+        private const float ColRuleY = -140f;        // 表头下横线
+        private const float FooterH = 118f;          // 页脚带高度
+        private static readonly float[] ColumnX = { 6f, 290f, 660f, 900f, 1130f, 1310f };
 
         // ---------------- 状态 ----------------
 
@@ -50,6 +72,7 @@ namespace RunHistory
         private static GameObject _entryGo;
         private static GameObject _panelGo;
         private static TextMeshProUGUI _panelTitle;
+        private static readonly List<GameObject> _titleDecor = new List<GameObject>();
         private static GameObject _listPage;
         private static GameObject _detailPage;
 
@@ -63,6 +86,7 @@ namespace RunHistory
         private static readonly List<TextMeshProUGUI> _rowClass = new List<TextMeshProUGUI>();
         private static readonly List<TextMeshProUGUI> _rowResult = new List<TextMeshProUGUI>();
         private static readonly List<Image> _rowResultBg = new List<Image>();
+        private static readonly List<Image> _rowAccent = new List<Image>();
         private static readonly List<TextMeshProUGUI> _rowTime = new List<TextMeshProUGUI>();
         private static readonly List<TextMeshProUGUI> _rowNodes = new List<TextMeshProUGUI>();
         private static readonly List<TextMeshProUGUI> _rowCoins = new List<TextMeshProUGUI>();
@@ -251,12 +275,19 @@ namespace RunHistory
             rt.anchoredPosition = new Vector2(-30f, -220f);
             rt.sizeDelta = new Vector2(240f, 96f);
 
-            var img = _entryGo.AddComponent<Image>();
-            img.color = Paper;
-            img.raycastTarget = true;
+            // 桌面上的入口牌：和面板里的按钮同一套语言（墨边 + 投影），
+            // 否则它在书桌木纹上会是一块没有轮廓的浅色方块。
+            NewImageAt(_entryGo.transform, ButtonShadow, new Vector2(0f, 0f), new Vector2(1f, 1f),
+                new Vector2(0.5f, 0.5f), new Vector2(2f, -6f), Vector2.zero, "Shadow");
+            var border = NewImage(_entryGo.transform, BorderInk, Vector2.zero, Vector2.one,
+                Vector2.zero, Vector2.zero, "Border");
+            border.raycastTarget = true;
+            var face = NewImage(_entryGo.transform, Paper, Vector2.zero, Vector2.one,
+                Vector2.zero, new Vector2(-6f, -6f), "Face");
 
             var btn = _entryGo.AddComponent<Button>();
-            btn.targetGraphic = img;
+            btn.targetGraphic = face;
+            btn.colors = TintColors();
             btn.onClick.AddListener(TogglePanel);
 
             NewText(_entryGo.transform, "战 绩", 34f, Ink,
@@ -422,16 +453,32 @@ namespace RunHistory
             rt.anchoredPosition = Vector2.zero;
             rt.sizeDelta = new Vector2(PanelW, PanelH);
 
+            // 投影：让面板从桌面背景上浮起来（比纸面大一圈、往下偏）
+            NewImage(_panelGo.transform, ShadowInk, Vector2.zero, Vector2.one,
+                new Vector2(0f, -12f), new Vector2(26f, 26f), "Shadow");
+
             NewImage(_panelGo.transform, PanelPaper, new Vector2(0f, 0f), new Vector2(1f, 1f),
                 Vector2.zero, Vector2.zero, "Bg");
 
-            // 标题（详情页打开时隐藏：详情页自己有一行大标题，两者会叠在一起）
-            _panelTitle = NewText(_panelGo.transform, "战 绩", 52f, Ink,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(400f, 60f));
+            // 双描边：外 4px 墨线 + 内 1px 亮线（纸页的压边）
+            AddFrame(_panelGo.transform, BorderInk, 4f, 0f);
+            AddFrame(_panelGo.transform, InnerLight, 1f, 7f);
+
+            // 标题带（标题 + 双线，把表头和标题分开）
+            // ★ 注意 TMP 文本框是顶部锚点：anchoredPosition 定的是**上沿**，
+            //   所以标题占 -26~-82，分隔线必须排在 -90 之后，否则会从字里穿过去。
+            _panelTitle = NewText(_panelGo.transform, "战 绩", 46f, Ink,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(600f, 56f));
+            // 标题下的双线也跟着标题一起显示/隐藏 —— 详情页有自己的大标题，线会横穿字
+            _titleDecor.Clear();
+            _titleDecor.Add(NewImage(_panelGo.transform, BorderInk, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, -90f), new Vector2(-80f, 3f), "TitleRuleA").gameObject);
+            _titleDecor.Add(NewImage(_panelGo.transform, Hair, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, -97f), new Vector2(-80f, 1f), "TitleRuleB").gameObject);
 
             // 关闭（用汉字而不是 ✕ —— 游戏的 TMP 字体没有 ✕ 的字形，会显示成方框）
-            var close = NewButton(_panelGo.transform, "关闭", new Color(0.80f, 0.74f, 0.66f, 1f), Ink, 26f,
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-36f, -30f), new Vector2(104f, 56f));
+            var close = NewButton(_panelGo.transform, "关闭", Face, Ink, 26f,
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-40f, -26f), new Vector2(112f, 54f));
             close.onClick.AddListener(ClosePanel);
 
             BuildListPage();
@@ -448,19 +495,21 @@ namespace RunHistory
             _listPage.transform.SetParent(_panelGo.transform, false);
             Stretch(_listPage.GetComponent<RectTransform>());
 
-            // 表头
+            // 表头（列位移与行内同一张表，表头/数据不会再差 20px）
             string[] heads = { "日期", "职业", "结果", "时长", "节点", "收益" };
-            float[] xs = { 46f, 330f, 700f, 940f, 1110f, 1290f };
             for (int i = 0; i < heads.Length; i++)
             {
                 var t = NewText(_listPage.transform, heads[i], 26f, Dim,
-                    new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(xs[i], -112f), new Vector2(220f, 34f));
+                    new Vector2(0f, 1f), new Vector2(0f, 1f),
+                    new Vector2(RowX + ColumnX[i], ColHeadY), new Vector2(240f, 34f));
                 t.alignment = TextAlignmentOptions.Left;
             }
+            NewImage(_listPage.transform, BorderInk, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, ColRuleY), new Vector2(-2f * RowX, 2f), "ColumnRule");
 
             for (int i = 0; i < RowsPerPage; i++)
             {
-                float y = -158f - i * 88f;
+                float y = RowsTop - i * RowPitch;
 
                 var row = new GameObject("Row" + i, typeof(RectTransform));
                 row.transform.SetParent(_listPage.transform, false);
@@ -468,8 +517,8 @@ namespace RunHistory
                 rrt.anchorMin = new Vector2(0f, 1f);
                 rrt.anchorMax = new Vector2(0f, 1f);
                 rrt.pivot = new Vector2(0f, 1f);
-                rrt.anchoredPosition = new Vector2(40f, y);
-                rrt.sizeDelta = new Vector2(PanelW - 80f, 76f);
+                rrt.anchoredPosition = new Vector2(RowX, y);
+                rrt.sizeDelta = new Vector2(RowW, RowH);
 
                 var bg = row.AddComponent<Image>();
                 bg.color = (i % 2 == 0) ? RowA : RowB;
@@ -477,20 +526,34 @@ namespace RunHistory
 
                 var btn = row.AddComponent<Button>();
                 btn.targetGraphic = bg;
+                btn.colors = TintColors();
                 int captured = i;
                 btn.onClick.AddListener(delegate { OpenDetailRow(captured); });
 
-                _rowDate.Add(Col(row.transform, 6f, 26f));
-                _rowClass.Add(Col(row.transform, 290f, 26f));
-                var chipBg = NewImage(row.transform, Chip,
-                    new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(660f, 0f), new Vector2(108f, 46f), "ResultChip");
-                _rowResultBg.Add(chipBg);
-                _rowResult.Add(NewText(chipBg.transform, "", 24f, Color.white,
-                    new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero));
-                _rowTime.Add(Col(row.transform, 900f, 26f));
-                _rowNodes.Add(Col(row.transform, 1090f, 26f));
-                _rowCoins.Add(Col(row.transform, 1270f, 26f));
+                // 左侧结果色条（一眼扫出胜/负/中断）+ 行底细线（账本的横格）
+                var accent = NewImageAt(row.transform, Color.clear, new Vector2(0f, 0f), new Vector2(0f, 1f),
+                    new Vector2(0f, 0.5f), Vector2.zero, new Vector2(7f, 0f), "Accent");
+                NewImageAt(row.transform, Hair, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                    new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0f, 2f), "RowRule");
 
+                _rowDate.Add(Col(row.transform, ColumnX[0], 26f));
+                _rowClass.Add(Col(row.transform, ColumnX[1], 26f));
+
+                // 结果标签：深墨边 + 结果色芯，像盖上去的印章
+                var chipBorder = NewImageAt(row.transform, new Color(0.25f, 0.20f, 0.16f, 0.55f),
+                    new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                    new Vector2(ColumnX[2], 0f), new Vector2(120f, 46f), "ResultChip");
+                var chipFill = NewImage(chipBorder.transform, Chip, Vector2.zero, Vector2.one,
+                    Vector2.zero, new Vector2(-4f, -4f), "Fill");
+                _rowResultBg.Add(chipFill);
+                _rowResult.Add(NewText(chipBorder.transform, "", 24f, Color.white,
+                    new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero));
+
+                _rowTime.Add(Col(row.transform, ColumnX[3], 26f));
+                _rowNodes.Add(Col(row.transform, ColumnX[4], 26f));
+                _rowCoins.Add(Col(row.transform, ColumnX[5], 26f));
+
+                _rowAccent.Add(accent);
                 _rowGos.Add(row);
                 row.SetActive(false);
             }
@@ -498,25 +561,32 @@ namespace RunHistory
             _emptyText = NewText(_listPage.transform, "还没有战绩 —— 打完一局就会出现在这里", 32f, Dim,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -420f), new Vector2(1200f, 60f));
 
-            // 翻页
-            var prev = NewButton(_listPage.transform, "< 上一页", RowA, Ink, 28f,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-260f, 40f), new Vector2(200f, 60f));
+            // 页脚带：与列表用一条墨线隔开，行永远压不到按钮。
+            // 注意要留出纸边（inset 10）—— 整宽拉伸会把面板底边那条 4px 墨线盖掉。
+            NewImageAt(_listPage.transform, FooterBg, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(-20f, FooterH - 10f), "FooterBand");
+            NewImageAt(_listPage.transform, BorderInk, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(0f, FooterH), new Vector2(-20f, 2f), "FooterRule");
+
+            // 翻页（靠右，给左边的种子区让位）
+            var prev = NewButton(_listPage.transform, "< 上一页", Face, Ink, 26f,
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-444f, 34f), new Vector2(168f, 52f));
             prev.onClick.AddListener(delegate { ChangePage(-1); });
 
-            _pageText = NewText(_listPage.transform, "", 28f, Ink,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(300f, 60f));
+            _pageText = NewText(_listPage.transform, "", 26f, Ink,
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-232f, 44f), new Vector2(190f, 34f));
 
-            var next = NewButton(_listPage.transform, "下一页 >", RowA, Ink, 28f,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(260f, 40f), new Vector2(200f, 60f));
+            var next = NewButton(_listPage.transform, "下一页 >", Face, Ink, 26f,
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-40f, 34f), new Vector2(168f, 52f));
             next.onClick.AddListener(delegate { ChangePage(1); });
 
-            // 种子：状态行 + 打开输入键盘
-            _seedStatusText = NewText(_listPage.transform, "", 22f, Dim,
-                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(44f, 52f), new Vector2(700f, 40f), false);
-
-            var seedBtn = NewButton(_listPage.transform, "种子…", RowA, Ink, 26f,
-                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(44f, 96f), new Vector2(150f, 52f));
+            // 种子：按钮在页脚最左，状态行贴在它右边（同一行，互不压行）
+            var seedBtn = NewButton(_listPage.transform, "种子…", Accent, Ink, 26f,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(40f, 33f), new Vector2(152f, 52f));
             seedBtn.onClick.AddListener(OpenSeedPad);
+
+            _seedStatusText = NewText(_listPage.transform, "", 22f, Dim,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(212f, 42f), new Vector2(680f, 34f), false);
 
             BuildSeedPad();
             RefreshSeedStatus();
@@ -546,11 +616,18 @@ namespace RunHistory
             rt.anchoredPosition = Vector2.zero;
             rt.sizeDelta = new Vector2(520f, 700f);
 
+            // 键盘是一张浮在面板上的小卡：投影 + 双描边，和面板同一套语言
+            NewImage(_seedPadGo.transform, ShadowInk, Vector2.zero, Vector2.one,
+                new Vector2(0f, -10f), new Vector2(22f, 22f), "Shadow");
             NewImage(_seedPadGo.transform, PanelPaper, new Vector2(0f, 0f), new Vector2(1f, 1f),
                 Vector2.zero, Vector2.zero, "Bg");
+            AddFrame(_seedPadGo.transform, BorderInk, 3f, 0f);
+            AddFrame(_seedPadGo.transform, InnerLight, 1f, 6f);
 
             NewText(_seedPadGo.transform, "输入种子", 36f, Ink,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -44f), new Vector2(360f, 48f));
+            NewImage(_seedPadGo.transform, BorderInk, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, -80f), new Vector2(-40f, 2f), "TitleRule");
 
             _seedValueText = NewText(_seedPadGo.transform, "—", 44f, Ink,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(420f, 60f));
@@ -564,17 +641,17 @@ namespace RunHistory
             {
                 int col = i % 3, row = i / 3;
                 string key = keys[i];
-                var btn = NewButton(_seedPadGo.transform, key, RowA, Ink, 30f,
+                var btn = NewButton(_seedPadGo.transform, key, Face, Ink, 30f,
                     new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(-170f + col * 170f, -230f - row * 96f), new Vector2(150f, 82f));
                 btn.onClick.AddListener(delegate { SeedKey(key); });
             }
 
-            var apply = NewButton(_seedPadGo.transform, "用这个种子", Chip, Ink, 28f,
+            var apply = NewButton(_seedPadGo.transform, "用这个种子", Accent, Ink, 28f,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-120f, 100f), new Vector2(210f, 62f));
             apply.onClick.AddListener(ApplySeedPad);
 
-            var close = NewButton(_seedPadGo.transform, "关闭", RowA, Ink, 28f,
+            var close = NewButton(_seedPadGo.transform, "关闭", Face, Ink, 28f,
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(120f, 100f), new Vector2(150f, 62f));
             close.onClick.AddListener(CloseSeedPad);
 
@@ -654,8 +731,18 @@ namespace RunHistory
         {
             if (_detailPage != null) { _detailPage.SetActive(false); }
             if (_listPage != null) { _listPage.SetActive(true); }
-            if (_panelTitle != null) { _panelTitle.gameObject.SetActive(true); }
+            SetTitleVisible(true);
             RefreshList();
+        }
+
+        /// <summary>标题带（文字 + 下方双线）一起显隐：详情页用自己的大标题，线会横穿它。</summary>
+        private static void SetTitleVisible(bool visible)
+        {
+            if (_panelTitle != null) { _panelTitle.gameObject.SetActive(visible); }
+            for (int i = 0; i < _titleDecor.Count; i++)
+            {
+                if (_titleDecor[i] != null) { _titleDecor[i].SetActive(visible); }
+            }
         }
 
         private static void RefreshList()
@@ -676,7 +763,9 @@ namespace RunHistory
                     _rowDate[i].text = ShortDate(e.startedAt);
                     _rowClass[i].text = ClassLabel(e.className);
                     _rowResult[i].text = Results.Label(e.result);
-                    _rowResultBg[i].color = ResultColor(e.result);
+                    Color resultColor = ResultColor(e.result);
+                    _rowResultBg[i].color = resultColor;
+                    _rowAccent[i].color = new Color(resultColor.r, resultColor.g, resultColor.b, 0.92f);
                     _rowTime[i].text = Duration(e.durationSeconds);
                     _rowNodes[i].text = e.nodes > 0 ? e.nodes + " 节点" : "—";
                     _rowCoins[i].text = e.upgradeCoins > 0 ? e.upgradeCoins.ToString() : "—";
@@ -771,6 +860,55 @@ namespace RunHistory
             return img;
         }
 
+        /// <summary>
+        /// 同 <see cref="NewImage"/>，但额外指定 pivot。
+        /// 贴边的东西（左边色条、行底细线、页脚带）必须把 pivot 也对上，
+        /// 否则 6px 的色条会有一半跑出行外。
+        /// </summary>
+        private static Image NewImageAt(Transform parent, Color color, Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pivot, Vector2 pos, Vector2 size, string name)
+        {
+            var img = NewImage(parent, color, anchorMin, anchorMax, pos, size, name);
+            img.rectTransform.pivot = pivot;
+            img.rectTransform.anchoredPosition = pos;
+            return img;
+        }
+
+        /// <summary>
+        /// 四条边拼出来的矩形描边（不用九宫格精灵 —— 这个项目里没有可直接取的圆角纸框）。
+        /// 横条拉满宽度，竖条让开上下两条的厚度，四条合起来正好闭合。
+        /// </summary>
+        private static void AddFrame(Transform parent, Color color, float thickness, float inset)
+        {
+            float verticalInset = inset + thickness;
+            NewImageAt(parent, color, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -inset), new Vector2(-2f * inset, thickness), "FrameTop");
+            NewImageAt(parent, color, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, inset), new Vector2(-2f * inset, thickness), "FrameBottom");
+            NewImageAt(parent, color, new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f),
+                new Vector2(inset, 0f), new Vector2(thickness, -2f * verticalInset), "FrameLeft");
+            NewImageAt(parent, color, new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
+                new Vector2(-inset, 0f), new Vector2(thickness, -2f * verticalInset), "FrameRight");
+        }
+
+        /// <summary>按钮的悬停/按下变色：只压暗不漂白，保持纸质手感。</summary>
+        private static ColorBlock TintColors()
+        {
+            var colors = ColorBlock.defaultColorBlock;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.97f, 0.96f, 0.93f, 1f);
+            colors.pressedColor = new Color(0.84f, 0.80f, 0.74f, 1f);
+            colors.selectedColor = Color.white;
+            colors.disabledColor = new Color(1f, 1f, 1f, 0.35f);
+            colors.fadeDuration = 0.08f;
+            return colors;
+        }
+
+        /// <summary>
+        /// 按钮 = 投影 + 墨线描边 + 面色 + 文字。
+        /// 之前是"一块纯色矩形"，跟纸面同色系、又没有边，所以在面板上看不出是按钮。
+        /// 描边负责"看得见"，投影负责"抬起来"；面色交给 <see cref="TintColors"/> 做反馈。
+        /// </summary>
         private static Button NewButton(Transform parent, string label, Color bgColor, Color textColor, float size,
             Vector2 anchorMin, Vector2 anchorMax, Vector2 pos, Vector2 sizeDelta)
         {
@@ -783,12 +921,25 @@ namespace RunHistory
             rt.anchoredPosition = pos;
             rt.sizeDelta = sizeDelta;
 
-            var img = go.AddComponent<Image>();
-            img.color = bgColor;
-            img.raycastTarget = true;
-
             var btn = go.AddComponent<Button>();
-            btn.targetGraphic = img;
+
+            // 投影（最底层）：往下偏 4px、往右偏 1px
+            var shadow = NewImage(go.transform, ButtonShadow, Vector2.zero, Vector2.one,
+                new Vector2(1f, -4f), Vector2.zero, "Shadow");
+            shadow.raycastTarget = false;
+
+            // 描边（收点击射线：整个按钮范围都能点）
+            var border = NewImage(go.transform, BorderInk, Vector2.zero, Vector2.one,
+                Vector2.zero, Vector2.zero, "Border");
+            border.raycastTarget = true;
+
+            // 面色（2px 内缩，露出墨边；变色反馈挂在这块上）
+            var face = NewImage(go.transform, bgColor, Vector2.zero, Vector2.one,
+                Vector2.zero, new Vector2(-4f, -4f), "Face");
+            face.raycastTarget = false;
+
+            btn.targetGraphic = face;
+            btn.colors = TintColors();
 
             NewText(go.transform, label, size, textColor,
                 new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);

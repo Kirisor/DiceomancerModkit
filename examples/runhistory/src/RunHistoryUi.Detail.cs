@@ -52,12 +52,12 @@ namespace RunHistory
             _detailPage.transform.SetParent(_panelGo.transform, false);
             Stretch(_detailPage.GetComponent<RectTransform>());
 
-            var back = NewButton(_detailPage.transform, "← 返回列表", RowA, Ink, 26f,
+            var back = NewButton(_detailPage.transform, "← 返回列表", Face, Ink, 26f,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(44f, -32f), new Vector2(180f, 54f));
             back.onClick.AddListener(ShowList);
 
             // 用这局的种子重开（写进"待用种子"，回桌面按开始游戏时生效）
-            var reuse = NewButton(_detailPage.transform, "用这局种子重开", Chip, Ink, 26f,
+            var reuse = NewButton(_detailPage.transform, "用这局种子重开", Accent, Ink, 26f,
                 new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-44f, -32f), new Vector2(250f, 54f));
             reuse.onClick.AddListener(ReuseSeedFromDetail);
 
@@ -87,15 +87,18 @@ namespace RunHistory
             for (int i = 0; i < perRow * 2; i++)
             {
                 int col = i % perRow, row = i / perRow;
-                var bg = NewImage(routeRoot.transform, Chip,
+                // 路线格：深墨边 + 节点色芯（与结果标签同一套，否则整页都是"没有边"的色块）
+                var border = NewImage(routeRoot.transform, new Color(0.25f, 0.20f, 0.16f, 0.50f),
                     new Vector2(0f, 1f), new Vector2(0f, 1f),
-                    new Vector2(col * 88f, -row * 56f), new Vector2(82f, 48f), "Chip" + i);
+                    new Vector2(col * 88f, -row * 56f), new Vector2(82f, 48f), "ChipBorder" + i);
+                var bg = NewImage(border.transform, Chip, Vector2.zero, Vector2.one,
+                    Vector2.zero, new Vector2(-4f, -4f), "Chip" + i);
                 var text = NewText(bg.transform, "", 20f, Ink,
                     new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
                 _chipBg.Add(bg);
                 _chipText.Add(text);
                 _chipNode.Add(-1);
-                bg.gameObject.SetActive(false);
+                border.gameObject.SetActive(false);
             }
 
             // 页签
@@ -105,7 +108,7 @@ namespace RunHistory
             for (int i = 0; i < 3; i++)
             {
                 int captured = i;
-                var btn = NewButton(_detailPage.transform, names[i], RowA, Ink, 28f,
+                var btn = NewButton(_detailPage.transform, names[i], Face, Ink, 28f,
                     new Vector2(0f, 1f), new Vector2(0f, 1f),
                     new Vector2(50f + i * 170f, -272f), new Vector2(160f, 56f));
                 btn.onClick.AddListener(delegate { SwitchTab(captured); });
@@ -124,15 +127,15 @@ namespace RunHistory
             crt.sizeDelta = new Vector2(1500f, 470f);
 
             // 翻页（只有卡组/遗物需要）
-            _detailPrev = NewButton(_detailPage.transform, "‹ 上一页", RowA, Ink, 26f,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-240f, 40f), new Vector2(190f, 54f));
+            _detailPrev = NewButton(_detailPage.transform, "‹ 上一页", Face, Ink, 26f,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-240f, 26f), new Vector2(190f, 54f));
             _detailPrev.onClick.AddListener(delegate { ChangeDetailPage(-1); });
 
             _detailPageText = NewText(_detailPage.transform, "", 26f, Ink,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 40f), new Vector2(300f, 54f));
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(240f, 52f));
 
-            _detailNext = NewButton(_detailPage.transform, "下一页 ›", RowA, Ink, 26f,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(240f, 40f), new Vector2(190f, 54f));
+            _detailNext = NewButton(_detailPage.transform, "下一页 ›", Face, Ink, 26f,
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(240f, 26f), new Vector2(190f, 54f));
             _detailNext.onClick.AddListener(delegate { ChangeDetailPage(1); });
 
             _detailPage.SetActive(false);
@@ -153,7 +156,7 @@ namespace RunHistory
                 if (_detailToast != null) { _detailToast.text = ""; }
 
                 if (_listPage != null) { _listPage.SetActive(false); }
-                if (_panelTitle != null) { _panelTitle.gameObject.SetActive(false); }   // 详情页有自己的大标题，别叠
+                SetTitleVisible(false);   // 详情页有自己的大标题，别叠；标题下那两条线也一起收掉
                 if (_detailPage != null) { _detailPage.SetActive(true); }
             }
             catch (Exception ex)
@@ -217,7 +220,7 @@ namespace RunHistory
 
             for (int i = 0; i < _chipBg.Count; i++)
             {
-                _chipBg[i].gameObject.SetActive(false);
+                _chipBg[i].transform.parent.gameObject.SetActive(false);
                 _chipNode[i] = -1;
             }
 
@@ -250,7 +253,7 @@ namespace RunHistory
                 if (node == null) { continue; }
 
                 string type = node.nodeType ?? "";
-                _chipBg[i].gameObject.SetActive(true);
+                _chipBg[i].transform.parent.gameObject.SetActive(true);
                 _chipBg[i].color = node.corrupted ? new Color(0.62f, 0.30f, 0.42f, 1f) : NodeColor(type);
                 _chipText[i].text = NodeShort(type);
                 _chipText[i].color = Color.white;
@@ -388,7 +391,7 @@ namespace RunHistory
                 {
                     bool active = i == _detailTab;
                     var img = _tabButtons[i].targetGraphic as Image;
-                    if (img != null) { img.color = active ? Chip : RowA; }
+                    if (img != null) { img.color = active ? Accent : Face; }
                     if (_tabTexts[i] != null) { _tabTexts[i].color = Ink; }
                 }
 
