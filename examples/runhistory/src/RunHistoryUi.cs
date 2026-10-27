@@ -614,7 +614,7 @@ namespace RunHistory
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = Vector2.zero;
-            rt.sizeDelta = new Vector2(520f, 700f);
+            rt.sizeDelta = new Vector2(520f, 660f);
 
             // 键盘是一张浮在面板上的小卡：投影 + 双描边，和面板同一套语言
             NewImage(_seedPadGo.transform, ShadowInk, Vector2.zero, Vector2.one,
@@ -624,16 +624,27 @@ namespace RunHistory
             AddFrame(_seedPadGo.transform, BorderInk, 3f, 0f);
             AddFrame(_seedPadGo.transform, InnerLight, 1f, 6f);
 
-            NewText(_seedPadGo.transform, "输入种子", 36f, Ink,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -44f), new Vector2(360f, 48f));
+            // ★ 这张卡里的每个元素都按「距顶多少」排，并且各占一段互不重叠的带：
+            //   标题 26~70 · 分隔线 78 · 数值框 96~158 · 提示 164~190
+            //   数字键 204~528（4 行 × 72，行距 84）· 底部按钮 548~608
+            //   之前把按钮锚在「距底 100」、数字键按「距顶 230 起」排，两套坐标系撞在一起，
+            //   最后一行 0/退格/清空 就被「用这个种子 / 关闭」压住了。
+            NewText(_seedPadGo.transform, "输入种子", 40f, Ink,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(360f, 44f));
             NewImage(_seedPadGo.transform, BorderInk, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, -80f), new Vector2(-40f, 2f), "TitleRule");
+                new Vector2(0f, -78f), new Vector2(-40f, 2f), "TitleRule");
 
-            _seedValueText = NewText(_seedPadGo.transform, "—", 44f, Ink,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(420f, 60f));
+            // 数值框：做成一个"输入框"的样子（墨边 + 浅面），输入时这一格在变
+            var valueBox = NewImageAt(_seedPadGo.transform, BorderInk,
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -96f), new Vector2(360f, 62f), "ValueBox");
+            NewImage(valueBox.transform, Face, Vector2.zero, Vector2.one,
+                Vector2.zero, new Vector2(-4f, -4f), "Fill");
+            _seedValueText = NewText(valueBox.transform, "—", 40f, Ink,
+                new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
 
             _seedHintText = NewText(_seedPadGo.transform, "只能用数字；区间 1 ~ 2,147,483,647", 20f, Dim,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -166f), new Vector2(460f, 34f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -164f), new Vector2(460f, 26f));
 
             // 3 列 × 4 行：1-9 / 0 / 退格 / 清空
             string[] keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "退格", "清空" };
@@ -643,16 +654,16 @@ namespace RunHistory
                 string key = keys[i];
                 var btn = NewButton(_seedPadGo.transform, key, Face, Ink, 30f,
                     new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(-170f + col * 170f, -230f - row * 96f), new Vector2(150f, 82f));
+                    new Vector2(-170f + col * 170f, -204f - row * 84f), new Vector2(150f, 72f));
                 btn.onClick.AddListener(delegate { SeedKey(key); });
             }
 
             var apply = NewButton(_seedPadGo.transform, "用这个种子", Accent, Ink, 28f,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-120f, 100f), new Vector2(210f, 62f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-85f, -548f), new Vector2(210f, 60f));
             apply.onClick.AddListener(ApplySeedPad);
 
             var close = NewButton(_seedPadGo.transform, "关闭", Face, Ink, 28f,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(120f, 100f), new Vector2(150f, 62f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(115f, -548f), new Vector2(150f, 60f));
             close.onClick.AddListener(CloseSeedPad);
 
             _seedPadGo.SetActive(false);
