@@ -77,11 +77,15 @@ namespace RunHistory
 
         /// <summary>继续游戏。由 <c>CampaignManager.DeserializeCampaignInfo</c> 之后调用。</summary>
         /// <remarks>
-        /// ★ 两道闸，都是为了不产出"垃圾局"（2026-10-26 首次实机验证后补）：
+        /// ★ 三道闸，都是为了不产出"垃圾局"：
         ///   ① 只认 <c>CampaignMode.Gaming</c> —— 已经打完的战役（Defeated/Victory）在主菜单
         ///      点"继续"时也会走一次反序列化，那时不该新建一局；
-        ///   ② seed 为 0 直接跳过 —— 没有战役时 <c>GetCampaignSeed()</c> 返回 0，
-        ///      实测会凭空生成一条 "seed 0 / 空牌组" 的假记录。
+        ///   ② seed 为 0 直接跳过 —— 没有战役时 <c>GetCampaignSeed()</c> 返回 0；
+        ///   ③ **同 seed 的局已经结算过 → 直接放弃，不再新建记录**（2026-10-27 补）。
+        ///      之前这里把"结算过的记录"当成"上一局"，于是从存档里又认领出一条新局：
+        ///      磁盘上的存档仍是 <c>Gaming</c>（开局写档时就是这个状态，放弃/重开没有覆盖它），
+        ///      于是每次"打完一局再回桌面点开始/继续"就会多出一条
+        ///      「（未知职业）· 1 节点 · 中断」的幽灵记录 —— 职业为空、起始牌组为空、时长 0 是它的指纹。
         /// </remarks>
         internal static void OnContinue(Combat.CampaignInformation campaignInfo = null)
         {
@@ -102,9 +106,18 @@ namespace RunHistory
                 var record = RunHistoryStore.FindBySeed(seed);
                 bool recovered = false;
 
-                if (record == null || Results.IsFinal(record.result))
+                if (record != null && Results.IsFinal(record.result))
                 {
-                    // 没记过（旧版本/记录被删）→ 从存档里认领一局；同 seed 但已结算 → 视为新的一局
+                    // 这颗种子的局已经收尾了：这份存档只是"开局时写下的那份"，不是新的一局
+                    _current = null;
+                    RunHistoryPlugin.Log.LogInfo("战绩：忽略一份已结束战役的存档（seed " + seed +
+                        "｜" + Results.Label(record.result) + "｜" + record.runId + "）。");
+                    return;
+                }
+
+                if (record == null)
+                {
+                    // 真的没记过（旧版本 / 记录被删）→ 从存档里认领一局
                     record = new RunRecord
                     {
                         runId = NewRunId(seed),
@@ -133,6 +146,35 @@ namespace RunHistory
             catch (Exception ex) { Fail("继续游戏采集", ex); }
         }
 
+        /// <summary>
+        /// 只在内存里"接管"这颗种子上**还没结算**的那一局；绝不新建记录。
+        ///
+        /// 为什么需要它：`OnNode` / `OnRunEnd` 发现 <c>_current</c> 为空（例如刚结算完、或本进程没经历过开局）
+        /// 时，以前是直接调 <see cref="OnContinue"/> —— 而那条路会"从存档认领新局"，
+        /// 于是一局打完之后地图上再触发一次节点，就会凭空长出一条幽灵局。
+        /// 现在只做接管：没有进行中的记录就什么都不做。
+        /// </summary>
+        private static bool AttachExisting(string reason)
+        {
+            try
+            {
+                var campaign = CampaignManager.Instance;
+                if (campaign == null) { return false; }
+
+                int seed = campaign.GetCampaignSeed();
+                if (seed == 0) { return false; }
+
+                var record = RunHistoryStore.FindBySeed(seed);
+                if (record == null || Results.IsFinal(record.result)) { return false; }
+
+                _abandoned = false;
+                _current = record;
+                RunHistoryPlugin.Log.LogDebug("战绩：接管进行中的局（" + reason + "｜" + record.runId + "）。");
+                return true;
+            }
+            catch (Exception ex) { Fail("接管进行中的局", ex); return false; }
+        }
+
         /// <summary>进入一个地图节点。由 <c>WorldManager.MapEngage(MapNode)</c> 之后调用。</summary>
         internal static void OnNode(MapNode mapNode)
         {
@@ -141,9 +183,16 @@ namespace RunHistory
                 if (mapNode == null) { return; }
                 if (RunHistoryPlugin.CfgSnapshotNodes != null && !RunHistoryPlugin.CfgSnapshotNodes.Value) { return; }
 
-                if (_current == null) { OnContinue(); }
+                if (_current == null && !AttachExisting("节点")) { return; }
                 if (_current == null) { return; }
                 if (Results.IsFinal(_current.result)) { return; }
+
+                // 开局那一刻职业还没定下来时 className 会是空 —— 到了第一个节点一定已经选完，补一次
+                if (string.IsNullOrEmpty(_current.className))
+                {
+                    string resolved = TryClassName();
+                    if (!string.IsNullOrEmpty(resolved)) { _current.className = resolved; }
+                }
 
                 var node = new RunNode
                 {
@@ -184,7 +233,7 @@ namespace RunHistory
                 if (campaign == null) { return; }
 
                 var statsInfo = campaign.GetCampaignStatusInfo();
-                if (_current == null) { OnContinue(); }
+                if (_current == null && !AttachExisting("结算")) { return; }
                 if (_current == null) { return; }
 
                 var record = _current;

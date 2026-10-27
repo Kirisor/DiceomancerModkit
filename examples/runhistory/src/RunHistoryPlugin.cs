@@ -25,7 +25,7 @@ namespace RunHistory
     {
         public const string PluginGuid = "diceomancer.runhistory";
         public const string PluginName = "Diceomancer 战绩（运行历史）";
-        public const string PluginVersion = "0.3.1";
+        public const string PluginVersion = "0.3.2";
 
         internal static ConfigEntry<bool> CfgEnabled;
 
