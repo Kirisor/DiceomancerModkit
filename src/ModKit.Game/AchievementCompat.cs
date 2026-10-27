@@ -91,17 +91,43 @@ namespace ModKit.Game
             int already = 0;
             try { already = manager.careerStatisticsPackage.achievementInfo.GetStoryMarkerProgress(key); }
             catch { }
-            if (already >= 1) { return; }
 
-            manager.achievementManager.GainAchievement(key);   // 写存档标记 + 解 Steam 成就
+            // 成就表里有没有这个 key —— 没有的话 GainAchievement 会**静默什么都不做**
+            // （它内部先 allAchievementInfo.Any(key) 再写），这是"日志里连一句都没有"的常见原因。
+            bool inTable = false;
+            try
+            {
+                var all = manager.achievementManager.allAchievementInfo;
+                if (all != null)
+                {
+                    for (int i = 0; i < all.Length; i++)
+                    {
+                        if (all[i].achievementKey == key) { inTable = true; break; }
+                    }
+                }
+            }
+            catch { }
 
             if (!_logged)
             {
                 _logged = true;
-                Debug.Log("[ModKit] 成就补发：" + key + "（" + why + "｜" + counted +
-                    " 个原版职业的最低进阶 = " + min + " ≥ " + need +
-                    (modded > 0 ? "；有 " + modded + " 个 mod 职业按原版口径不计入" : "") + "）。");
+                Debug.Log("[ModKit] 成就检定：" + key + "（" + why + "｜原版职业 " + counted +
+                    " 个，最低进阶 " + min + " ≥ " + need +
+                    (modded > 0 ? "；" + modded + " 个 mod 职业不计入" : "") +
+                    "｜成就表内=" + (inTable ? "有" : "**没有**") +
+                    "｜本地标记(前)=" + already + "）。");
             }
+
+            if (already >= 1) { return; }
+            if (!inTable) { return; }
+
+            manager.achievementManager.GainAchievement(key);   // 写存档标记 + 解 Steam 成就
+
+            int after = 0;
+            try { after = manager.careerStatisticsPackage.achievementInfo.GetStoryMarkerProgress(key); }
+            catch { }
+            Debug.Log("[ModKit] 成就补发：" + key + "｜本地标记(后)=" + after +
+                (after >= 1 ? "（已写入存档）" : "（**没写进去**，检查 SaveCareerStatistics 是否抛错）"));
         }
     }
 
