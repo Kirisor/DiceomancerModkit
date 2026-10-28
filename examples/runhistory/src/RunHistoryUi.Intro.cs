@@ -74,8 +74,13 @@ namespace RunHistory
             {
                 if (_panelGo != null)
                 {
-                    // 排在面板下面、入口牌子上面：环境与入口一起压暗，面板自己不受影响
-                    _scrimGo.transform.SetSiblingIndex(_panelGo.transform.GetSiblingIndex());
+                    // 压暗层必须紧贴面板**下面**、入口牌子**上面**。
+                    // ★ 不能写 SetSiblingIndex(面板下标)：压暗层占住那个下标时面板自己会被挤到 +1，
+                    //   第二次打开时面板的下标已经变了，算出来的位置反而在面板上面 ——
+                    //   于是整屏（连面板）都被压暗层糊住，症状就是"关掉再打开全黑了"。
+                    //   所以直接定序：压暗层到最后一位，再把面板放到最后一位。
+                    _scrimGo.transform.SetAsLastSibling();
+                    _panelGo.transform.SetAsLastSibling();
                 }
                 if (_scrimImg != null)
                 {

@@ -334,7 +334,10 @@ namespace RunHistory
                 BlockOtherUI(true);
                 PlaceCanvasInFrontOfCamera(Camera.main);
                 StartIntro();      // 压暗环境 + 面板落位（见 RunHistoryUi.Intro）
-                Debug.Log("[RunHistory] 面板已打开（" + RunHistoryStore.Index.entries.Count + " 局）");
+                Debug.Log("[RunHistory] 面板已打开（" + RunHistoryStore.Index.entries.Count + " 局）" +
+                    (_scrimGo == null || _panelGo == null ? "" :
+                     "｜层级：压暗=" + _scrimGo.transform.GetSiblingIndex() +
+                     " 面板=" + _panelGo.transform.GetSiblingIndex()));
             }
             catch (Exception ex)
             {
