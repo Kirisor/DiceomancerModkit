@@ -62,6 +62,7 @@ namespace RunHistory
                     startedAt = Stamp(),
                     seed = seed,
                     className = TryClassName(),
+                    ascensionLevel = TryAscensionLevel(),
                     startingDeck = DeckNames(),
                 };
                 RefreshBaseline(record);
@@ -124,6 +125,7 @@ namespace RunHistory
                         startedAt = Stamp(),
                         seed = seed,
                         className = TryClassName(),
+                        ascensionLevel = TryAscensionLevel(),
                         recoveredFromSave = true,
                         startingDeck = DeckNames(),
                     };
@@ -339,6 +341,25 @@ namespace RunHistory
         private static string Stamp()
         {
             return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        }
+
+        /// <summary>
+        /// 抄下"这局选的进阶等级"。
+        /// 游戏把它写在 StoryMarker 的 <c>LowestAscensionLevel</c> 上（桌面按开始游戏时设置），
+        /// 结算时也是从同一个标记取值的 —— 我们在开局就抄一份，这样：
+        ///   ① 进行中的局也能显示进阶；② 中途退出（中断）的局不会因为没结算而丢掉这个值。
+        /// </summary>
+        private static int TryAscensionLevel()
+        {
+            try
+            {
+                var campaign = CampaignManager.Instance;
+                if (campaign == null) { return 0; }
+                var markers = campaign.GetStoryMarkerInfoCollection();
+                if (markers == null) { return 0; }
+                return markers.GetStoryMarkerProgress("LowestAscensionLevel");
+            }
+            catch { return 0; }
         }
 
         private static string TryClassName()

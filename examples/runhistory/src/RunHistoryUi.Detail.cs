@@ -204,6 +204,11 @@ namespace RunHistory
                 parts.Add("seed " + _detail.seed);
                 parts.Add("时长 " + Duration(_detail.durationSeconds));
                 parts.Add("进阶 " + _detail.ascensionLevel);
+                int streak;
+                if (_detail.result == Results.Win && Streaks().TryGetValue(_detail.runId, out streak) && streak > 0)
+                {
+                    parts.Add(streak + " 连胜");
+                }
                 if (_detail.resumedCount > 0) { parts.Add("续玩 " + _detail.resumedCount + " 次"); }
                 if (_detail.recoveredFromSave) { parts.Add("从存档认领"); }
                 int coins = _detail.final == null ? 0 : _detail.final.upgradeCoins;

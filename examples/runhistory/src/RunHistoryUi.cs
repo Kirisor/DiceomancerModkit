@@ -63,7 +63,8 @@ namespace RunHistory
         private const float ColHeadY = -102f;        // 表头文字顶边
         private const float ColRuleY = -140f;        // 表头下横线
         private const float FooterH = 118f;          // 页脚带高度
-        private static readonly float[] ColumnX = { 6f, 290f, 660f, 900f, 1130f, 1310f };
+        // 列：日期 / 职业 / 进阶 / 连胜 / 结果 / 时长 / 节点 / 收益
+        private static readonly float[] ColumnX = { 6f, 220f, 470f, 620f, 780f, 1010f, 1190f, 1380f };
 
         // ---------------- 状态 ----------------
 
@@ -87,6 +88,9 @@ namespace RunHistory
         private static readonly List<TextMeshProUGUI> _rowResult = new List<TextMeshProUGUI>();
         private static readonly List<Image> _rowResultBg = new List<Image>();
         private static readonly List<Image> _rowAccent = new List<Image>();
+        private static readonly List<TextMeshProUGUI> _rowAsc = new List<TextMeshProUGUI>();
+        private static readonly List<Image> _rowAscFill = new List<Image>();
+        private static readonly List<TextMeshProUGUI> _rowStreak = new List<TextMeshProUGUI>();
         private static readonly List<TextMeshProUGUI> _rowTime = new List<TextMeshProUGUI>();
         private static readonly List<TextMeshProUGUI> _rowNodes = new List<TextMeshProUGUI>();
         private static readonly List<TextMeshProUGUI> _rowCoins = new List<TextMeshProUGUI>();
@@ -321,6 +325,7 @@ namespace RunHistory
                 if (_panelGo == null) { return; }
 
                 RunHistoryStore.ReloadIndex();
+                _streakCache = null;      // 索引重读后连胜要重算（可能刚打完一局）
                 _page = 0;
                 ShowList();
                 _panelGo.SetActive(true);
@@ -496,7 +501,7 @@ namespace RunHistory
             Stretch(_listPage.GetComponent<RectTransform>());
 
             // 表头（列位移与行内同一张表，表头/数据不会再差 20px）
-            string[] heads = { "日期", "职业", "结果", "时长", "节点", "收益" };
+            string[] heads = { "日期", "职业", "进阶", "连胜", "结果", "时长", "节点", "收益" };
             for (int i = 0; i < heads.Length; i++)
             {
                 var t = NewText(_listPage.transform, heads[i], 26f, Dim,
@@ -539,19 +544,32 @@ namespace RunHistory
                 _rowDate.Add(Col(row.transform, ColumnX[0], 26f));
                 _rowClass.Add(Col(row.transform, ColumnX[1], 26f));
 
+                // 进阶：小子标签（墨边 + 纸色芯），表头已写「进阶」，格子里只放数字
+                var ascBorder = NewImageAt(row.transform, new Color(0.25f, 0.20f, 0.16f, 0.50f),
+                    new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                    new Vector2(ColumnX[2], 0f), new Vector2(76f, 40f), "AscChip");
+                var ascFill = NewImage(ascBorder.transform, Chip, Vector2.zero, Vector2.one,
+                    Vector2.zero, new Vector2(-4f, -4f), "Fill");
+                _rowAscFill.Add(ascFill);
+                _rowAsc.Add(NewText(ascBorder.transform, "", 24f, Ink,
+                    new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero));
+
+                // 连胜：文字即可（数字 + 「连胜」），2 连以上用暖色
+                _rowStreak.Add(Col(row.transform, ColumnX[3], 24f));
+
                 // 结果标签：深墨边 + 结果色芯，像盖上去的印章
                 var chipBorder = NewImageAt(row.transform, new Color(0.25f, 0.20f, 0.16f, 0.55f),
                     new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                    new Vector2(ColumnX[2], 0f), new Vector2(120f, 46f), "ResultChip");
+                    new Vector2(ColumnX[4], 0f), new Vector2(120f, 46f), "ResultChip");
                 var chipFill = NewImage(chipBorder.transform, Chip, Vector2.zero, Vector2.one,
                     Vector2.zero, new Vector2(-4f, -4f), "Fill");
                 _rowResultBg.Add(chipFill);
                 _rowResult.Add(NewText(chipBorder.transform, "", 24f, Color.white,
                     new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero));
 
-                _rowTime.Add(Col(row.transform, ColumnX[3], 26f));
-                _rowNodes.Add(Col(row.transform, ColumnX[4], 26f));
-                _rowCoins.Add(Col(row.transform, ColumnX[5], 26f));
+                _rowTime.Add(Col(row.transform, ColumnX[5], 26f));
+                _rowNodes.Add(Col(row.transform, ColumnX[6], 26f));
+                _rowCoins.Add(Col(row.transform, ColumnX[7], 26f));
 
                 _rowAccent.Add(accent);
                 _rowGos.Add(row);
@@ -762,6 +780,7 @@ namespace RunHistory
             {
                 var entries = RunHistoryStore.Index.entries;
                 _page = Mathf.Clamp(_page, 0, PageCount() - 1);
+                var streaks = Streaks();
 
                 for (int i = 0; i < RowsPerPage; i++)
                 {
@@ -780,6 +799,28 @@ namespace RunHistory
                     _rowTime[i].text = Duration(e.durationSeconds);
                     _rowNodes[i].text = e.nodes > 0 ? e.nodes + " 节点" : "—";
                     _rowCoins[i].text = e.upgradeCoins > 0 ? e.upgradeCoins.ToString() : "—";
+
+                    // 进阶：0 = 没开进阶（或这局还没到结算，值未知）
+                    bool hasAsc = e.ascensionLevel > 0;
+                    _rowAsc[i].text = hasAsc ? e.ascensionLevel.ToString() : "—";
+                    _rowAsc[i].color = hasAsc ? Ink : Dim;
+                    _rowAscFill[i].color = hasAsc ? Chip : new Color(0.90f, 0.87f, 0.81f, 1f);
+
+                    // 连胜：只在「赢」的那一局显示它是第几连胜
+                    int streak = 0;
+                    streaks.TryGetValue(e.runId, out streak);
+                    if (e.result == Results.Win && streak > 0)
+                    {
+                        _rowStreak[i].text = streak + " 连胜";
+                        _rowStreak[i].color = streak >= 2
+                            ? new Color(0.55f, 0.36f, 0.10f, 1f)     // 2 连以上：暖色
+                            : new Color(0.35f, 0.31f, 0.27f, 1f);
+                    }
+                    else
+                    {
+                        _rowStreak[i].text = "—";
+                        _rowStreak[i].color = Dim;
+                    }
                 }
 
                 if (_emptyText != null) { _emptyText.gameObject.SetActive(entries.Count == 0); }
@@ -792,6 +833,37 @@ namespace RunHistory
             {
                 Debug.LogWarning("[RunHistory] 刷新列表失败 —— " + ex.GetType().Name + ": " + ex.Message);
             }
+        }
+
+        // ---------------- 连胜（派生值，不落盘） ----------------
+        //
+        // ★ 为什么不把连胜写进每局记录：它是「从旧到新数一遍」的结果，写进去就要在
+        //   结算时反查历史、还要处理中断/放弃，反而容易和历史数据不一致。
+        //   列表是只读展示，现算最稳：赢 +1；负/放弃清零；中断与进行中**既不计数也不打断**
+        //   （它们没有真正结算过，游戏自己的职业统计也不会把它们算成败局）。
+
+        private static Dictionary<string, int> _streakCache;
+
+        private static Dictionary<string, int> Streaks()
+        {
+            if (_streakCache != null) { return _streakCache; }
+
+            var map = new Dictionary<string, int>(StringComparer.Ordinal);
+            try
+            {
+                var entries = RunHistoryStore.Index.entries;   // 已按时间倒序
+                int run = 0;
+                for (int i = entries.Count - 1; i >= 0; i--)
+                {
+                    var e = entries[i];
+                    if (e == null) { continue; }
+                    if (e.result == Results.Win) { run++; map[e.runId] = run; }
+                    else if (e.result == Results.Lose || e.result == Results.Abandon) { run = 0; }
+                }
+            }
+            catch { }
+            _streakCache = map;
+            return map;
         }
 
         private static void OpenDetailRow(int rowIndex)
