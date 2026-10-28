@@ -72,6 +72,12 @@ namespace ModKit.Game
         private const float CardDepth = 6f;
         private const float RelicScale = 1.2f;   // 与原版图鉴 SubCollectionRelics 同值
         private const int CanvasOrder = 1000;    // 自建画布排序号
+
+        // ---- 打开时的「打光」：环境压暗 ----
+        // ★ 图鉴页里的卡是游戏自己的 3D 卡牌（按槽位**世界坐标**生成、不挂在面板下），
+        //   所以面板本体不能做位移/缩放/渐显，否则卡片会跟纸面错位或抢先出现。
+        private const float ScrimAlpha = 0.55f;     // 压暗终值（环境只剩四成半亮度）
+        private const float IntroSeconds = 0.24f;   // 压暗淡入时长（秒）
         private static int _tab;      // 0=卡 1=遗物 2=关键词 3=能力
         private static int _page;
         private static bool _lastInMenu;
@@ -90,7 +96,7 @@ namespace ModKit.Game
         private static readonly Color Accent = new Color(0.94f, 0.79f, 0.45f, 1f);    // 主按钮/当前页签
         private static readonly Color Hair = new Color(0.25f, 0.20f, 0.16f, 0.22f);   // 细分隔线
         private static readonly Color RuleInk = new Color(0.25f, 0.20f, 0.16f, 0.55f);
-        private static readonly Color ButtonShadow = new Color(0f, 0f, 0f, 0.20f);
+        private static readonly Color ButtonShadow = new Color(0.05f, 0.04f, 0.03f, 0.34f);
 
         // ------------------------------------------------------------------
         //  装配
@@ -347,7 +353,7 @@ namespace ModKit.Game
             // 桌面上的入口牌：与面板里的按钮同一套语言（圆角描边 + 投影），
             // 原来是一块没有边界的纸色方块，贴在书桌木纹上几乎看不出是按钮。
             NewImage(_entryGo.transform, ButtonShadow, Vector2.zero, Vector2.one,
-                new Vector2(2f, -6f), Vector2.zero, "Shadow", raycast: false);
+                new Vector2(3f, -9f), Vector2.zero, "Shadow", raycast: false);
             var face = NewImage(_entryGo.transform, Paper, Vector2.zero, Vector2.one,
                 Vector2.zero, Vector2.zero, "Face", raycast: true);
 
@@ -403,17 +409,138 @@ namespace ModKit.Game
                 _tab = 0;
                 _page = 0;
                 Refresh();
+                StartIntro();                // 环境压暗（见下方「打开时的打光」）
             }
             catch (Exception ex) { Warn("面板", "打开模组图鉴失败 —— " + Describe(ex)); }
         }
 
         private static void Close()
         {
+            try { StopIntro(); } catch { }
             try { BlockOtherUI(false); } catch { }
             try { ClearSpawnedCards(); } catch { }
             try { ClearSpawnedRelics(); } catch { }   // 关闭时遗物实例必须一并销毁
             try { if (_panelGo != null) { _panelGo.SetActive(false); } }
             catch (Exception ex) { Warn("面板", "关闭模组图鉴失败 —— " + Describe(ex)); }
+        }
+
+        // ------------------------------------------------------------------
+        //  打开时的「打光」：环境压暗
+        // ------------------------------------------------------------------
+        //
+        //  ★ 这里只压暗环境，**不给面板做渐显/位移**：图鉴页的卡是游戏自己的 3D 卡牌，
+        //    按槽位**世界坐标**生成、不挂在面板下 —— 面板一淡出，卡片会比纸面先出现；
+        //    面板一移动，卡片就和格子错位。所以图鉴只做"房间灯变暗"，纸页照旧瞬间到位。
+
+        /// <summary>压暗层颜色：暖黑（纯黑压在木纹上会发灰，暖黑更沉）。</summary>
+        private static readonly Color ScrimTint = new Color(0.055f, 0.048f, 0.040f, 1f);
+
+        private static GameObject _scrimGo;
+        private static Image _scrimImg;
+        private static bool _introActive;
+        private static float _introTime;
+        private static float _introDeadline;
+
+        /// <summary>
+        /// 建压暗层（只建一次），铺得比画布大得多。
+        /// </summary>
+        /// <remarks>
+        /// ★ 画布只是「一屏」的 19.2×10.8 世界单位（0.01 缩放、相机前 60），
+        ///   桌面木纹在画布之外还有，只铺画布大小会在屏幕边上留一圈亮边。
+        /// ★ 不接收射线：输入隔断由 BlockOtherUI 的 Blocker 负责，压暗层只负责画。
+        /// </remarks>
+        private static void EnsureScrim()
+        {
+            if (_scrimGo != null || _canvasGo == null) { return; }
+
+            _scrimGo = new GameObject("ModKit_CompendiumScrim", typeof(RectTransform));
+            _scrimGo.transform.SetParent(_canvasGo.transform, false);
+            var rt = _scrimGo.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(-2600f, -2600f);
+            rt.offsetMax = new Vector2(2600f, 2600f);
+
+            _scrimImg = _scrimGo.AddComponent<Image>();
+            var c = ScrimTint;
+            c.a = 0f;
+            _scrimImg.color = c;
+            _scrimImg.raycastTarget = false;
+
+            _scrimGo.SetActive(false);
+            Note("压暗", "环境压暗层已创建（打开面板时环境亮度降至 " +
+                Mathf.RoundToInt((1f - ScrimAlpha) * 100f) + "%）。");
+        }
+
+        private static void StartIntro()
+        {
+            EnsureScrim();
+            if (_scrimGo == null) { return; }
+
+            if (_panelGo != null)
+            {
+                // 排在面板下面、入口牌子上面：环境与入口一起压暗，纸页自己不受影响
+                _scrimGo.transform.SetSiblingIndex(_panelGo.transform.GetSiblingIndex());
+            }
+            if (_scrimImg != null)
+            {
+                var c = _scrimImg.color;
+                c.a = 0f;
+                _scrimImg.color = c;
+            }
+            _scrimGo.SetActive(true);
+
+            _introActive = true;
+            _introTime = 0f;
+            _introDeadline = Time.realtimeSinceStartup + IntroSeconds + 0.5f;
+            StepIntro(0f);
+        }
+
+        private static void FinishIntro()
+        {
+            _introActive = false;
+            if (_scrimImg != null)
+            {
+                var c = _scrimImg.color;
+                c.a = ScrimAlpha;
+                _scrimImg.color = c;
+            }
+        }
+
+        private static void StopIntro()
+        {
+            _introActive = false;
+            if (_scrimGo != null) { _scrimGo.SetActive(false); }
+        }
+
+        private static void StepIntro(float dt)
+        {
+            if (!_introActive) { return; }
+
+            _introTime += Mathf.Max(0f, dt);
+            float k = Mathf.Clamp01(_introTime / IntroSeconds);
+            float e = 1f - (1f - k) * (1f - k) * (1f - k);   // ease-out cubic
+
+            if (_scrimImg != null)
+            {
+                var c = _scrimImg.color;
+                c.a = ScrimAlpha * e;
+                _scrimImg.color = c;
+            }
+            if (k >= 1f) { FinishIntro(); }
+        }
+
+        /// <summary>每帧驱动（宿主 Update 在 0.5 秒限流之前调用；不播动画时只是一位布尔判断）。</summary>
+        internal static void OnFrame(float dt)
+        {
+            if (!_introActive) { return; }
+            try
+            {
+                StepIntro(dt);
+                // 兜底：Update 若中途断掉，超时后直接落到终值，不会留半亮的桌面
+                if (_introActive && Time.realtimeSinceStartup > _introDeadline) { FinishIntro(); }
+            }
+            catch { _introActive = false; FinishIntro(); }
         }
 
         private static void BuildPanel()
@@ -426,6 +553,10 @@ namespace ModKit.Game
             prt.pivot = new Vector2(0.5f, 0.5f);
             prt.anchoredPosition = Vector2.zero;
             prt.sizeDelta = new Vector2(1680f, 920f);
+
+            // ⓪ 柔影：两段式（环境影 + 贴身影），面板才真的浮在压暗后的环境上。
+            //    纸页顶边比面板矩形低 40px，所以 topInset 传 40 —— 影子跟着纸页走。
+            UiSkin.AddLiftedShadow(_panelGo.transform, 48f, 26f, 22f, 8f, 40f);
 
             // ① 边框（回纹花边）：比纸页大一圈，最底层。顶边下移 40px（offsetMax.y = -34）
             var border = new GameObject("Border", typeof(RectTransform));
@@ -656,9 +787,9 @@ namespace ModKit.Game
 
             var btn = go.AddComponent<Button>();
 
-            // 投影：往右下偏 2~5px
+            // 投影：往右下偏 3~8px
             var shadow = NewImage(go.transform, ButtonShadow, Vector2.zero, Vector2.one,
-                new Vector2(2f, -5f), Vector2.zero, "Shadow");
+                new Vector2(3f, -8f), Vector2.zero, "Shadow");
             shadow.raycastTarget = false;
 
             var img = NewImage(go.transform, face ?? Face, Vector2.zero, Vector2.one,
@@ -1802,6 +1933,9 @@ namespace ModKit.Game
 
         private void Update()
         {
+            // 压暗淡入要连续播，放在 0.5 秒限流之前
+            ModCompendium.OnFrame(Time.unscaledDeltaTime);
+
             if (Time.realtimeSinceStartup < _next) { return; }
             _next = Time.realtimeSinceStartup + 0.5f;
             try { ModCompendium.OnHostTick(); }

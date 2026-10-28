@@ -6,6 +6,7 @@
 //    PanelRound  96×96  圆角面板底（白填充 + 4px 描边），配 Sliced；也可当 Mask 用
 //    RowRound    48×48  圆角条目底（白填充 + 4px 描边），配 Sliced；条目/按钮/详情用
 //    PanelFrame  96×96  九宫格外框（圆角 + 4px 深棕描边 + 内金线 + 内阴影）
+//    DropShadow 256×256 柔影（轮廓以内不透明，外侧 46px 渐隐），九宫格拉伸
 //
 //  圆角一致性：底图与外框用同一半径，四角自然形成倒角，不再露出直角。
 // =============================================================================
@@ -30,6 +31,97 @@ namespace ModKit.Game
 
         /// <summary>描边宽度（像素）。</summary>
         internal const float StrokeWidth = 4f;
+
+        // ---------------- 投影 ----------------
+
+        private static Sprite _dropShadow;
+        private static Sprite _dropShadowTight;
+
+        /// <summary>
+        /// 柔影精灵：轮廓以内不透明、外侧 <paramref name="fringe"/> 像素渐隐的圆角矩形
+        /// （白 RGB + alpha 曲线）。九宫格拉伸，面板/条目/卡片托板都能复用。
+        /// </summary>
+        /// <remarks>
+        /// 为什么要贴图而不是「叠几层半透明矩形」：矩形叠出来的影子每一层都是一条硬边，
+        /// 落在纸面/木纹上会看出两三道台阶，像脏边。距离场渐隐是连续的，边缘才像光。
+        /// </remarks>
+        internal static Sprite DropShadow { get { return BuildDropShadow(46f, ref _dropShadow, "ModKitDropShadow"); } }
+
+        /// <summary>贴身实影（渐隐带 20px）：只负责"贴着纸边的那道暗"，配 <see cref="DropShadow"/> 用。</summary>
+        internal static Sprite DropShadowTight { get { return BuildDropShadow(20f, ref _dropShadowTight, "ModKitDropShadowTight"); } }
+
+        private static Sprite BuildDropShadow(float fringe, ref Sprite cache, string name)
+        {
+            if (cache != null) { return cache; }
+
+            const int N = 256;
+            const float corner = PanelRadius;   // 轮廓圆角跟面板一致（20px），角上才不露尖
+            var tex = new Texture2D(N, N, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+
+            var px = new Color32[N * N];
+            float half = N * 0.5f;
+            float hw = half - fringe;      // 实心轮廓的半宽
+
+            for (int y = 0; y < N; y++)
+            {
+                for (int x = 0; x < N; x++)
+                {
+                    float d = SdfRoundRect((x + 0.5f) - half, (y + 0.5f) - half, hw, hw, corner);
+                    float t = Mathf.Clamp01(d / fringe);
+                    float a = 1f - t * t * (3f - 2f * t);          // smoothstep
+                    px[y * N + x] = new Color32(255, 255, 255,
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(a * 255f), 0, 255));
+                }
+            }
+
+            tex.SetPixels32(px);
+            tex.Apply(false, false);
+            cache = Sprite.Create(tex, new Rect(0f, 0f, N, N), new Vector2(0.5f, 0.5f), 100f, 0,
+                SpriteMeshType.FullRect, new Vector4(104f, 104f, 104f, 104f));
+            cache.name = name;
+            return cache;
+        }
+
+        /// <summary>
+        /// 给 parent 垫一层柔影：四边各探出 <paramref name="spread"/>（≥ 渐隐带，否则会被
+        /// 矩形硬切），整体下移 <paramref name="drop"/>。
+        /// <paramref name="topInset"/> 给「纸页比面板矩形矮一截」的情况用（图鉴纸页顶边低 40px），
+        /// 让影子跟着纸页走，而不是在顶上多出一圈。
+        /// </summary>
+        internal static Image AddDropShadow(Transform parent, float spread, float drop, float alpha,
+            float topInset = 0f, bool tight = false)
+        {
+            float fringe = tight ? 20f : 46f;
+            if (spread < fringe) { spread = fringe; }
+
+            var go = new GameObject(tight ? "DropShadowTight" : "DropShadow", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(-spread, -spread);
+            rt.offsetMax = new Vector2(spread, spread - topInset);
+            rt.anchoredPosition = new Vector2(0f, -drop);
+
+            var img = go.AddComponent<Image>();
+            img.sprite = tight ? DropShadowTight : DropShadow;
+            img.type = Image.Type.Sliced;
+            img.color = new Color(0.035f, 0.028f, 0.022f, alpha);   // 暖黑
+            img.raycastTarget = false;
+            go.transform.SetAsFirstSibling();
+            return img;
+        }
+
+        /// <summary>两段式投影：环境柔影（宽淡）+ 贴身实影（窄实）。</summary>
+        internal static void AddLiftedShadow(Transform parent, float ambient, float ambientDrop,
+            float contact, float contactDrop, float topInset = 0f)
+        {
+            AddDropShadow(parent, ambient, ambientDrop, 0.50f, topInset, false);
+            AddDropShadow(parent, contact, contactDrop, 0.45f, topInset, true);
+        }
 
         // ---------------- 纸纹 ----------------
 

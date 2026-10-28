@@ -43,8 +43,9 @@ namespace RunHistory
         private static readonly Color BorderInk = new Color(0.25f, 0.20f, 0.16f, 0.78f);
         private static readonly Color Hair = new Color(0.25f, 0.20f, 0.16f, 0.22f);
         private static readonly Color InnerLight = new Color(1f, 1f, 1f, 0.35f);
-        private static readonly Color ShadowInk = new Color(0f, 0f, 0f, 0.28f);
-        private static readonly Color ButtonShadow = new Color(0f, 0f, 0f, 0.20f);
+        // 投影：面板用柔影精灵（见 RunHistoryUi.Skin），按钮用压得更实的一层 —— 按钮小，
+        // 渐隐带在这个尺寸上会糊成一团，所以「离纸越近的东西，影子越实」。
+        private static readonly Color ButtonShadow = new Color(0.05f, 0.04f, 0.03f, 0.34f);
         private static readonly Color Face = new Color(0.88f, 0.83f, 0.75f, 1f);     // 次按钮面
         private static readonly Color FaceHot = new Color(0.82f, 0.76f, 0.67f, 1f);  // 悬停/按下
         private static readonly Color Accent = new Color(0.94f, 0.79f, 0.45f, 1f);   // 主按钮面
@@ -282,7 +283,7 @@ namespace RunHistory
             // 桌面上的入口牌：和面板里的按钮同一套语言（墨边 + 投影），
             // 否则它在书桌木纹上会是一块没有轮廓的浅色方块。
             NewImageAt(_entryGo.transform, ButtonShadow, new Vector2(0f, 0f), new Vector2(1f, 1f),
-                new Vector2(0.5f, 0.5f), new Vector2(2f, -6f), Vector2.zero, "Shadow");
+                new Vector2(0.5f, 0.5f), new Vector2(3f, -9f), Vector2.zero, "Shadow");
             var border = NewImage(_entryGo.transform, BorderInk, Vector2.zero, Vector2.one,
                 Vector2.zero, Vector2.zero, "Border");
             border.raycastTarget = true;
@@ -332,6 +333,7 @@ namespace RunHistory
                 _open = true;
                 BlockOtherUI(true);
                 PlaceCanvasInFrontOfCamera(Camera.main);
+                StartIntro();      // 压暗环境 + 面板落位（见 RunHistoryUi.Intro）
                 Debug.Log("[RunHistory] 面板已打开（" + RunHistoryStore.Index.entries.Count + " 局）");
             }
             catch (Exception ex)
@@ -344,6 +346,7 @@ namespace RunHistory
         {
             try
             {
+                StopIntro();       // 先收压暗层，再藏面板（两帧内不会看到亮边）
                 if (_panelGo != null) { _panelGo.SetActive(false); }
                 _open = false;
                 BlockOtherUI(false);
@@ -458,9 +461,12 @@ namespace RunHistory
             rt.anchoredPosition = Vector2.zero;
             rt.sizeDelta = new Vector2(PanelW, PanelH);
 
-            // 投影：让面板从桌面背景上浮起来（比纸面大一圈、往下偏）
-            NewImage(_panelGo.transform, ShadowInk, Vector2.zero, Vector2.one,
-                new Vector2(0f, -12f), new Vector2(26f, 26f), "Shadow");
+            // 投影：两段式（贴身影 + 环境影）——让面板真的从桌面上浮起来
+            AddLiftedShadow(_panelGo.transform, 48f, 24f, 22f, 8f);
+
+            // 打开动画要整块渐显，所以挂一个 CanvasGroup（落位逻辑见 RunHistoryUi.Intro）
+            _panelGroup = _panelGo.AddComponent<CanvasGroup>();
+            _panelGroup.alpha = 1f;
 
             NewImage(_panelGo.transform, PanelPaper, new Vector2(0f, 0f), new Vector2(1f, 1f),
                 Vector2.zero, Vector2.zero, "Bg");
@@ -634,9 +640,8 @@ namespace RunHistory
             rt.anchoredPosition = Vector2.zero;
             rt.sizeDelta = new Vector2(520f, 660f);
 
-            // 键盘是一张浮在面板上的小卡：投影 + 双描边，和面板同一套语言
-            NewImage(_seedPadGo.transform, ShadowInk, Vector2.zero, Vector2.one,
-                new Vector2(0f, -10f), new Vector2(22f, 22f), "Shadow");
+            // 键盘是一张浮在面板上的小卡：柔影 + 双描边，和面板同一套语言
+            AddLiftedShadow(_seedPadGo.transform, 46f, 18f, 20f, 6f);
             NewImage(_seedPadGo.transform, PanelPaper, new Vector2(0f, 0f), new Vector2(1f, 1f),
                 Vector2.zero, Vector2.zero, "Bg");
             AddFrame(_seedPadGo.transform, BorderInk, 3f, 0f);
@@ -1006,9 +1011,9 @@ namespace RunHistory
 
             var btn = go.AddComponent<Button>();
 
-            // 投影（最底层）：往下偏 4px、往右偏 1px
+            // 投影（最底层）：往下偏 6px、往右偏 2px
             var shadow = NewImage(go.transform, ButtonShadow, Vector2.zero, Vector2.one,
-                new Vector2(1f, -4f), Vector2.zero, "Shadow");
+                new Vector2(2f, -6f), Vector2.zero, "Shadow");
             shadow.raycastTarget = false;
 
             // 描边（收点击射线：整个按钮范围都能点）
@@ -1104,6 +1109,9 @@ namespace RunHistory
 
         private void Update()
         {
+            // 打开动画要连续播，放在 0.5 秒限流之前（不播时这里只是一个布尔判断）
+            RunHistoryUi.OnFrame(Time.unscaledDeltaTime);
+
             if (Time.realtimeSinceStartup < _next) { return; }
             _next = Time.realtimeSinceStartup + 0.5f;
             try { RunHistoryUi.OnHostTick(); }
