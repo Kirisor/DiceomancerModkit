@@ -57,7 +57,19 @@ namespace ModKit.Game
                 isPositive = true,          // 默认正向；负面效果后续通过语义名细化
                 extraDelay = 0,
                 cardEffectResolveType = resolveType,
-                effectNumberInfos = BuildNumberInfos(spec)
+                effectNumberInfos = BuildNumberInfos(spec),
+
+                // ★ 必须显式给**空数组**，不能留 null（2026-10-30 奶之哀实机崩溃）。
+                //   游戏侧 `EffectUtils.GenerateEffectFromEffectInfo` 只是**原样拷贝**
+                //   `EffectInfo.extraStringInfo` → `EffectBase.EffectExtraStringInfos`；
+                //   而原版 EffectInfo 来自 Unity 资产 —— Unity 序列化器把 null 数组存成**空数组**，
+                //   所以原版代码可以放心写 `EffectExtraStringInfos.Length`（不少特殊效果就这么写）。
+                //   平台是在代码里 new EffectInfo，漏这一项就是 null ⇒ 一读 Length 当场 NRE。
+                //   实机现场（奶之哀绑定游戏原生 EffectSpEffectMultiDamage）：
+                //     IL_003d  ldloc.0 / ldfld string[] EffectBase::EffectExtraStringInfos / ldlen
+                //     → NullReferenceException at [0x0003d]（栈顶就是 ApplyEffectForTarget）
+                //   症状：这张卡**整次结算中断**（伤害与易伤都没落地），控制台一条红字。
+                extraStringInfo = new string[0],
             };
 
             if (!string.IsNullOrEmpty(customId))
