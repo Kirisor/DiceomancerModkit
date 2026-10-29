@@ -234,7 +234,80 @@ namespace ModKit.Game
             // 兼容：哨兵汇总里那一行文本也留一份，便于和日志对照
             root["_probeSummary"] = probe != null ? probe.ToString() : "(无)";
 
+            // ---- 特殊卡牌集合（BasicCard = 游戏里的「基础牌」身份）----
+            //  为什么落盘：游戏判定「是不是基础牌」**不看卡的任何字段**，只看卡在不在具名集合里
+            //  （`CardUtils.CheckCardCoreInfoSpecialRequirement` 的 `"BasicCard"` 分支逐字如此）。
+            //  mod 职业的初始牌要靠平台补进这个集合，所以这份原版清单就是那条逻辑的**证据**：
+            //  只有它写清"原版基础牌到底是哪些"，才能确认"按初始牌组补身份"是对的。
+            //  ★ 落盘时机在**加载 mod 之前**（见 PlatformRuntime），所以这里看到的是纯原版内容。
+            root["specialCardCollections"] = DumpSpecialCardCollections();
+
             return root;
+        }
+
+        /// <summary>
+        /// 特殊卡牌集合：每个集合只写张数，<c>BasicCard</c> 额外写全名单（它是「基础牌」身份）。
+        /// </summary>
+        private static JObject DumpSpecialCardCollections()
+        {
+            var result = new JObject();
+            try
+            {
+                var cdm = GameData.CardDataManager.Instance;
+                if (cdm == null)
+                {
+                    result["_error"] = "CardDataManager.Instance 为 null（本次没导出集合）";
+                    return result;
+                }
+
+                var map = Reflect.Get<Dictionary<string, Card.CardDateCollection>>(cdm, "_cardDateCollectionDictionary");
+                if (map == null)
+                {
+                    result["_error"] = "_cardDateCollectionDictionary 取不到（本次没导出集合）";
+                    return result;
+                }
+
+                // Dictionary 的枚举顺序在 .NET 里没保证 ⇒ 排序，保证同一份游戏数据两次导出字节一致
+                var keys = new List<string>(map.Keys);
+                keys.Sort(StringComparer.Ordinal);
+
+                var counts = new JObject();
+                var basic = new List<string>();
+                foreach (var key in keys)
+                {
+                    var col = map[key];
+                    if (col == null) { counts[key] = 0; continue; }
+
+                    var names = new List<string>();
+                    try
+                    {
+                        foreach (var c in col.GetAllCards())
+                        {
+                            if (c != null && !string.IsNullOrEmpty(c.cardName)) { names.Add(c.cardName); }
+                        }
+                    }
+                    catch { /* 集合本身坏了不该拖垮整份导出 */ }
+
+                    counts[key] = names.Count;
+                    if (key == "BasicCard")
+                    {
+                        names.Sort(StringComparer.Ordinal);
+                        basic = names;
+                    }
+                }
+
+                result["_counts"] = counts;
+                result["basicCards"] = ToArray(basic);
+                result["_note"] =
+                    "BasicCard 就是游戏口径的「基础牌」：效果里的「升级随机 N 张基础牌」" +
+                    "（EffectSpEffectUpgradeRandomBasicCard / SpecialStoryUpgradeBasicCards）与 " +
+                    "CardUtils 的 \"BasicCard\" 特判都只认这个集合。";
+            }
+            catch (Exception ex)
+            {
+                result["_error"] = ex.GetType().Name + ": " + ex.Message;
+            }
+            return result;
         }
 
         private static void AddSource(JObject into, string key, string origin, int count)

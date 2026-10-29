@@ -258,6 +258,23 @@ namespace ModKit.Game
                     log.Warn("职业隔离：收紧集合 colorEs 失败 —— " + ex.Message);
                 }
 
+                // ---- 2.7 基础牌身份：把本职业初始牌组里的 mod 卡并入游戏的 `BasicCard` 集合 ----
+                //   ★ 游戏给"初始牌组"一种额外身份：只有 `BasicCard` 集合里的卡才算**基础牌**。
+                //     吃这个身份的效果（反编译核对，2026-10-29）：
+                //       · `EffectSpEffectUpgradeRandomBasicCard`（小树枝等）—— "升级随机 N 张基础牌"
+                //       · `SpecialStoryUpgradeBasicCards` —— 事件"升级 N 张基础牌"
+                //       · `CardUtils.CheckCardCoreInfoSpecialRequirement("BasicCard")` —— 卡/效果按身份筛
+                //     原版六职业的初始牌组卡天然躺在资产的这个集合里；mod 的卡是运行期新建的
+                //     `CardSo`，资产里不可能有 ⇒ 不补这一步，mod 的打击/格挡永远吃不到这些收益。
+                try
+                {
+                    AttachBasicCards(cdm, modId, deckCards, log);
+                }
+                catch (Exception ex)
+                {
+                    log.Warn("基础牌：并入 BasicCard 集合失败 —— " + ex.GetType().Name + ": " + ex.Message);
+                }
+
                 // ---- 3. 开局牌组 / 起始遗物 + 把新球放进序列化色表 ----
                 var init = CareerManager.Instance == null ? null : CareerManager.Instance.GetCareerInformationForInitialize();
                 if (init == null)
@@ -312,6 +329,128 @@ namespace ModKit.Game
             catch (Exception ex)
             {
                 result.Errors.Add(modId + "：职业 " + (spec.Id ?? "?") + " 装配异常 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
+        }
+
+        // ------------------------------------------------------------------
+        //  基础牌身份（BasicCard 集合）
+        //
+        //  游戏把「初始牌组」当成一种**身份**，而不是给卡加字段：`CardDataManager` 里有一个
+        //  具名集合 `BasicCard`，判定基础牌的唯一依据就是"卡在不在这个集合里"
+        //  （`CardUtils.CheckCardCoreInfoSpecialRequirement` 的 `"BasicCard"` 分支逐字如此）。
+        //  原版六职业的初始牌组卡是资产里就写好的，mod 的卡是运行期 new 出来的 `CardSo`，
+        //  资产里不可能有 ⇒ 平台必须替它补上身份，否则「升级基础牌」类效果永远跳过它。
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// 把「本 mod 自己的」初始牌组卡并入游戏的 <c>BasicCard</c> 集合（幂等）。
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>为什么是"初始牌组里的 mod 卡"</b>：原版这个集合装的就是各职业的初始牌组
+        /// （打击 / 格挡 / 职业标志牌），不是"所有低费卡"——反编译 <c>EffectSpEffectUltimateStrikeBlock</c>
+        /// 还要在集合里再筛一次 <c>cardName.Contains("Strike") || Contains("Block")</c>，
+        /// 说明集合里确实不止打击/格挡。mod 职业的初始牌组与它一一对应，按牌组走即与原版同义。
+        /// </para>
+        /// <para>
+        /// <b>为什么只挑本 mod 的卡</b>：初始牌组可以点名原版卡（奶蛙带「至尊骰」Dice），
+        /// 原版卡的身份由原版数据决定，平台不去改它。
+        /// </para>
+        /// <para>
+        /// <b>为什么要判重</b>：整条流水线在场景切换 / 重建守卫里会重跑，重复 Add 会让集合里
+        /// 出现同一张卡多次（`GetAllCards()` 不去重 ⇒ "升级随机基础牌"的抽签概率被放大）。
+        /// </para>
+        /// </remarks>
+        /// <returns>本次真正加进去的张数（去重后去重前都没有时为 0）。</returns>
+        private static int AttachBasicCards(CardDataManager cdm, string modId, List<CardSo> deckCards, IGameLog log)
+        {
+            if (cdm == null || deckCards == null || deckCards.Count == 0) { return 0; }
+
+            // 只挑本 mod 自己的卡（cardName 已归一化成 "<modId>.<id>"）
+            string prefix = modId + ".";
+            var own = new List<CardSo>();
+            foreach (var c in deckCards)
+            {
+                if (c == null || string.IsNullOrEmpty(c.cardName)) { continue; }
+                if (!c.cardName.StartsWith(prefix, StringComparison.Ordinal)) { continue; }
+                if (own.Contains(c)) { continue; }      // 初始牌组里同一种卡出现多次（4 张打击）
+                own.Add(c);
+            }
+            if (own.Count == 0) { return 0; }
+
+            CardDateCollection basic;
+            try
+            {
+                // ⚠️ 这个方法内部是 Dictionary 索引器：集合名写错会抛 KeyNotFoundException，
+                //    而且消息里只有一个空字符串 —— 这里自己兜住并说清楚。
+                basic = cdm.GetSpecialCardDataCollectionByName("BasicCard");
+            }
+            catch (Exception ex)
+            {
+                log?.Warn("基础牌：取不到游戏的 BasicCard 集合，mod 的初始牌这次没有基础牌身份 —— " +
+                    ex.GetType().Name + ": " + ex.Message);
+                return 0;
+            }
+            if (basic == null)
+            {
+                log?.Warn("基础牌：游戏的 BasicCard 集合是 null，mod 的初始牌这次没有基础牌身份。");
+                return 0;
+            }
+
+            // 判重（集合里三桶都要看：GetAllCards() = common + uncommon + rare）
+            var have = new HashSet<string>(StringComparer.Ordinal);
+            AddNames(have, basic.commonCards);
+            AddNames(have, basic.unCommonCards);
+            AddNames(have, basic.rareCards);
+
+            var add = new List<CardSo>();
+            foreach (var c in own)
+            {
+                if (have.Contains(c.cardName)) { continue; }
+                add.Add(c);
+            }
+            if (add.Count == 0) { return 0; }
+
+            // 放到 commonCards 桶：`GetAllCards()` 三桶都会拼上，放哪桶都进池；
+            // 稀有度本来就写在卡自己的 CardInfo 里，这里不影响掉落权重。
+            var merged = new List<CardSo>(basic.commonCards ?? new CardSo[0]);
+            merged.AddRange(add);
+            basic.commonCards = merged.ToArray();
+
+            // 读回：游戏判"基础牌"是 `GetAllCards()`（三桶拼接）⇒ 必须从那里再看一眼，
+            // 才能证明我们没把卡塞进一个它读不到的桶里。
+            string backText = "";
+            try
+            {
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+                AddNames(seen, basic.GetAllCards());
+                int back = 0;
+                foreach (var c in add) { if (seen.Contains(c.cardName)) { back++; } }
+                backText = "，读回 " + back + "/" + add.Count + "，集合共 " + seen.Count + " 张";
+                if (back != add.Count)
+                {
+                    log?.Warn("基础牌：读回只有 " + back + "/" + add.Count +
+                        " 张出现在 BasicCard 集合里 —— 「升级基础牌」可能仍会跳过被漏掉的那几张。");
+                }
+            }
+            catch (Exception ex)
+            {
+                log?.Warn("基础牌：读回 BasicCard 失败 —— " + ex.GetType().Name + ": " + ex.Message);
+            }
+
+            var names = new List<string>();
+            foreach (var c in add) { names.Add(c.cardName); }
+            log?.Info("基础牌：已把 " + modId + " 的 " + add.Count + " 张初始牌并入游戏的 BasicCard 集合（" +
+                string.Join(" / ", names) + backText + "）—— 「升级基础牌」类效果从现在起会认它们。");
+            return add.Count;
+        }
+
+        private static void AddNames(HashSet<string> target, CardSo[] cards)
+        {
+            if (cards == null) { return; }
+            for (int i = 0; i < cards.Length; i++)
+            {
+                if (cards[i] != null && !string.IsNullOrEmpty(cards[i].cardName)) { target.Add(cards[i].cardName); }
             }
         }
 
