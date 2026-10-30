@@ -62,6 +62,27 @@ public sealed class MilkFrogClass : IModClassProvider
                 "mf_milk_rabbit", "mf_milk_dog", "mf_milk_family",
                 "mf_milk_king", "mf_milk_clock", "mf_naidan_question",
 
+                // ---- 0.3.2 新增的卡（2026-10-30 补进池子：之前只加进 mod.json，忘了列进 PoolCards）----
+                //   口径：除「初始牌组的打击/格挡」与「6 张精粹（衍生卡）」之外，mod 的卡全部进池。
+                //   算一下：mod.json 声明 42 张 → 运行时加载 41（mf_exist 被平台拒载，见下）→
+                //   减 6 张精粹 = 35 → 减打击/格挡 = 33 张（就是职业池应有的 mod 卡数）。
+                //   ⚠️ mf_exist「奶蛙存在吗？」的费用槽顺序已改（2026-10-30）：
+                //      原来是多色槽 [Green, Purple]，这个**有序**组合在本 build 没注册图标
+                //      （注册的是 [Purple, Green]，顺序参与匹配），文件在加载期就被拒。
+                //      把顺序换成已注册的那个之后，卡能正常加载，这里才列得进来。
+                "mf_dynasty",          // 奶蛙王朝：奶家人 +3（含次数）光环
+                "mf_all_summons",      // 应奶尽奶：场上所有召唤物各结算一次
+                "mf_settle_all",       // 笑到最后：抽/弃牌堆里所有奶蛙再结算一遍
+                "mf_holy_frog",        // 圣奶蛙降临大地：治疗 4 + 奶蛙 3
+                "mf_mother_fear",      // 生母之惧：无力/脆皮/目盲各 2 + 易逝
+                "mf_mourning",         // 奶之哀：伤害 5 × 4 + 自身 4 易伤
+                "mf_peach",            // 黄桃罐头：格挡 6，被奶蛙结算时给 6 加固
+                "mf_soy_love",         // 豆奶之恋：目标流血 → 等量燃烧
+                "mf_call_family",      // 呼叫奶家人：看顶 3、数绿牌、抽 3
+                "mf_soy_ruin",         // 豆奶之殇（黑结局）：移除敌方减益 → 失血
+                "mf_soy_vow",          // 豆奶之誓（绿结局）：移除敌方减益 → 随机增益
+                "mf_exist",            // 奶蛙存在吗？：获得「奶蛙存在时抽1弃1」能力（费用槽顺序已修正）
+
                 // ---- 原版卡（2026-10-30 点名纳入职业池）----
                 //   ★ 这里写的是**原版卡名**（游戏的 CardSo.cardName），不是 mod 内 id：
                 //     平台的解析顺序与初始牌组一致 —— 先按 "<modId>.<id>" 找本 mod 的卡，
