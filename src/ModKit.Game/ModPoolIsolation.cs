@@ -188,7 +188,21 @@ namespace ModKit.Game
         /// </remarks>
         internal static void FilterCampaignPool(List<CardSo> pool)
         {
-            if (pool == null || pool.Count == 0 || _byCard.Count == 0) { return; }
+            if (pool == null || pool.Count == 0) { return; }
+
+            // ---- ① 去重（按 CardSo 引用）----
+            //   一张卡可能被**多个集合**收进池：mod 卡同时进了 `ModKit_<modId>`（标准集合）
+            //   与职业集合；被作者点名的原版卡同时在通用集合与职业集合里。
+            //   `SetCampaignCardPool` 只是 List.AddRange 拼接、**不去重** ⇒ 同一张卡出现两次，
+            //   掉落权重就是别人的两倍（2026-10-30 实测：奶蛙的 mod 卡全是 2×）。
+            int duplicates = DedupePool(pool);
+
+            if (_byCard.Count == 0)
+            {
+                // 没有「带职业的 mod」时不需要隔离，但去重已经做了
+                if (duplicates > 0) { LogCampaignPool(null, pool.Count, 0, 0, duplicates); }
+                return;
+            }
 
             string current = CurrentClassKey();
             int modCards = 0;
@@ -207,19 +221,43 @@ namespace ModKit.Game
                 removed++;
             }
 
-            LogCampaignPool(current, pool.Count, modCards, removed);
+            LogCampaignPool(current, pool.Count, modCards, removed, duplicates);
         }
 
-        private static void LogCampaignPool(string current, int remaining, int modCards, int removed)
+        /// <summary>
+        /// 按 <see cref="CardSo"/> **引用**去重（每张卡留一份），返回摘掉几条。
+        /// </summary>
+        /// <remarks>
+        /// `CardSo` 是 ScriptableObject，没有重写 Equals ⇒ `HashSet` 天然按引用比，
+        /// 正是我们要的语义（同一个资产实例 = 同一张卡）。
+        /// </remarks>
+        private static int DedupePool(List<CardSo> pool)
+        {
+            int removed = 0;
+            var seen = new HashSet<CardSo>();
+            for (int i = pool.Count - 1; i >= 0; i--)
+            {
+                var so = pool[i];
+                if (so == null || !seen.Add(so))
+                {
+                    pool.RemoveAt(i);
+                    removed++;
+                }
+            }
+            return removed;
+        }
+
+        private static void LogCampaignPool(string current, int remaining, int modCards, int removed, int duplicates)
         {
             string colors = CurrentColorsText();
-            string signature = "campaign/" + current + "/" + colors + "/" + remaining + "/" + modCards + "/" + removed;
+            string signature = "campaign/" + current + "/" + colors + "/" + remaining + "/" + modCards + "/" + removed + "/" + duplicates;
             if (signature == _lastLogSignature) { return; }
             _lastLogSignature = signature;
             try
             {
                 ModKitLog.Info("职业隔离：战役池重建 —— 本局三色 " + colors + "，解析职业 " + (current ?? "<未知>")
-                    + "，池内模组卡 " + modCards + " 张，摘除 " + removed + " 张，剩余 " + remaining + " 张。");
+                    + "，池内模组卡 " + modCards + " 张，摘除 " + removed + " 张，去重 " + duplicates +
+                    " 条，剩余 " + remaining + " 张。");
             }
             catch { }
         }

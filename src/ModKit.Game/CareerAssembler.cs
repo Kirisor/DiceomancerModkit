@@ -173,45 +173,46 @@ namespace ModKit.Game
                     return;
                 }
 
+                // ---- 2.0 卡池（**提前算**：后面「基础牌不进随机池」也要用它）----
+                //   优先用 spec.PoolCards（职业自己的卡池，决定整局能否变强）；
+                //   没声明就退化成"初始牌组里的去重卡"。
+                var poolCards = new List<CardSo>();
+                int vanillaInPool = 0;
+                if (spec.PoolCards != null && spec.PoolCards.Count > 0)
+                {
+                    foreach (var rawId in spec.PoolCards)
+                    {
+                        // ★ 解析顺序与初始牌组一致（2026-10-30）：先按 "<modId>.<id>" 找本 mod 的卡，
+                        //   找不到再当**原版卡名**查游戏数据 —— 职业池里点名原版通用卡是正常需求。
+                        //   之前这里只查 mod 自己的卡，于是作者写原版卡名一律报
+                        //   「卡池引用了不存在的卡」并被静默跳过（池子永远凑不到目标张数）。
+                        CardSo so = ResolveDeckCard(modId, rawId, modCards);
+                        if (so == null)
+                        {
+                            result.Errors.Add(modId + "：职业 " + spec.Id + " 的卡池引用了不存在的卡 '" + rawId + "'。");
+                            continue;
+                        }
+                        if (!poolCards.Contains(so))
+                        {
+                            poolCards.Add(so);
+                            // 计数只看卡名是否带本 mod 前缀（原版卡名没有前缀）
+                            if (!so.cardName.StartsWith(modId + ".", StringComparison.Ordinal)) { vanillaInPool++; }
+                        }
+                    }
+                }
+                // ★ 衍生卡（精粹等）不进职业卡池 —— 它们只能由效果生成（2026-10-24 实机反馈）。
+                poolCards.RemoveAll(c => c == null || ContentAssembler.DerivedCardNames.Contains(c.cardName));
+
+                if (poolCards.Count == 0)
+                {
+                    foreach (var c in deckCards) { if (!poolCards.Contains(c)) { poolCards.Add(c); } }
+                    result.Warnings.Add(modId + "：职业 " + spec.Id + " 没声明 poolCards，卡池退化为主牌组去重（"
+                        + poolCards.Count + " 张）。");
+                }
+
                 bool exists = collections.Any(c => c != null && c.cardCollectionName == classKey);
                 if (!exists)
                 {
-                    // 卡池：优先用 spec.PoolCards（职业自己的卡池，决定整局能否变强）；
-                    // 没声明就退化成"初始牌组里的去重卡"。
-                    var poolCards = new List<CardSo>();
-                    int vanillaInPool = 0;
-                    if (spec.PoolCards != null && spec.PoolCards.Count > 0)
-                    {
-                        foreach (var rawId in spec.PoolCards)
-                        {
-                            // ★ 解析顺序与初始牌组一致（2026-10-30）：先按 "<modId>.<id>" 找本 mod 的卡，
-                            //   找不到再当**原版卡名**查游戏数据 —— 职业池里点名原版通用卡是正常需求。
-                            //   之前这里只查 mod 自己的卡，于是作者写原版卡名一律报
-                            //   「卡池引用了不存在的卡」并被静默跳过（池子永远凑不到目标张数）。
-                            CardSo so = ResolveDeckCard(modId, rawId, modCards);
-                            if (so == null)
-                            {
-                                result.Errors.Add(modId + "：职业 " + spec.Id + " 的卡池引用了不存在的卡 '" + rawId + "'。");
-                                continue;
-                            }
-                            if (!poolCards.Contains(so))
-                            {
-                                poolCards.Add(so);
-                                // 计数只看卡名是否带本 mod 前缀（原版卡名没有前缀）
-                                if (!so.cardName.StartsWith(modId + ".", StringComparison.Ordinal)) { vanillaInPool++; }
-                            }
-                        }
-                    }
-                    // ★ 衍生卡（精粹等）不进职业卡池 —— 它们只能由效果生成（2026-10-24 实机反馈）。
-                    poolCards.RemoveAll(c => c == null || ContentAssembler.DerivedCardNames.Contains(c.cardName));
-
-                    if (poolCards.Count == 0)
-                    {
-                        foreach (var c in deckCards) { if (!poolCards.Contains(c)) { poolCards.Add(c); } }
-                        result.Warnings.Add(modId + "：职业 " + spec.Id + " 没声明 poolCards，卡池退化为主牌组去重（"
-                            + poolCards.Count + " 张）。");
-                    }
-
                     collections.Add(new CardDateCollection
                     {
                         cardCollectionType = CardCollectionType.Class,
@@ -227,6 +228,18 @@ namespace ModKit.Game
                     log.Info("已注册职业牌组集合：" + classKey + "（卡池 " + poolCards.Count + " 张" +
                         (vanillaInPool > 0 ? "，其中原版卡 " + vanillaInPool + " 张" : "") +
                         " / 初始牌组 " + deckAmounts.Count + " 张 / 色组 " + string.Join("+", colorEs.Select(c => c.ToString())) + "）");
+                }
+
+                // ---- 2.1 基础牌不进随机池（2026-10-30）----
+                //   初始牌组里「没被写进 PoolCards」的卡（打击/格挡这类基础牌）只该待在初始牌组里
+                //   —— 原版职业池里没有它们，不能让它们变成奖励卡。
+                try
+                {
+                    RemoveStarterOnlyFromRandomPool(modId, deckCards, poolCards, log);
+                }
+                catch (Exception ex)
+                {
+                    log.Warn("基础牌：从随机池摘除初始牌失败 —— " + ex.GetType().Name + ": " + ex.Message);
                 }
 
                 // ---- 2.2 随机池隔离：把该 mod 的集合/卡登记下来 ----
@@ -453,6 +466,89 @@ namespace ModKit.Game
             log?.Info("基础牌：已把 " + modId + " 的 " + add.Count + " 张初始牌并入游戏的 BasicCard 集合（" +
                 string.Join(" / ", names) + backText + "）—— 「升级基础牌」类效果从现在起会认它们。");
             return add.Count;
+        }
+
+        // ------------------------------------------------------------------
+        //  基础牌不进随机池
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// 把「只在初始牌组里」的卡从本 mod 的随机池集合（<c>ModKit_&lt;modId&gt;</c>）里摘掉。
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>为什么需要</b>：`ContentAssembler.RegisterCardCollection` 会把本 mod 的**全部**卡注册进
+        /// `ModKit_&lt;modId&gt;`（标准集合），而这个集合的 colorEs 被收紧成职业三色后会被
+        /// `SetCampaignCardPool` 按颜色收进战役池 ⇒ 初始牌组里的打击/格挡也会变成奖励卡。
+        /// 反编译核对原版：职业池 `Standard_Class_PGB`(32 张) 与 `Standard_Class_PRV`(29 张)
+        /// 里**都没有** Strike/Block —— 基础牌只存在于初始牌组，不进随机池。
+        /// </para>
+        /// <para>
+        /// <b>判据</b>：「在 StartDeck 里、但不在 PoolCards 里」= 只在初始牌组。
+        /// 作者想让某张基础牌可被抽到，把它写进 PoolCards 就行（那样它就不"只是初始牌"了）。
+        /// </para>
+        /// <para>
+        /// <b>为什么不在这里重建战役池</b>：装配发生在主菜单，战役池会在开局/继续时由
+        /// `SetCampaignUsedColorE` → `SetCampaignCardPool` 重建；这里改的是**集合本身**，
+        /// 下一局自然生效（强行在主菜单重建，`campaignUsedColorE` 还没定，反而可能造出空池）。
+        /// </para>
+        /// </remarks>
+        private static void RemoveStarterOnlyFromRandomPool(
+            string modId, List<CardSo> deckCards, List<CardSo> poolCards, IGameLog log)
+        {
+            if (deckCards == null || deckCards.Count == 0) { return; }
+
+            var cdm = CardDataManager.Instance;
+            if (cdm == null) { return; }
+            var collections = Reflect.Get<List<CardDateCollection>>(cdm, "_colorCardDateCollections");
+            if (collections == null) { return; }
+
+            string collectionName = "ModKit_" + modId;
+            CardDateCollection target = null;
+            foreach (var col in collections)
+            {
+                if (col != null && col.cardCollectionName == collectionName) { target = col; break; }
+            }
+            if (target == null) { return; }
+
+            var inPool = new HashSet<CardSo>(poolCards ?? new List<CardSo>());
+            var starterOnly = new HashSet<CardSo>();
+            foreach (var c in deckCards)
+            {
+                if (c != null && !inPool.Contains(c)) { starterOnly.Add(c); }
+            }
+            if (starterOnly.Count == 0) { return; }
+
+            int removed = 0;
+            var names = new List<string>();
+            target.commonCards = StripArray(target.commonCards, starterOnly, ref removed, names);
+            target.unCommonCards = StripArray(target.unCommonCards, starterOnly, ref removed, names);
+            target.rareCards = StripArray(target.rareCards, starterOnly, ref removed, names);
+
+            if (removed > 0)
+            {
+                log.Info("基础牌不进随机池：已从集合 " + collectionName + " 摘掉 " + removed +
+                    " 张「只在初始牌组里」的卡（" + string.Join(" / ", names) +
+                    "）—— 它们只该出现在初始牌组；想让某张可抽，就把它写进 PoolCards。");
+            }
+        }
+
+        private static CardSo[] StripArray(CardSo[] source, HashSet<CardSo> drop, ref int removed, List<string> names)
+        {
+            if (source == null || source.Length == 0) { return source; }
+            var list = new List<CardSo>(source.Length);
+            for (int i = 0; i < source.Length; i++)
+            {
+                var c = source[i];
+                if (c != null && drop.Contains(c))
+                {
+                    removed++;
+                    if (!string.IsNullOrEmpty(c.cardName) && !names.Contains(c.cardName)) { names.Add(c.cardName); }
+                    continue;
+                }
+                list.Add(c);
+            }
+            return list.Count == source.Length ? source : list.ToArray();
         }
 
         private static void AddNames(HashSet<string> target, CardSo[] cards)
