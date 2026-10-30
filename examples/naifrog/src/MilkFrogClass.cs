@@ -62,28 +62,53 @@ public sealed class MilkFrogClass : IModClassProvider
                 "mf_milk_rabbit", "mf_milk_dog", "mf_milk_family",
                 "mf_milk_king", "mf_milk_clock", "mf_naidan_question",
 
-                // ---- 原版通用卡（2026-10-30 点名纳入职业池）----
+                // ---- 原版卡（2026-10-30 点名纳入职业池）----
                 //   ★ 这里写的是**原版卡名**（游戏的 CardSo.cardName），不是 mod 内 id：
                 //     平台的解析顺序与初始牌组一致 —— 先按 "<modId>.<id>" 找本 mod 的卡，
                 //     找不到再当原版卡名去游戏数据里查（CareerAssembler.ResolveDeckCard）。
-                //   ★ 选卡规则：卡面流派色 ⊆ {紫, 绿, 黑}（与职业三色一致），紫 / 绿紫 / 黑 / 紫黑都有。
-                //   ⚠️ 这些卡本来就会随「颜色匹配的原版集合」进战役池，点名进职业集合后
-                //     它们在战役池里会**计两次**（掉率略高于其它同稀有度原版卡）。
-                "CardOfManyThings",    // 万象无常牌：随机结算若干张牌
+                //   ★ 选卡规则：卡面流派色 ⊆ {紫, 绿, 黑}（与职业三色一致），紫 / 绿紫 / 黑 / 紫黑 / 绿黑都有。
+                //   ★★ **不要写已经在通用集合里的卡**（那会让它在战役池里计两次、掉率翻倍）。
+                //     奶蛙三色自动吃进的原版集合只有三个（运行期实测 capabilities.json）：
+                //       Standard_Purple(7)       = 变戏法/冲击波/骰化术/平衡调整/万象无常牌/坍塌/完全错乱术
+                //       Standard_Green(3)        = 水元素/扭曲元素/有丝分裂
+                //       Standard_PurpleGreen(3)  = 演化/混乱转变/莲花
+                //     这 13 张一律不列（它们本来就在池子里）；六个 Standard_Class_* 职业集合
+                //     的真实色组里没有一个 ⊆ {紫,绿,黑}（PGB 其实是 紫+绿+蓝），所以职业池也不会混进别人的牌。
+
+                // ---- 第一批：非通用集合，只能靠点名进池 ----
+                "Monolith",            // 磐石：格挡（原属 PGV 职业池，不会被自动带进来）
                 "Catalyst",            // 催化剂：数字翻倍 / 叠加态
-                "Dicify",              // 骰化术：把数字改成骰子数
-                "Collapse",            // 坍塌
-                "TotalDisorientation", // 完全错乱术：抽牌并改数字
-                "BalanceTweak",        // 平衡调整：得法力 + 随机加卡
-                "Evolution",           // 演化（Modify 系）
-                "Monolith",            // 磐石：格挡
                 "QuillSpray",          // 针刺扫射：伤害全体敌人
-                "ChaoticTransform",    // 混乱转变：探寻
                 "Mutation",            // 变异：多次随机增益
                 "Ascend",              // 飞升：堆叠增益
                 "BlackTentacle",       // 乌黑触手：伤害 ×2
                 "Calamity",            // 灾厄：骰子惩罚
-                "Torment"              // 折磨：全部减益
+                "Torment",             // 折磨：全部减益
+
+                // ---- 第二批：补位到 76 张（2026-10-30）----
+                // ---- 紫：骰子 / 数值改写 ----
+                "DiceBonus",           // 幸运骰子：获得 DiceBonus 能力
+                "DiceTakeLuck",        // 运气窃取：抢敌人的骰运
+                "Nerf",                // 削弱：数值增减
+                "Trick",               // 恶作剧：把数字改成骰子数
+                "Superposition",       // 叠加态：主能力（多色槽，含紫可付）
+                // ---- 绿紫：回复 / 召唤 / 演化 ----
+                "Unyielding",          // 不屈：回复
+                "NasalGoo",            // 黏鼻涕：虚弱 + 无力
+                "TheHangedMan",        // 倒吊人：闪避
+                "GlowBerries",         // 发光果：治疗 + 随机增益
+                "Swarm",               // 虫群：多段伤害
+                "BiggerIsBetter",      // 多就是好 大就是棒：全体召唤物加数
+                "Life",                // 生命：洗回牌库 + 检索
+                // ---- 黑 / 紫黑 / 绿黑：高风险高收益 ----
+                "Vision",              // 幻象：弃光手牌再抽
+                "MentalDisturbance",   // 精神污染：虚弱 + 易伤
+                "BlackLotus",          // 黑莲花
+                "BlackHole",           // 黑洞：全体多段 + 无力
+                "MarkOfPurple",        // 紫印记：最大生命 + 作弊上限
+                "FoulPlay",            // 千术
+                "UltimateLifeform",    // 究极生物：全部增益
+                "MarkOfGreen"          // 绿印记：最大生命 + 治疗
             }
         };
     }
