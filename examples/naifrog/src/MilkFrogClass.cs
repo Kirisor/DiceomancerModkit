@@ -92,9 +92,6 @@ public sealed class MilkFrogClass : IModClassProvider
                 "Nerf",                // 削弱：数值增减
                 "Trick",               // 恶作剧：把数字改成骰子数
                 "Superposition",       // 叠加态：主能力（多色槽，含紫可付）
-                "LinkedPalms",         // 连还手：随机获得法力
-                "DiceCurse",           // 骰子诅咒：给目标上骰运惩罚
-                "Buff",                // 加强：数值增减
                 "WhatIsThis",          // 这是啥？：探寻
                 // ---- 第二批：回复 / 召唤 / 演化 ----
                 "Unyielding",          // 不屈：回复
@@ -104,10 +101,7 @@ public sealed class MilkFrogClass : IModClassProvider
                 "Swarm",               // 虫群：多段伤害
                 "BiggerIsBetter",      // 多就是好 大就是棒：全体召唤物加数
                 "Life",                // 生命：洗回牌库 + 检索
-                "FastForward",         // 快进：全体演化
-                "Newborn",             // 新生：伤害
                 "Apocalypse",          // 末日：大数字→数值
-                "Tulpenmanie",         // 郁金香：主能力
                 // ---- 第二批：黑系保留（疫病卡，正常只能由事件/其它卡生成）----
                 "MentalDisturbance",   // 精神污染：虚弱 + 易伤
                 "BlackLotus",          // 黑莲花
