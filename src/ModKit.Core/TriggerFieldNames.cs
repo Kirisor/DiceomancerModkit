@@ -43,9 +43,12 @@ namespace ModKit.Core
         public const string ExtraString = "extraString";
         public const string ColorE = "colorE";
 
+        /// <summary>触发点的卡牌过滤（2026-10-30 暴露；游戏字段 <c>cardCoreInfoCheck</c>）。</summary>
+        public const string CardRequirement = "cardRequirement";
+
         private static readonly string[] All = new string[]
         {
-            "battlePhase", "certainTurn", "relativeCharacter", "extraString", "colorE"
+            "battlePhase", "certainTurn", "relativeCharacter", "extraString", "colorE", "cardRequirement"
         };
 
         /// <summary>平台已暴露的全部附加字段 JSON 名（顺序固定，供诊断稳定输出）。</summary>
@@ -58,7 +61,8 @@ namespace ModKit.Core
             { "certainTurnStartInfo",  CertainTurn },
             { "relativeCharacterType", RelativeCharacter },
             { "extraString",           ExtraString },
-            { "colorE",                ColorE }
+            { "colorE",                ColorE },
+            { "cardCoreInfoCheck",     CardRequirement }
         };
 
         private static readonly Dictionary<string, string> JsonToGame =
@@ -68,12 +72,13 @@ namespace ModKit.Core
             { CertainTurn,           "certainTurnStartInfo" },
             { RelativeCharacter,     "relativeCharacterType" },
             { ExtraString,           "extraString" },
-            { ColorE,                "colorE" }
+            { ColorE,                "colorE" },
+            { CardRequirement,       "cardCoreInfoCheck" }
         };
 
         /// <summary>
         /// 游戏 <c>TriggerTargetInfo</c> 上的字段名 → 平台 JSON 字段名。
-        /// 平台仍未暴露的（<c>cardCoreInfoCheck</c> / <c>SpecialExtraCondition</c>）返回 <c>null</c>。
+        /// 平台仍未暴露的（<c>SpecialExtraCondition</c>）返回 <c>null</c>。
         /// </summary>
         public static string JsonNameOf(string gameFieldName)
         {
@@ -127,7 +132,14 @@ namespace ModKit.Core
             { "CardKeywordTrigger",  new string[] { ExtraString } },
             { "AbilityStandardTrigger", new string[] { ExtraString } },
             { "TakeRest",            new string[] { ExtraString } },
-            { "ManaConsumed",        new string[] { ColorE } }
+            { "ManaConsumed",        new string[] { ColorE } },
+            // ★ 2026-10-30：这五个触发点按**卡牌条件**过滤（TriggerManager.cs:116-121 →
+            //   CardUtils.CheckCardCoreInfoFitCheck），读的就是 cardCoreInfoCheck。
+            { "CastCard",            new string[] { CardRequirement } },
+            { "CastCardFinished",    new string[] { CardRequirement } },
+            { "DrawCard",            new string[] { CardRequirement } },
+            { "DiscardCard",         new string[] { CardRequirement } },
+            { "ExertCard",           new string[] { CardRequirement } }
         };
 
         /// <summary>

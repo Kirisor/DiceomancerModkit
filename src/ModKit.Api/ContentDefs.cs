@@ -800,6 +800,74 @@ namespace ModKit.Api
 
         /// <summary>触发上限的计数方式（JSON 名 <c>triggerLimitType</c>，如每回合/每场战斗）。</summary>
         public string TriggerLimitType { get; set; }
+
+        // ---------------------------------------------------------------------
+        //  稀有度 / 触发点的卡牌过滤 / 池归属（2026-10-30 补）
+        // ---------------------------------------------------------------------
+
+        /// <summary>
+        /// 稀有度（JSON 名 <c>rarity</c>）：<c>Common</c> / <c>Uncommon</c> / <c>Rare</c>。
+        /// </summary>
+        /// <remarks>
+        /// 不写 ⇒ 沿用 <c>artTemplate</c> 那件原版遗物的稀有度
+        /// （平台是克隆模板资产，克隆会连 <c>relicRarity</c> 一起复制）。
+        /// 想精确控制稀有度就显式写，别靠挑模板。
+        /// </remarks>
+        public string Rarity { get; set; }
+
+        /// <summary>
+        /// 卡牌过滤（JSON 名 <c>cardRequirement</c>）：只有满足条件的卡才会触发。
+        /// </summary>
+        /// <remarks>
+        /// 只对读 <c>cardCoreInfoCheck</c> 的触发点有效
+        /// （<c>CastCard</c> / <c>CastCardFinished</c> / <c>DrawCard</c> / <c>DiscardCard</c> / <c>ExertCard</c>）。
+        /// 不写 ⇒ 过滤为空 ⇒ 任意卡都触发。
+        /// </remarks>
+        public CardRequirementSpec CardRequirement { get; set; }
+
+        /// <summary>
+        /// 池归属（JSON 名 <c>poolColors</c>）：给颜色 ⇒ 这些遗物进「按色组专属」集合。
+        /// </summary>
+        /// <remarks>
+        /// 不写 ⇒ 进平台默认的 <c>Standard</c> 集合（**所有职业都能刷到**）。
+        /// 写了 ⇒ 平台另建一个 <c>Colored</c> 集合，<c>colorEs</c> 就是这里给的颜色，
+        /// 而游戏 <c>RelicDataManager.SetCampaignRelicPool</c> 只把
+        /// <c>colorEs ⊆ 本局三色</c> 的 Colored 集合收进池
+        /// ⇒ 奶蛙（紫绿黑）写 <c>["Purple","Green","Black"]</c> 就天然只有奶蛙能刷到。
+        /// </remarks>
+        public List<string> PoolColors { get; set; }
+    }
+
+    /// <summary>
+    /// 遗物触发点的卡牌过滤（JSON <c>cardRequirement</c>，游戏 <c>Card.CardCoreInfoCheck</c>）。
+    /// </summary>
+    /// <remarks>
+    /// 对应游戏字段（反编译 <c>Card/CardCoreInfoCheck.cs</c>）：
+    /// <c>requireHasCardKeyword/requiredKeyword</c>、<c>requireHasCardColorE/requiredColorE</c>、
+    /// <c>requireNoCardColorE/requiredNoColorE</c>、<c>requireRarity/requiredRarities</c>、
+    /// <c>requireDescribeKey</c>。
+    /// <para>
+    /// <c>describeKey</c> 是**必须**的：游戏用它去 <c>CardRequirementDes</c> 表取
+    /// 「什么条件」这句文案（遗物描述会显示出来）。自己的条件要在 mod 的
+    /// i18n 里加一张 <c>CardRequirementDes</c> 表。
+    /// </para>
+    /// </remarks>
+    public sealed class CardRequirementSpec
+    {
+        /// <summary>卡必须带的关键词（如 <c>milk_frog</c>）。</summary>
+        public string Keyword { get; set; }
+
+        /// <summary>卡必须**全部**含有的流派色。</summary>
+        public List<string> Colors { get; set; }
+
+        /// <summary>卡必须**不含**的流派色。</summary>
+        public List<string> ExcludeColors { get; set; }
+
+        /// <summary>稀有度白名单（Common / Uncommon / Rare）。</summary>
+        public List<string> Rarities { get; set; }
+
+        /// <summary><c>CardRequirementDes</c> 表里的条件文案 key（必填）。</summary>
+        public string DescribeKey { get; set; }
     }
 
     /// <summary>

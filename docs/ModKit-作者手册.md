@@ -268,6 +268,12 @@
 | `trigger` | string | ✅ | 触发点（见《效果字典》§四） |
 | `effects` | array | ✅ | 与卡牌同一套写法（§4） |
 | `addToPool` | bool | — | 缺省 `true` 进随机遗物池；`false` 则不由随机池获得 |
+| `rarity` | string | — | `Common`/`Uncommon`/`Rare`。不写则沿用 `artTemplate` 的稀有度（平台是克隆模板，别靠挑模板控制档位） |
+| `poolColors` | string[] | — | 写了 ⇒ 进「按色组专属」的 `Colored` 集合（游戏只放行 `colorEs ⊆ 本局三色` 的职业）；不写 ⇒ 进共用 `Standard` 集合（所有职业都能刷） |
+| `colors` | string[] | — | 遗物自己的色味（显示用），不写则沿用模板 |
+| `triggerLimit` | int | — | 触发次数上限，必须与 `triggerLimitType` 成对 |
+| `triggerLimitType` | string | — | `EachTurn`（每回合重置）/ `EachBattle`（整场 N 次） |
+| `cardRequirement` | object | — | 触发点的卡牌过滤：`keyword` / `colors` / `excludeColors` / `rarities` / **`describeKey`（必填）**。只对 `CastCard` / `CastCardFinished` / `DrawCard` / `DiscardCard` / `ExertCard` 生效 |
 | 触发点附加字段 | 视触发点 | 视触发点 | 见 §5.2 |
 
 遗物**必须**同时有 `trigger` 和 `effects`。
@@ -286,12 +292,22 @@
 
 给触发点**不读**的字段不会崩，但会被忽略并给一条警告（例如在 `BattleStart` 上写 `colorE`）。
 
-### 5.3 `artTemplate` 怎么挑
+### 5.3 遗物池归属：共用还是职业专属
+
+`RelicDataManager.SetCampaignRelicPool` 只收两类集合：`Standard`（全都收）与 `Colored`（仅当 `colorEs ⊆ 本局三色`）。所以：
+
+- **不写 `poolColors`** ⇒ 平台建 `Standard` 集合 ⇒ **所有职业都能刷到**（这是旧行为，别指望它专属）。
+- **写 `poolColors`** ⇒ 平台按同色组另建 `Colored` 集合。例如奶蛙（紫绿黑）写
+  `"poolColors": ["Purple","Green","Black"]`，而没有任何原版职业的三色含 Black
+  ⇒ 这三件遗物**只有奶蛙能刷到**，且和原版的 15 个色组遗物集合同构（各 3 件、1 普通 + 1 罕见 + 1 传说）。
+
+### 5.4 `artTemplate` 怎么挑
+
 
 平台是**克隆**一个原版遗物来造你的遗物，模板的 `extraRelicEffectInfos`（额外效果表）与 `requiredChargeCount`（充能数）会**原样继承**。
 所以要挑 `effects=N+0`（没有额外效果）、`charge=0/-1`（不要充能）的干净模板：在 `BepInEx\LogOutput.log` 里搜 `[relic] ` 摘要行，按这两个条件挑名字。
 
-### 5.4 实例
+### 5.5 实例
 
 ```json
 {

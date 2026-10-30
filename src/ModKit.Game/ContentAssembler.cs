@@ -441,6 +441,66 @@ namespace ModKit.Game
                 so.relicInfo.chargeCount = -1;
                 so.relicInfo.canChargeBeyondRequirement = false;
 
+                // ★ 模板继承清理（2026-10-30）：克隆会把模板的**额外效果表**一起带过来。
+                //   模板挑到一件 effects=1+1 的原版遗物时，作者写的遗物会**偷偷多一个效果**
+                //   （手册 §5.3 让作者自己挑干净模板 —— 那是把平台的坑丢给作者）。
+                //   这里直接清空：遗物只有 mainEffectInfo 一条链路，多效果表一律为 0 条。
+                so.relicInfo.extraRelicEffectInfos = new RelicEffectInfo[0];
+
+                // ★ 稀有度（2026-10-30）：不写就沿用模板；写了就覆盖。
+                //   之前平台从不写 relicRarity ⇒ mod 遗物的档位取决于借到哪件模板，
+                //   想做「1 普通 + 1 罕见 + 1 传说」的组配根本控制不了。
+                if (!string.IsNullOrEmpty(def.Rarity))
+                {
+                    so.relicInfo.relicRarity = RarityToGame(def.Rarity);
+                }
+
+                // ★ 颜色（2026-10-30）：同模板继承问题 —— 奶蛙遗物会显示成模板的颜色。
+                if (def.Colors != null && def.Colors.Count > 0)
+                {
+                    var relicColors = new List<ColorE>();
+                    foreach (var name in def.Colors)
+                    {
+                        var c = ModKit.Core.ManaColorNames.Resolve(name);
+                        if (c.Mapped) { relicColors.Add(GameCapabilitiesProbe.ToGameColor(c.Value)); }
+                    }
+                    if (relicColors.Count > 0) { so.relicInfo.relicColors = relicColors.ToArray(); }
+                }
+
+                // ★ 触发上限（2026-10-30）：Core 早就解析了 triggerLimit/triggerLimitType，
+                //   但装配层一直无条件写 hasTriggerLimit=false ⇒ 作者写了上限也不生效。
+                //   游戏侧生效链路（反编译 Relic/RelicHolder.cs:104/139-145）：
+                //     NoChargeTrigger 且 HasTriggerLimit ⇒ 用 relicInfo.triggerLimit 初始化充能数字，
+                //     每触发一次扣 1，扣到 0 后不再触发。
+                if (def.TriggerLimit.HasValue && def.TriggerLimit.Value > 0)
+                {
+                    so.relicInfo.hasTriggerLimit = true;
+                    so.relicInfo.triggerLimit = def.TriggerLimit.Value;
+                    so.relicInfo.triggerLimitType = ParseRelicTriggerLimitType(def.TriggerLimitType);
+                }
+                else
+                {
+                    so.relicInfo.hasTriggerLimit = false;
+                }
+
+                // ★ 池归属（2026-10-30）：给了 poolColors 就登记，供 RegisterRelicCollection
+                //   把这批遗物放进「按色组专属」的 Colored 集合（不进共用 Standard 集合）。
+                if (def.PoolColors != null && def.PoolColors.Count > 0)
+                {
+                    var poolColors = new List<ColorE>();
+                    foreach (var name in def.PoolColors)
+                    {
+                        var c = ModKit.Core.ManaColorNames.Resolve(name);
+                        if (c.Mapped) { poolColors.Add(GameCapabilitiesProbe.ToGameColor(c.Value)); }
+                    }
+                    if (poolColors.Count > 0)
+                    {
+                        RelicPoolColors[def.Id] = poolColors.ToArray();
+                        _log.Info("遗物池归属：" + def.Id + " 进专属集合（色组 " +
+                            string.Join("+", def.PoolColors.ToArray()) + "）。");
+                    }
+                }
+
                 // ★★ 把作者声明的「触发 + 效果」真正写进去（2026-10-11 补上，这是遗物一直"没作用"的真因）
                 //   此前 AssembleRelic 只改了 relicName / isSpecialRelic / useSpecialDesKey，
                 //   **从未写过 `mainEffectInfo`** —— 于是遗物在功能上就是模板 Abacus，
@@ -503,7 +563,12 @@ namespace ModKit.Game
                             requireCertainTurn = false,
                             turnCount = 0,
                             certainTurnRelationInfo = Combat.BattleWorld.CertainTurnRelationInfo.Before
-                        }
+                        },
+                        // ★ 卡牌过滤（2026-10-30）：CastCard / CastCardFinished / DrawCard /
+                        //   DiscardCard / ExertCard 这五个触发点会读 target.cardCoreInfoCheck
+                        //   （TriggerManager.cs:116-121 → CardUtils.CheckCardCoreInfoFitCheck）。
+                        //   不写 ⇒ 全默认（requireHasCardKeyword=false 等）⇒ 任意卡都触发。
+                        cardCoreInfoCheck = BuildRelicCardRequirement(def.CardRequirement)
                     };
                     // ★★★ 必须传 `ref`（2026-10-14 实机事故后补）★★★
                     //   TriggerTargetInfo 是 **struct**：按值传参时 ApplyRelicTriggerFields 里的所有字段写入
@@ -678,6 +743,95 @@ namespace ModKit.Game
             }
         }
 
+        /// <summary>
+        /// 遗物的 <c>triggerLimitType</c>（<c>EachTurn</c> / <c>EachBattle</c>）→ 游戏枚举。
+        /// </summary>
+        /// <remarks>
+        /// 反编译 <c>Relic/RelicTriggerLimitType.cs</c> 只有两个值：
+        /// <c>EachBattle</c>(0) / <c>EachTurn</c>(1)。写错的名字**在校验器就该被拦**，
+        /// 这里兜底给 <c>EachBattle</c>（更保守：整场只给 N 次，不会变成每回合白拿）。
+        /// </remarks>
+        private static RelicTriggerLimitType ParseRelicTriggerLimitType(string name)
+        {
+            if (string.Equals(name, "EachTurn", StringComparison.Ordinal)) { return RelicTriggerLimitType.EachTurn; }
+            return RelicTriggerLimitType.EachBattle;
+        }
+
+        /// <summary>
+        /// 遗物 <c>cardRequirement</c> → 游戏 <c>Card.CardCoreInfoCheck</c>。
+        /// </summary>
+        /// <remarks>
+        /// 反编译 <c>Card/CardCoreInfoCheck.cs</c> 的字段语义：
+        /// <c>requireDescribeKey</c>（条件文案 key，必须能在 CardRequirementDes 表里查到）、
+        /// <c>requireHasCardKeyword/requiredKeyword</c>（卡必须带某关键词）、
+        /// <c>requireHasCardColorE/requiredColorE</c>（必须含这些色）、
+        /// <c>requireNoCardColorE/requiredNoColorE</c>（必须不含这些色）、
+        /// <c>requireRarity/requiredRarities</c>（稀有度白名单）。
+        /// spec 为 null ⇒ 全默认值 ⇒ 不过滤（与不写这一节等价）。
+        /// </remarks>
+        private static Card.CardCoreInfoCheck BuildRelicCardRequirement(ModKit.Api.CardRequirementSpec spec)
+        {
+            var check = new Card.CardCoreInfoCheck();
+            if (spec == null) { return check; }
+
+            check.requireDescribeKey = spec.DescribeKey;
+
+            if (!string.IsNullOrEmpty(spec.Keyword))
+            {
+                check.requireHasCardKeyword = true;
+                check.requiredKeyword = spec.Keyword;
+            }
+
+            var colors = ToGameColors(spec.Colors);
+            if (colors.Length > 0)
+            {
+                check.requireHasCardColorE = true;
+                check.requiredColorE = colors;
+            }
+
+            var noColors = ToGameColors(spec.ExcludeColors);
+            if (noColors.Length > 0)
+            {
+                check.requireNoCardColorE = true;
+                check.requiredNoColorE = noColors;
+            }
+
+            if (spec.Rarities != null && spec.Rarities.Count > 0)
+            {
+                var rarities = new List<Rarity>();
+                foreach (var r in spec.Rarities) { rarities.Add(RarityToGame(r)); }
+                check.requireRarity = true;
+                check.requiredRarities = rarities.ToArray();
+            }
+
+            return check;
+        }
+
+        /// <summary>颜色名列表 → 游戏的 <c>ColorE[]</c>（未知名字跳过，校验器已拦过）。</summary>
+        private static ColorE[] ToGameColors(List<string> names)
+        {
+            var list = new List<ColorE>();
+            if (names == null) { return list.ToArray(); }
+            foreach (var name in names)
+            {
+                var c = ModKit.Core.ManaColorNames.Resolve(name);
+                if (c.Mapped) { list.Add(GameCapabilitiesProbe.ToGameColor(c.Value)); }
+            }
+            return list.ToArray();
+        }
+
+        /// <summary>
+        /// 遗物池归属：<c>relicName → 该遗物所属色组</c>（只有写了 <c>poolColors</c> 的遗物才有条目）。
+        /// </summary>
+        /// <remarks>
+        /// 用途：<c>RegisterRelicCollection</c> 要把「写了 poolColors 的遗物」放进一个
+        /// <c>Colored</c> 集合（游戏只对 <c>colorEs ⊆ 本局三色</c> 的 Colored 集合放行），
+        /// 而那条路径只拿得到 <c>RelicSo</c>、拿不到 JSON 定义（重建热更时更是只有 SO）。
+        /// 所以装配期把颜色记在这里，按 <c>relicName</c> 反查。
+        /// </remarks>
+        private static readonly Dictionary<string, ColorE[]> RelicPoolColors =
+            new Dictionary<string, ColorE[]>(StringComparer.Ordinal);
+
         private static CardEffectResolveType ResolveTimingToGame(string name)
         {
             var t = ModKit.Core.ResolveTimingNames.Resolve(name);
@@ -707,8 +861,7 @@ namespace ModKit.Game
         }
 
         /// <summary>颜色 → 游戏的单字法力求缩写。</summary>
-        private static string ColorToManaAbbr(string colorName)
-        {
+        private static string ColorToManaAbbr(string colorName)        {
             var c = ModKit.Core.ManaColorNames.Resolve(colorName);
             if (!c.Mapped) { return "V"; }
             switch (c.Value)

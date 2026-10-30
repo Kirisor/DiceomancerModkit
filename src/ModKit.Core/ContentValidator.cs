@@ -184,7 +184,166 @@ namespace ModKit.Core
                 CheckEffects(root, caps, report, id, true);
             }
 
+            // ---- 稀有度 / 卡牌过滤 / 触发上限 / 池归属（2026-10-30）----
+            CheckRelicRarity(root, report, id);
+            CheckRelicCardRequirement(root, hasTrigger ? trigger : null, report, id);
+            CheckRelicTriggerLimit(root, report, id);
+            CheckRelicPoolColors(root, report, id);
+
             return report;
+        }
+
+        /// <summary>遗物 <c>rarity</c>：必须是 Common / Uncommon / Rare 之一。</summary>
+        private static void CheckRelicRarity(JObject root, ValidationReport report, string id)
+        {
+            string rarity = ReadString(root, "rarity");
+            if (string.IsNullOrEmpty(rarity)) { return; }
+            if (!RarityNames.Resolve(rarity).Mapped)
+            {
+                report.Error(id, "rarity",
+                    "未知稀有度 '" + rarity + "'。可选：" + string.Join(" / ", ToArray(RarityNames.AllNames)));
+            }
+        }
+
+        /// <summary>触发点会读 <c>cardCoreInfoCheck</c> 的那批触发点（其余触发点忽略本过滤）。</summary>
+        private static readonly string[] CardFilterTriggers =
+        {
+            "CastCard", "CastCardFinished", "DrawCard", "DiscardCard", "ExertCard"
+        };
+
+        /// <summary>遗物 <c>cardRequirement</c>：必须描述一个条件，且 describeKey 必填。</summary>
+        private static void CheckRelicCardRequirement(JObject root, string trigger, ValidationReport report, string id)
+        {
+            var node = root["cardRequirement"] as JObject;
+            if (node == null)
+            {
+                // 触发点需要卡牌过滤却没写 ⇒ 会对**任意卡**触发（静默变宽），必须提示。
+                if (!string.IsNullOrEmpty(trigger))
+                {
+                    for (int i = 0; i < CardFilterTriggers.Length; i++)
+                    {
+                        if (!string.Equals(CardFilterTriggers[i], trigger, StringComparison.Ordinal)) { continue; }
+                        report.Warn(id, "cardRequirement",
+                            "触发点 '" + trigger + "' 按牌过滤，但没写 cardRequirement ⇒ 会对**任意卡**触发。" +
+                            "想只对某类卡触发，写 {\"keyword\": …, \"describeKey\": …}。");
+                        break;
+                    }
+                }
+                return;
+            }
+
+            bool usable = false;
+            if (!string.IsNullOrEmpty(trigger))
+            {
+                for (int i = 0; i < CardFilterTriggers.Length; i++)
+                {
+                    if (string.Equals(CardFilterTriggers[i], trigger, StringComparison.Ordinal)) { usable = true; break; }
+                }
+            }
+            if (!usable)
+            {
+                report.Warn(id, "cardRequirement",
+                    "触发点 '" + (trigger ?? "(空)") + "' **不读** cardRequirement —— 该过滤会被完全忽略，" +
+                    "遗物会对任意卡触发。会读它的触发点：" + string.Join(" / ", CardFilterTriggers) + "。");
+            }
+
+            bool any = !string.IsNullOrEmpty(ReadString(node, "keyword"))
+                       || ReadStringList(node, "colors").Count > 0
+                       || ReadStringList(node, "excludeColors").Count > 0
+                       || ReadStringList(node, "rarities").Count > 0;
+            if (!any)
+            {
+                report.Error(id, "cardRequirement",
+                    "cardRequirement 里没写任何条件（keyword / colors / excludeColors / rarities 全空）—— " +
+                    "空过滤等于不过滤，却还要求 describeKey，请直接删掉这一节。");
+            }
+
+            // ★ describeKey 必填：游戏用它去 CardRequirementDes 表取条件文案（遗物描述会显示）
+            if (string.IsNullOrEmpty(ReadString(node, "describeKey")))
+            {
+                report.Error(id, "cardRequirement",
+                    "必须给 describeKey —— 它是 CardRequirementDes 表里「条件文本」的 key（遗物描述要用）。" +
+                    "在 mod 的 i18n 里加一张 CardRequirementDes 表并写一条该 key 的文案。");
+            }
+
+            // 颜色名合法性（与费用/卡面同一套名字）
+            CheckColorNames(node, "colors", "cardRequirement", report, id);
+            CheckColorNames(node, "excludeColors", "cardRequirement", report, id);
+
+            // 稀有度白名单合法性
+            var rarities = ReadStringList(node, "rarities");
+            for (int i = 0; i < rarities.Count; i++)
+            {
+                if (!RarityNames.Resolve(rarities[i]).Mapped)
+                {
+                    report.Error(id, "cardRequirement.rarities",
+                        "未知稀有度 '" + rarities[i] + "'。可选：" + string.Join(" / ", ToArray(RarityNames.AllNames)));
+                }
+            }
+        }
+
+        /// <summary>遗物 <c>triggerLimit</c> / <c>triggerLimitType</c>：两个必须成对且取值合法。</summary>
+        private static void CheckRelicTriggerLimit(JObject root, ValidationReport report, string id)
+        {
+            int? limit = ReadIntOrNull(root, "triggerLimit");
+            string type = ReadString(root, "triggerLimitType");
+
+            if (limit == null && string.IsNullOrEmpty(type)) { return; }
+
+            if (limit == null)
+            {
+                report.Error(id, "triggerLimit",
+                    "写了 triggerLimitType 却没写 triggerLimit（次数）—— 上限没有次数是无意义的。");
+                return;
+            }
+            if (limit.Value <= 0)
+            {
+                report.Error(id, "triggerLimit",
+                    "triggerLimit 必须是正整数（现在是 " + limit.Value + "）。不限次数就整段删掉。");
+            }
+            if (string.IsNullOrEmpty(type))
+            {
+                report.Error(id, "triggerLimitType",
+                    "写了 triggerLimit 必须同时写 triggerLimitType —— 否则平台不知道" +
+                    "「每回合重置」还是「整场只算 N 次」。可选：EachTurn / EachBattle。");
+                return;
+            }
+            if (!string.Equals(type, "EachTurn", StringComparison.Ordinal)
+                && !string.Equals(type, "EachBattle", StringComparison.Ordinal))
+            {
+                report.Error(id, "triggerLimitType",
+                    "未知计数方式 '" + type + "'。可选：EachTurn（每回合重置）/ EachBattle（每场战斗重置）。");
+            }
+        }
+
+        /// <summary>遗物 <c>poolColors</c>：颜色名合法即可（空 = 进共用池）。</summary>
+        private static void CheckRelicPoolColors(JObject root, ValidationReport report, string id)
+        {
+            var colors = ReadStringList(root, "poolColors");
+            if (colors.Count == 0) { return; }
+            for (int i = 0; i < colors.Count; i++)
+            {
+                if (!ManaColorNames.Resolve(colors[i]).Mapped)
+                {
+                    report.Error(id, "poolColors",
+                        "未知颜色 '" + colors[i] + "'。可选：Red / Green / Blue / Purple / Void / Black。");
+                }
+            }
+        }
+
+        /// <summary>校验 JSON 里某个色名数组（node 内 <paramref name="field"/>）的取值合法性。</summary>
+        private static void CheckColorNames(JObject node, string field, string section,
+            ValidationReport report, string id)
+        {
+            var colors = ReadStringList(node, field);
+            for (int i = 0; i < colors.Count; i++)
+            {
+                if (!ManaColorNames.Resolve(colors[i]).Mapped)
+                {
+                    report.Error(id, section + "." + field,
+                        "未知颜色 '" + colors[i] + "'。可选：Red / Green / Blue / Purple / Void / Black。");
+                }
+            }
         }
 
         // ---------------------------------------------------------------------
@@ -893,6 +1052,26 @@ namespace ModKit.Core
             if (t == null || t.Type != JTokenType.Integer) { return false; }
             value = (int)t;
             return true;
+        }
+
+        /// <summary>读一个可空整数（缺省 / null / 非整数一律返回 null）。</summary>
+        private static int? ReadIntOrNull(JObject obj, string field)
+        {
+            int value;
+            return TryReadInt(obj, field, out value) ? (int?)value : null;
+        }
+
+        /// <summary>读一个字符串数组（缺省 / null / 非数组一律返回空列表）。</summary>
+        private static List<string> ReadStringList(JObject obj, string field)
+        {
+            var result = new List<string>();
+            var arr = obj[field] as JArray;
+            if (arr == null) { return result; }
+            for (int i = 0; i < arr.Count; i++)
+            {
+                if (arr[i] != null && arr[i].Type == JTokenType.String) { result.Add((string)arr[i]); }
+            }
+            return result;
         }
 
         /// <summary>把字面量字符串列表转数组，便于 <c>string.Join</c>。</summary>

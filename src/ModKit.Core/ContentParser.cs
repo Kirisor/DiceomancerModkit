@@ -113,6 +113,10 @@ namespace ModKit.Core
                 Colors = StrList(root, "colors"),
                 TriggerLimit = IntOrNull(root, "triggerLimit"),
                 TriggerLimitType = Str(root, "triggerLimitType"),
+                // ---- 稀有度 / 卡牌过滤 / 池归属（2026-10-30）----
+                Rarity = Str(root, "rarity"),
+                CardRequirement = ParseCardRequirement(root),
+                PoolColors = StrList(root, "poolColors"),
                 Effects = ParseEffects(root, report)
             };
 
@@ -120,6 +124,21 @@ namespace ModKit.Core
             def.AddToPool = pool == null || pool.Type == JTokenType.Null || pool.Value<bool>();
 
             return new ParseResult<RelicDef>(def, report);
+        }
+
+        /// <summary>遗物的 <c>cardRequirement</c>（触发点卡牌过滤）。缺省/非法一律返回 null。</summary>
+        private static CardRequirementSpec ParseCardRequirement(JObject root)
+        {
+            var node = root["cardRequirement"] as JObject;
+            if (node == null) { return null; }
+            return new CardRequirementSpec
+            {
+                Keyword = Str(node, "keyword"),
+                Colors = StrList(node, "colors"),
+                ExcludeColors = StrList(node, "excludeColors"),
+                Rarities = StrList(node, "rarities"),
+                DescribeKey = Str(node, "describeKey")
+            };
         }
 
         /// <summary>把 JSON 文本解析成 <see cref="I18nDef"/>。</summary>

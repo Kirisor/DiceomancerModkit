@@ -22,9 +22,14 @@
       "minLength": 1,
       "description": "借用的原版遗物名，提供图标与模板。平台在加载期校验其存在。"
     },
+    "rarity": {
+      "type": "string",
+      "enum": ["Common", "Uncommon", "Rare"],
+      "description": "稀有度。不写则沿用模板遗物的稀有度（平台是克隆模板资产）。"
+    },
     "trigger": {
       "type": "string",
-      "description": "触发点名。必须是平台内置的『实际发出』触发点名，不是游戏的 AllTriggerType 枚举。"
+      "description": "触发点名。必须是游戏 TriggerTargetInfo.AllTriggerType 里的取值。"
     },
     "effects": {
       "type": "array",
@@ -35,6 +40,86 @@
       "type": "boolean",
       "default": true,
       "description": "是否进入遗物池。false 时只能通过调试发放获得，便于对照测试。"
+    },
+    "poolColors": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"] },
+      "description": "池归属。写了就进一个 Colored 集合（游戏只对 colorEs ⊆ 本局三色的职业放行）⇒ 职业专属；不写则进共用 Standard 集合（所有职业都能刷）。"
+    },
+    "colors": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"] },
+      "description": "遗物自己的色味（显示用）。不写则沿用模板。"
+    },
+    "triggerLimit": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "触发次数上限。必须与 triggerLimitType 成对出现。"
+    },
+    "triggerLimitType": {
+      "type": "string",
+      "enum": ["EachTurn", "EachBattle"],
+      "description": "上限的计数方式：每回合重置 / 每场战斗重置。"
+    },
+    "cardRequirement": {
+      "type": "object",
+      "description": "触发点的卡牌过滤。只对 CastCard / CastCardFinished / DrawCard / DiscardCard / ExertCard 有效。",
+      "additionalProperties": false,
+      "properties": {
+        "keyword": { "type": "string", "description": "卡必须带的关键词名。" },
+        "colors": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"] },
+          "description": "卡必须全部含有的流派色。"
+        },
+        "excludeColors": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"] },
+          "description": "卡必须不含的流派色。"
+        },
+        "rarities": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Common", "Uncommon", "Rare"] },
+          "description": "稀有度白名单。"
+        },
+        "describeKey": {
+          "type": "string",
+          "description": "CardRequirementDes 表里的条件文案 key（必填，遗物描述要用）。"
+        }
+      }
+    },
+    "battlePhase": {
+      "type": "object",
+      "description": "ChangeBattlePhase 专用：哪个阶段、是开始还是结束。",
+      "additionalProperties": false,
+      "properties": {
+        "phase": { "type": "string", "enum": ["Upkeep", "Main", "End", "CleanUp"] },
+        "isStart": { "type": "boolean" }
+      }
+    },
+    "certainTurn": {
+      "type": "object",
+      "description": "WholeNewTurnStart 专用：第 N 回合 / 之前 / 之后。",
+      "additionalProperties": false,
+      "properties": {
+        "require": { "type": "boolean" },
+        "turnCount": { "type": "integer", "minimum": 0 },
+        "relation": { "type": "string", "enum": ["Before", "Exactly", "After"] }
+      }
+    },
+    "relativeCharacter": {
+      "type": "string",
+      "enum": ["Owner", "Opponents", "All"],
+      "description": "相对谁（Opponents 是复数）。EnemyHealthBarBreak / CharacterRollDice / ChangeBattlePhase / CharacterCheck 会读。"
+    },
+    "extraString": {
+      "type": "string",
+      "description": "触发点的字符串参数（TakeRest / CardKeywordTrigger / AbilityStandardTrigger 用）。"
+    },
+    "colorE": {
+      "type": "string",
+      "enum": ["Red", "Green", "Blue", "Purple", "Void", "Black"],
+      "description": "ManaConsumed 专用：消耗的是哪种颜色的法力。"
     }
   }
 }

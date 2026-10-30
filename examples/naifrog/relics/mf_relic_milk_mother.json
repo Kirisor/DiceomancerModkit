@@ -1,0 +1,26 @@
+{
+  "$schema": "modkit/relic@1",
+  "id": "mf_relic_milk_mother",
+  "name": {
+    "zh-Hans": "奶妈",
+    "en": "Milk Mother"
+  },
+  "artTemplate": "Cake",
+  "rarity": "Rare",
+  "trigger": "CastCard",
+  "cardRequirement": {
+    "keyword": "milk_frog",
+    "describeKey": "Key_MilkFrogOnly"
+  },
+  "poolColors": [
+    "Purple",
+    "Green",
+    "Black"
+  ],
+  "addToPool": true,
+  "effects": [
+    {
+      "custom": "mf_relic_check_grow"
+    }
+  ]
+}

@@ -190,29 +190,73 @@ namespace ModKit.Game
                     return;
                 }
 
-                string collectionName = "ModKit_" + modId;
-                for (int i = 0; i < list.Count; i++)
+                // ---- 2026-10-30：按「池归属」把遗物拆成两类集合 ----
+                //   · 没写 poolColors 的 ⇒ 共用的 Standard 集合（原来的行为，所有职业都能刷）
+                //   · 写了 poolColors 的 ⇒ 按色组分别进 Colored 集合
+                //     游戏 `RelicDataManager.SetCampaignRelicPool` 只收 `colorEs ⊆ 本局三色` 的
+                //     Colored 集合 ⇒ 写 ["Purple","Green","Black"] 就天然只有奶蛙能刷到。
+                var shared = new List<RelicSo>();
+                var groups = new List<RelicColorGroup>();
+                for (int i = 0; i < relics.Count; i++)
                 {
-                    if (list[i] != null && list[i].unlockUpgradeName == collectionName)
+                    var r = relics[i];
+                    if (r == null || r.relicInfo == null) { continue; }
+                    ColorE[] colors;
+                    if (RelicPoolColors.TryGetValue(r.relicInfo.relicName, out colors) && colors != null && colors.Length > 0)
                     {
-                        _log.Info("遗物集合 " + collectionName + " 已存在，跳过重复注册。");
-                        RefreshCampaignRelicPool(manager, result, modId);
-                        return;
+                        RelicColorGroup group = null;
+                        for (int g = 0; g < groups.Count; g++)
+                        {
+                            if (SameColors(groups[g].Colors, colors)) { group = groups[g]; break; }
+                        }
+                        if (group == null) { group = new RelicColorGroup(colors); groups.Add(group); }
+                        group.Relics.Add(r);
+                    }
+                    else
+                    {
+                        shared.Add(r);
                     }
                 }
 
-                // RelicDataCollection 是 public class、字段全 public、无自定义构造 → 可直接 new。
-                // 用 unlockUpgradeName 当"我们建的集合"的标记（Standard 类型下它不参与解锁判定）。
-                var collection = new RelicDataCollection
+                // ---- ① 共用集合（Standard）----
+                if (shared.Count > 0)
                 {
-                    relicDataCollectionType = RelicDataCollectionType.Standard,
-                    requireUnlock = false,
-                    unlockUpgradeName = collectionName,
-                    colorEs = new ColorE[0],
-                    relicSos = relics.ToArray()
-                };
-                list.Add(collection);
-                _log.Info("已注册遗物集合：" + collectionName + "（" + relics.Count + " 件）");
+                    string collectionName = "ModKit_" + modId;
+                    if (FindCollection(list, collectionName) == null)
+                    {
+                        list.Add(new RelicDataCollection
+                        {
+                            relicDataCollectionType = RelicDataCollectionType.Standard,
+                            requireUnlock = false,
+                            unlockUpgradeName = collectionName,
+                            colorEs = new ColorE[0],
+                            relicSos = shared.ToArray()
+                        });
+                        _log.Info("已注册遗物集合：" + collectionName + "（" + shared.Count + " 件，所有职业共用）");
+                    }
+                    else
+                    {
+                        _log.Info("遗物集合 " + collectionName + " 已存在，跳过重复注册。");
+                    }
+                }
+
+                // ---- ② 专属集合（Colored，按色组分组）----
+                for (int g = 0; g < groups.Count; g++)
+                {
+                    var group = groups[g];
+                    string groupName = "ModKit_" + modId + "_c" + g;
+                    if (FindCollection(list, groupName) != null) { continue; }
+                    list.Add(new RelicDataCollection
+                    {
+                        relicDataCollectionType = RelicDataCollectionType.Colored,
+                        requireUnlock = false,
+                        unlockUpgradeName = groupName,
+                        colorEs = group.Colors,
+                        relicSos = group.Relics.ToArray()
+                    });
+                    _log.Info("已注册遗物集合：" + groupName + "（" + group.Relics.Count + " 件，专属色组 " +
+                        string.Join("+", group.Colors) + "）");
+                }
 
                 RefreshCampaignRelicPool(manager, result, modId);
             }
@@ -220,6 +264,41 @@ namespace ModKit.Game
             {
                 result.Warnings.Add(modId + "：注册遗物集合失败（遗物仍可按名查询）—— " + ex.Message);
             }
+        }
+
+        /// <summary>一个「同色组」的专属遗物集合（注册期的临时分组结构）。</summary>
+        private sealed class RelicColorGroup
+        {
+            internal RelicColorGroup(ColorE[] colors)
+            {
+                Colors = colors;
+                Relics = new List<RelicSo>();
+            }
+
+            internal ColorE[] Colors { get; private set; }
+
+            internal List<RelicSo> Relics { get; private set; }
+        }
+
+        private static bool SameColors(ColorE[] a, ColorE[] b)
+        {
+            if (a == null || b == null || a.Length != b.Length) { return false; }
+            for (int i = 0; i < a.Length; i++)
+            {
+                bool found = false;
+                for (int j = 0; j < b.Length; j++) { if (a[i] == b[j]) { found = true; break; } }
+                if (!found) { return false; }
+            }
+            return true;
+        }
+
+        private static RelicDataCollection FindCollection(List<RelicDataCollection> list, string name)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null && list[i].unlockUpgradeName == name) { return list[i]; }
+            }
+            return null;
         }
 
         /// <summary>重建战役遗物池，让刚注册的集合生效。</summary>

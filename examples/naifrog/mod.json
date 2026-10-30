@@ -49,7 +49,10 @@
     "cards/mf_soy_vow.json"
   ],
   "relics": [
-    "relics/milk_frog_talisman.json"
+    "relics/milk_frog_talisman.json",
+    "relics/mf_relic_milk_die.json",
+    "relics/mf_relic_mini_frog.json",
+    "relics/mf_relic_milk_mother.json"
   ],
   "keywords": [
     "keywords/manual_bulwark.json",

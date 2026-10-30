@@ -1,0 +1,31 @@
+{
+  "$schema": "modkit/relic@1",
+  "id": "mf_relic_mini_frog",
+  "name": {
+    "zh-Hans": "微型奶蛙",
+    "en": "Mini Milk Frog"
+  },
+  "artTemplate": "Dirt",
+  "rarity": "Uncommon",
+  "trigger": "CastCardFinished",
+  "cardRequirement": {
+    "keyword": "milk_frog",
+    "describeKey": "Key_MilkFrogOnly"
+  },
+  "triggerLimit": 3,
+  "triggerLimitType": "EachBattle",
+  "poolColors": [
+    "Purple",
+    "Green",
+    "Black"
+  ],
+  "addToPool": true,
+  "effects": [
+    {
+      "builtin": "draw",
+      "amounts": [
+        1
+      ]
+    }
+  ]
+}

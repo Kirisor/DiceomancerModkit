@@ -1,0 +1,25 @@
+{
+  "$schema": "modkit/relic@1",
+  "id": "mf_relic_milk_die",
+  "name": {
+    "zh-Hans": "奶■",
+    "en": "Milk ■"
+  },
+  "artTemplate": "FishTank",
+  "rarity": "Common",
+  "trigger": "EnemyHealthBarBreak",
+  "relativeCharacter": "Opponents",
+  "triggerLimit": 1,
+  "triggerLimitType": "EachTurn",
+  "poolColors": [
+    "Purple",
+    "Green",
+    "Black"
+  ],
+  "addToPool": true,
+  "effects": [
+    {
+      "custom": "mf_relic_settle_frog"
+    }
+  ]
+}

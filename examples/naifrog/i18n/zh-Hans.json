@@ -59,7 +59,10 @@
     },
     "Relic": {
       "naifrog.milk_frog_talisman": "奶蛙之护符",
-      "naifrog.milk_frog_talisman_Des": "当你触发 1 次「奶蛙」时，抽 1 张牌。每回合至多 2 次。"
+      "naifrog.milk_frog_talisman_Des": "当你触发 1 次「奶蛙」时，抽 1 张牌。每回合至多 2 次。",
+      "naifrog.mf_relic_milk_die": "奶■",
+      "naifrog.mf_relic_mini_frog": "微型奶蛙",
+      "naifrog.mf_relic_milk_mother": "奶妈"
     },
     "EffectDescription": {
       "Key_mf_grave_swell": "造成 {Number} 倍你弃牌堆张数的伤害。",

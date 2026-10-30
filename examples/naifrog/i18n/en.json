@@ -102,7 +102,10 @@
     },
     "Relic": {
       "naifrog.milk_frog_talisman": "Milk Frog Talisman",
-      "naifrog.milk_frog_talisman_Des": "When you trigger Milk Frog, draw 1 card. Twice per turn at most."
+      "naifrog.milk_frog_talisman_Des": "When you trigger Milk Frog, draw 1 card. Twice per turn at most.",
+      "naifrog.mf_relic_milk_die": "Milk ■",
+      "naifrog.mf_relic_mini_frog": "Mini Milk Frog",
+      "naifrog.mf_relic_milk_mother": "Milk Mother"
     },
     "PickCardConfigure": {
       "Title_MilkfrogDiscard": "Choose a card to discard",
