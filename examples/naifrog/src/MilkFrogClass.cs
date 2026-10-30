@@ -88,16 +88,12 @@ public sealed class MilkFrogClass : IModClassProvider
 
                 // ---- 第二批：骰子 / 数值改写 ----
                 "DiceBonus",           // 幸运骰子：获得 DiceBonus 能力
-                "DiceTakeLuck",        // 运气窃取：抢敌人的骰运
-                "Nerf",                // 削弱：数值增减
                 "Trick",               // 恶作剧：把数字改成骰子数
                 "Superposition",       // 叠加态：主能力（多色槽，含紫可付）
                 "WhatIsThis",          // 这是啥？：探寻
                 // ---- 第二批：回复 / 召唤 / 演化 ----
                 "Unyielding",          // 不屈：回复
                 "NasalGoo",            // 黏鼻涕：虚弱 + 无力
-                "TheHangedMan",        // 倒吊人：闪避
-                "GlowBerries",         // 发光果：治疗 + 随机增益
                 "Swarm",               // 虫群：多段伤害
                 "BiggerIsBetter",      // 多就是好 大就是棒：全体召唤物加数
                 "Life",                // 生命：洗回牌库 + 检索
