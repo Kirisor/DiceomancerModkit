@@ -430,6 +430,12 @@ namespace ModKit.Game
                 //   第一次跑会有几秒的一次性开销（可用配置关掉；已存在的 PNG 默认复用）。
                 CardArtExporter.TryExport(log);
 
+                // ★ 诊断导出（2026-10-30 新增）：原版**遗物池归属**（哪些遗物进哪个集合）。
+                //   动因：遗物"能否刷出"完全由 19 个 RelicDataSo 集合决定，此前只能 grep
+                //   LogOutput.log 里的 `[relic] … pool=` 行，日志一滚就没了。
+                //   同 CapabilitiesDump/CardArtExporter：只读、失败隔离、放在加载 mod 之前。
+                RelicPoolDump.TryWrite(log);
+
                 if (probeSummary.HasFailures)
                 {
                     log.Warn("部分能力探测失败 —— 相关内容会被判为不可用（而不是静默放行）：");
