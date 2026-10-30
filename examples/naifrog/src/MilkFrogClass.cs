@@ -74,6 +74,10 @@ public sealed class MilkFrogClass : IModClassProvider
                 //       Standard_PurpleGreen(3)  = 演化/混乱转变/莲花
                 //     这 13 张一律不列（它们本来就在池子里）；六个 Standard_Class_* 职业集合
                 //     的真实色组里没有一个 ⊆ {紫,绿,黑}（PGB 其实是 紫+绿+蓝），所以职业池也不会混进别人的牌。
+                //   ★★ 黑系（[疫病 Malady] 卡）正常**不在战役池**里 —— 只由事件或其它卡生成。
+                //     作为 mod 只保留 3 张最贴黑球主题的（精神污染 / 黑莲花 / 黑洞）；
+                //     紫印记 / 绿印记 / 千术 是纯事件卡（剧情奖励），已剔除；
+                //     乌黑触手 / 灾厄 / 折磨 / 幻象 / 究极生物 也是衍生卡，一并剔除。
 
                 // ---- 第一批：非通用集合，只能靠点名进池 ----
                 "Monolith",            // 磐石：格挡（原属 PGV 职业池，不会被自动带进来）
@@ -81,18 +85,18 @@ public sealed class MilkFrogClass : IModClassProvider
                 "QuillSpray",          // 针刺扫射：伤害全体敌人
                 "Mutation",            // 变异：多次随机增益
                 "Ascend",              // 飞升：堆叠增益
-                "BlackTentacle",       // 乌黑触手：伤害 ×2
-                "Calamity",            // 灾厄：骰子惩罚
-                "Torment",             // 折磨：全部减益
 
-                // ---- 第二批：补位到 76 张（2026-10-30）----
-                // ---- 紫：骰子 / 数值改写 ----
+                // ---- 第二批：骰子 / 数值改写 ----
                 "DiceBonus",           // 幸运骰子：获得 DiceBonus 能力
                 "DiceTakeLuck",        // 运气窃取：抢敌人的骰运
                 "Nerf",                // 削弱：数值增减
                 "Trick",               // 恶作剧：把数字改成骰子数
                 "Superposition",       // 叠加态：主能力（多色槽，含紫可付）
-                // ---- 绿紫：回复 / 召唤 / 演化 ----
+                "LinkedPalms",         // 连还手：随机获得法力
+                "DiceCurse",           // 骰子诅咒：给目标上骰运惩罚
+                "Buff",                // 加强：数值增减
+                "WhatIsThis",          // 这是啥？：探寻
+                // ---- 第二批：回复 / 召唤 / 演化 ----
                 "Unyielding",          // 不屈：回复
                 "NasalGoo",            // 黏鼻涕：虚弱 + 无力
                 "TheHangedMan",        // 倒吊人：闪避
@@ -100,15 +104,14 @@ public sealed class MilkFrogClass : IModClassProvider
                 "Swarm",               // 虫群：多段伤害
                 "BiggerIsBetter",      // 多就是好 大就是棒：全体召唤物加数
                 "Life",                // 生命：洗回牌库 + 检索
-                // ---- 黑 / 紫黑 / 绿黑：高风险高收益 ----
-                "Vision",              // 幻象：弃光手牌再抽
+                "FastForward",         // 快进：全体演化
+                "Newborn",             // 新生：伤害
+                "Apocalypse",          // 末日：大数字→数值
+                "Tulpenmanie",         // 郁金香：主能力
+                // ---- 第二批：黑系保留（疫病卡，正常只能由事件/其它卡生成）----
                 "MentalDisturbance",   // 精神污染：虚弱 + 易伤
                 "BlackLotus",          // 黑莲花
-                "BlackHole",           // 黑洞：全体多段 + 无力
-                "MarkOfPurple",        // 紫印记：最大生命 + 作弊上限
-                "FoulPlay",            // 千术
-                "UltimateLifeform",    // 究极生物：全部增益
-                "MarkOfGreen"          // 绿印记：最大生命 + 治疗
+                "BlackHole"            // 黑洞：全体多段 + 无力
             }
         };
     }
