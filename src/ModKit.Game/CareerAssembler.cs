@@ -179,18 +179,27 @@ namespace ModKit.Game
                     // 卡池：优先用 spec.PoolCards（职业自己的卡池，决定整局能否变强）；
                     // 没声明就退化成"初始牌组里的去重卡"。
                     var poolCards = new List<CardSo>();
+                    int vanillaInPool = 0;
                     if (spec.PoolCards != null && spec.PoolCards.Count > 0)
                     {
                         foreach (var rawId in spec.PoolCards)
                         {
-                            string name = Qualify(modId, rawId);
-                            CardSo so = modCards.FirstOrDefault(c => c != null && c.cardName == name);
+                            // ★ 解析顺序与初始牌组一致（2026-10-30）：先按 "<modId>.<id>" 找本 mod 的卡，
+                            //   找不到再当**原版卡名**查游戏数据 —— 职业池里点名原版通用卡是正常需求。
+                            //   之前这里只查 mod 自己的卡，于是作者写原版卡名一律报
+                            //   「卡池引用了不存在的卡」并被静默跳过（池子永远凑不到目标张数）。
+                            CardSo so = ResolveDeckCard(modId, rawId, modCards);
                             if (so == null)
                             {
                                 result.Errors.Add(modId + "：职业 " + spec.Id + " 的卡池引用了不存在的卡 '" + rawId + "'。");
                                 continue;
                             }
-                            if (!poolCards.Contains(so)) { poolCards.Add(so); }
+                            if (!poolCards.Contains(so))
+                            {
+                                poolCards.Add(so);
+                                // 计数只看卡名是否带本 mod 前缀（原版卡名没有前缀）
+                                if (!so.cardName.StartsWith(modId + ".", StringComparison.Ordinal)) { vanillaInPool++; }
+                            }
                         }
                     }
                     // ★ 衍生卡（精粹等）不进职业卡池 —— 它们只能由效果生成（2026-10-24 实机反馈）。
@@ -215,8 +224,9 @@ namespace ModKit.Game
                         startDeck = deckAmounts.ToArray(),
                         startRelic = relicSos.ToArray()
                     });
-                    log.Info("已注册职业牌组集合：" + classKey + "（卡池 " + poolCards.Count + " 张 / 初始牌组 " +
-                        deckAmounts.Count + " 张 / 色组 " + string.Join("+", colorEs.Select(c => c.ToString())) + "）");
+                    log.Info("已注册职业牌组集合：" + classKey + "（卡池 " + poolCards.Count + " 张" +
+                        (vanillaInPool > 0 ? "，其中原版卡 " + vanillaInPool + " 张" : "") +
+                        " / 初始牌组 " + deckAmounts.Count + " 张 / 色组 " + string.Join("+", colorEs.Select(c => c.ToString())) + "）");
                 }
 
                 // ---- 2.2 随机池隔离：把该 mod 的集合/卡登记下来 ----

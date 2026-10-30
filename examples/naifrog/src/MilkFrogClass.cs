@@ -60,7 +60,30 @@ public sealed class MilkFrogClass : IModClassProvider
                 "naifrogseek", "thonasflare", "nainaiphus",
                 // 「奶家人」族（2026-10-24）：奶兔 / 奶狗 / 奶家人 / 奶king / 奶之刻 / 奶蛋？
                 "mf_milk_rabbit", "mf_milk_dog", "mf_milk_family",
-                "mf_milk_king", "mf_milk_clock", "mf_naidan_question"
+                "mf_milk_king", "mf_milk_clock", "mf_naidan_question",
+
+                // ---- 原版通用卡（2026-10-30 点名纳入职业池）----
+                //   ★ 这里写的是**原版卡名**（游戏的 CardSo.cardName），不是 mod 内 id：
+                //     平台的解析顺序与初始牌组一致 —— 先按 "<modId>.<id>" 找本 mod 的卡，
+                //     找不到再当原版卡名去游戏数据里查（CareerAssembler.ResolveDeckCard）。
+                //   ★ 选卡规则：卡面流派色 ⊆ {紫, 绿, 黑}（与职业三色一致），紫 / 绿紫 / 黑 / 紫黑都有。
+                //   ⚠️ 这些卡本来就会随「颜色匹配的原版集合」进战役池，点名进职业集合后
+                //     它们在战役池里会**计两次**（掉率略高于其它同稀有度原版卡）。
+                "CardOfManyThings",    // 万象无常牌：随机结算若干张牌
+                "Catalyst",            // 催化剂：数字翻倍 / 叠加态
+                "Dicify",              // 骰化术：把数字改成骰子数
+                "Collapse",            // 坍塌
+                "TotalDisorientation", // 完全错乱术：抽牌并改数字
+                "BalanceTweak",        // 平衡调整：得法力 + 随机加卡
+                "Evolution",           // 演化（Modify 系）
+                "Monolith",            // 磐石：格挡
+                "QuillSpray",          // 针刺扫射：伤害全体敌人
+                "ChaoticTransform",    // 混乱转变：探寻
+                "Mutation",            // 变异：多次随机增益
+                "Ascend",              // 飞升：堆叠增益
+                "BlackTentacle",       // 乌黑触手：伤害 ×2
+                "Calamity",            // 灾厄：骰子惩罚
+                "Torment"              // 折磨：全部减益
             }
         };
     }
