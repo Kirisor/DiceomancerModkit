@@ -1,5 +1,33 @@
 # 变更记录
 
+## 奶蛙 mod 0.5.0（独立发行版 `naifrog-v0.5.0`）
+
+> 独立于平台版本号发行；**需要平台 0.4.1 及以上**（遗物的稀有度 / 职业专属池 /
+> 卡牌过滤 / 触发上限是 0.4.1 才有的能力，旧平台会把这些字段忽略掉）。
+> 内容规模：卡 41 张（职业卡池 34 / 初始牌组 10 / 衍生 6）＋ 遗物 4 ＋ 关键词 2 ＋ 能力 4。
+
+### 新增遗物（绿黑组 · 职业专属）
+
+三件都带 `poolColors: ["Purple","Green","Black"]` ⇒ 只进奶蛙的遗物池，其它职业刷不到
+（原版 15 个色组专属遗物集合的结构：每组 3 件、1 普通 + 1 罕见 + 1 传说）。
+
+- **奶■**（普通）：敌人的生命值被击破时，结算一张奶蛙牌（手牌优先，其次抽牌堆）。每回合 1 次。
+- **微型奶蛙**（稀有）：你打出奶蛙牌、结算完成时抽 1 张。每场战斗 3 次。
+- **奶妈**（传说）：打出奶蛙牌时检定 10（D20 + 修正）；成功则该牌的**全部数字**在本场战斗内 +1。
+
+### 职业池
+
+- 战役池从 52 条点名列到 **58 条**（34 张 mod 卡 + 24 张原版卡）。
+  去重与实际可刷出张数由平台侧保证：本局共 71 张不同卡（34 mod + 37 原版）。
+- 新增 6 张黑球系疫病卡进池：乌黑触手、幻象、灾厄、不祥黑雾、折磨、祭坛
+  （精神污染 / 黑洞 原本就在池中，未重复列入）。疫病牌的唯一机制副作用是「不能被转换为能量」。
+
+### 平台侧修复（0.4.1，同时生效）
+
+- 战役池按 `CardSo` 去重：mod 卡此前会在池里出现两次（职业集合 + 通用集合各算一次），掉率翻倍。
+- 初始牌组里的打击/格挡不再进随机池（判据：在 StartDeck 而不在 PoolCards）。
+- 遗物装配不再继承模板的多余效果表与充能数。
+
 ## 奶蛙 mod 0.3.2（独立发行版 `naifrog-v0.3.2`）
 
 > 独立于平台版本号发行；需要平台 0.4.0 及以上的 ModKit 平台。
@@ -42,6 +70,32 @@
   且不清空 `dist/`（平台包取自游戏目录当前安装的 dll，同版本号重打会与已发布资产不一致）。
 - 产出 `dist/Naifrog-Mod-0.3.2.zip`；清单完整性校验覆盖 `mod.json` 声明的
   卡 / 遗物 / 关键词 / 能力 / 文案 全部文件。
+
+## v0.4.1
+
+### 新增
+
+- **遗物 `rarity`**：`Common` / `Uncommon` / `Rare`，直接写 `RelicInfo.relicRarity`。
+  不写则沿用 `artTemplate` 的档位（旧行为），想精确控制档位不必再挑模板。
+- **遗物 `poolColors`**：写了就按同色组另建 `Colored` 集合 ⇒ **职业专属遗物**
+  （游戏 `SetCampaignRelicPool` 只收 `colorEs ⊆ 本局三色` 的 Colored 集合）。
+  不写仍走共用 `Standard` 集合（所有职业可刷）。
+- **遗物 `cardRequirement`**：触发点的卡牌过滤（`keyword` / `colors` / `excludeColors` /
+  `rarities` / `describeKey`）→ `TriggerTargetInfo.cardCoreInfoCheck`。
+  只对 `CastCard` / `CastCardFinished` / `DrawCard` / `DiscardCard` / `ExertCard` 生效。
+- **遗物触发上限真正生效**：`triggerLimit` + `triggerLimitType`（`EachTurn` / `EachBattle`）
+  此前装配层无条件写 `hasTriggerLimit = false`，作者写了也没用。
+- **诊断导出 `relics.json`**：原版 19 个 `RelicDataSo` 集合（类型 / 色组 / 稀有度 / 成员 / 中文名）
+  与 `poolByRelic` 反查表落盘到 `BepInEx/ModKitDump/`。
+- **`tools/build-api-core.sh`**：Api / Core 首次可从源码重编（此前是纯发布产物，
+  加字段无从落地）；`tools/build-game.sh` 改为优先引用 `dist/platform` 里的新 Api / Core。
+
+### 修复
+
+- 遗物装配清理克隆继承：`extraRelicEffectInfos` 置空、`mainType` 固定 `NoChargeTrigger`、
+  `chargeCount = -1` ⇒ 不再需要"挑一件干净的原版模板"。
+- 战役卡池去重（同一张 `CardSo` 只保留一份）+ 基础牌不进随机池。
+- 新增 6 张黑球系疫病卡进池的奶蛙侧改动（详见 0.5.0）。
 
 ## v0.4.0
 
