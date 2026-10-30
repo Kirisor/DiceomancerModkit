@@ -273,6 +273,7 @@ namespace ModKit.Game
 
                 var counts = new JObject();
                 var basic = new List<string>();
+                var cols = new JArray();
                 foreach (var key in keys)
                 {
                     var col = map[key];
@@ -288,20 +289,44 @@ namespace ModKit.Game
                     }
                     catch { /* 集合本身坏了不该拖垮整份导出 */ }
 
+                    names.Sort(StringComparer.Ordinal);   // 枚举顺序无保证 ⇒ 排序，保证字节稳定
                     counts[key] = names.Count;
-                    if (key == "BasicCard")
+                    if (key == "BasicCard") { basic = names; }
+
+                    // ---- 新增：集合元信息 + 名单 ----
+                    // 为什么需要它：职业卡池是「本局三色 ⊇ 集合 colorEs」筛出来的，
+                    // 而 colorEs / 类型只有运行期才知道（资产里看不出来）。没有这份元信息，
+                    // 就无法回答「某个职业到底自动吃进了哪些原版卡」。
+                    // ★ 只对 Class / Standard 两类写名单（它们才是 `_colorCardDateCollections`
+                    //   的成员、才会进战役池）；其余特殊集合只给张数，避免把导出撑大。
+                    var one = new JObject();
+                    one["name"] = key;
+                    var typeText = col.cardCollectionType.ToString();
+                    one["type"] = typeText;
+                    one["inRandomPool"] = col.isInRandomPool;
+                    var colorsArr = new JArray();
+                    if (col.colorEs != null)
                     {
-                        names.Sort(StringComparer.Ordinal);
-                        basic = names;
+                        foreach (var c in col.colorEs) { colorsArr.Add(c.ToString()); }
                     }
+                    one["colors"] = colorsArr;
+                    one["count"] = names.Count;
+                    if (typeText == "Class" || typeText == "Standard")
+                    {
+                        one["cards"] = ToArray(names);
+                    }
+                    cols.Add(one);
                 }
 
                 result["_counts"] = counts;
                 result["basicCards"] = ToArray(basic);
+                result["collections"] = cols;
                 result["_note"] =
                     "BasicCard 就是游戏口径的「基础牌」：效果里的「升级随机 N 张基础牌」" +
                     "（EffectSpEffectUpgradeRandomBasicCard / SpecialStoryUpgradeBasicCards）与 " +
-                    "CardUtils 的 \"BasicCard\" 特判都只认这个集合。";
+                    "CardUtils 的 \"BasicCard\" 特判都只认这个集合。" +
+                    " collections 里 type=Class/Standard 的集合才会进战役池，筛选条件是 " +
+                    "collection.colorEs ⊆ 本局三色；它们的 cards 就是全部成员名。";
             }
             catch (Exception ex)
             {
