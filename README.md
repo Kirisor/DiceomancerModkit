@@ -12,11 +12,11 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 | 我要… | 下载 | 说明 |
 |---|---|---|
-| **玩别人做的 mod** | **[ModKit-Platform-0.4.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.0/ModKit-Platform-0.4.0.zip)** | **185 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
+| **玩别人做的 mod** | **[ModKit-Platform-0.4.1.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.1/ModKit-Platform-0.4.1.zip)** | **199 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
 | **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
-| **玩奶蛙 mod** | **[Naifrog-Mod-0.3.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.3.2/Naifrog-Mod-0.3.2.zip)** | **652 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）41 张卡（职业池 22 / 初始牌组 10 / 衍生 6）+ 1 遗物 + 2 关键词 + 4 能力，中英双语；需要平台包 |
+| **玩奶蛙 mod** | **[Naifrog-Mod-0.5.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.5.0/Naifrog-Mod-0.5.0.zip)** | **660 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）41 张卡（职业池 34 / 初始牌组 10 / 衍生 6）+ 4 遗物（3 件职业专属）+ 2 关键词 + 4 能力，中英双语；需要平台包 **0.4.1+** |
 | **看战绩** | **[RunHistory-v0.3.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/runhistory-v0.3.2/RunHistory-v0.3.2.zip)** | **33 KB · 独立插件**：逐局战绩（日期/职业/结果/时长 → 路线、终局卡组、遗物、骰子与检定统计），悬停卡片高亮「第几层拿到」；**支持用种子重开一局（同种子 → 同地图）**；丢进 `BepInEx/plugins` 即用，**不需要平台包** |
-| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.0/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
+| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.1/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
 
 > 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
 > 全部历史版本见 [Releases](https://github.com/Kirisor/DiceomancerModkit/releases)。
@@ -42,16 +42,18 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 ---
 
-## 奶蛙 mod（职业 mod · v0.3.2）
+## 奶蛙 mod（职业 mod · v0.5.0）
 
-下载：**[Naifrog-Mod-0.3.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.3.2/Naifrog-Mod-0.3.2.zip)**（652 KB / 76 个文件，解压即 `naifrog/`）
+下载：**[Naifrog-Mod-0.5.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.5.0/Naifrog-Mod-0.5.0.zip)**（660 KB / 80 个文件，解压即 `naifrog/`）
 
 `examples/naifrog/` 是随仓库维护的完整职业 mod：**奶蛙**（紫 / 绿 / 黑三色护符），
-41 张卡（职业卡池 22 张、初始牌组 10 张、6 张精粹类衍生卡）、1 件起始遗物（奶蛙之护符）、
+41 张卡（职业卡池 34 张、初始牌组 10 张、6 张精粹类衍生卡）、4 件遗物（起始护符 + 三件职业专属）、
 2 个关键词、4 个能力、中英双语文案，带自己的 C# 行为（`naifrog.dll`）。
 召唤族「奶家人」：奶蛋 / 奶鼠 / 奶狗 / 奶兔 / 奶king，加上「奶家人」本体与只作判定目标的「奶蛋？」。
-v0.3.2 新增 12 张卡与 2 个能力（奶蛙王朝、应奶尽奶、笑到最后、豆奶之恋 / 殇 / 誓、黄桃罐头、
-奶之哀、生母之惧、圣奶蛙降临大地、呼叫奶家人、奶蛙存在吗？），并把一批召唤卡稀有度下调为精良。
+v0.5.0 新增绿黑组专属遗物三件（**奶■** 普通：敌人血条被击破时结算一张奶蛙牌，每回合 1 次；
+**微型奶蛙** 稀有：打出奶蛙牌结算完抽 1，每场 3 次；**奶妈** 传说：打出奶蛙牌时检定 10，
+成功则该牌全部数字本场 +1），三件都只进奶蛙的遗物池；职业池扩到 58 条（34 mod + 24 原版），
+本局实际可刷出 71 张不同卡。v0.3.2 新增 12 张卡与 2 个能力。
 
 - 玩：解压后把 `naifrog/` 整个目录放进 `<游戏根>\BepInEx\DiceomancerMods\`，再装平台包；
   **新开一局**时，选球界面左侧会出现**平台自建的职业面板**，选「奶蛙」→「开始游戏」即可
