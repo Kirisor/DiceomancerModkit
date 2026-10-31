@@ -348,6 +348,16 @@ namespace ModKit.Game
 
                 log.Info("职业装配完成：" + classKey + "（名「" + spec.NameZh + "」/ 球 " + CareerPatch.NewOrbColor +
                     "=" + CareerPatch.OrbState + " / 牌组 " + deckAmounts.Count + " 张）");
+
+                // ★ 生涯桶（2026-10-31）：装配完就把"这个职业在生涯数据里的桶"建好并落盘。
+                //   不建的话有两个症状：
+                //     ① 生涯数据面板按 `classInfos.Where(isUnlocked)` 出行 ⇒ mod 职业要等
+                //        第一次"新开一局"（NewGameLaunchInitialize 里 Validate 才补桶）之后才出现；
+                //     ② 升魔盒读 `classInfos` 里该职业的 highestAscensionLevel 算可选上限，
+                //        桶不存在时永远只能选进阶 1。
+                //   桶的 key = classKey（"<modId>.<classId>"），**不借用原版职业名** ——
+                //   借用会污染原版职业的胜场/最高进阶，还会误发"用某职业通关"的成就。
+                EnsureClassUnlocked(classKey, log);
             }
             catch (Exception ex)
             {
@@ -597,17 +607,50 @@ namespace ModKit.Game
                 if (pkg.classInfos == null) { pkg.classInfos = new List<CareerStatisticsInfoForClass>(); }
 
                 var info = pkg.classInfos.FirstOrDefault(c => c != null && c.className == classKey);
+                bool changed = false;
                 if (info == null)
                 {
-                    info = new CareerStatisticsInfoForClass { className = classKey };
+                    info = new CareerStatisticsInfoForClass { className = classKey, isUnlocked = true };
                     pkg.classInfos.Add(info);
-                    if (log != null) { log.Info("职业统计：已补 " + classKey + " 的 classInfos 条目（否则新档开局会空引用）。"); }
+                    changed = true;
+                    if (log != null) { log.Info("职业统计：已补 " + classKey + " 的 classInfos 条目并解锁（否则新档开局会空引用、生涯数据里也看不到这个职业）。"); }
                 }
                 if (!info.isUnlocked)
                 {
                     info.isUnlocked = true;
+                    changed = true;
                     if (log != null) { log.Info("职业统计：已把 " + classKey + " 置为已解锁。"); }
                 }
+
+                // ★ 立刻落盘（2026-10-31）：只改内存的话，下一次 `SaveCareerStatistics` 之前
+                //   退出游戏（主菜单直接关、或崩溃）这条桶就白建了 —— 生涯数据面板下次仍然没有它，
+                //   升魔盒也照样只给进阶 1。这里只在**真的新增/解锁**时写一次，不做无谓 IO。
+                if (changed)
+                {
+                    // 只写"看起来已经加载过"的包：装配可能发生在生涯存档反序列化之前，
+                    // 那时 package 还是空的 —— 对着空包调 SaveCareerStatistics 会把真存档覆盖成空表。
+                    // 判据：里面已经有原版职业桶（Standard_Class_*）。没有就只改内存，
+                    // 反正开新档时原版 Validate() 会自己落盘。
+                    bool looksLoaded = pkg.classInfos.Any(c => c != null && !string.IsNullOrEmpty(c.className) &&
+                        c.className.StartsWith("Standard_Class_", StringComparison.Ordinal));
+                    if (looksLoaded)
+                    {
+                        try
+                        {
+                            var saveLoad = SaveLoad.SaveLoadManager.Instance;
+                            if (saveLoad != null) { saveLoad.SaveCareerStatistics(pkg); }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (log != null) { log.Warn("职业统计：写回 CareerStatisticsSave 失败 —— " + ex.GetType().Name + ": " + ex.Message); }
+                        }
+                    }
+                    else if (log != null)
+                    {
+                        log.Info("职业统计：生涯存档尚未加载，mod 职业桶只在内存里（开新档时原版会落盘）。");
+                    }
+                }
+
             }
             catch (Exception ex)
             {
