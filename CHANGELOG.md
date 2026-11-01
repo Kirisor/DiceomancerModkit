@@ -1,5 +1,27 @@
 # 变更记录
 
+## v0.4.2
+
+### 修复
+
+- **mod 职业的生涯进度现在会真正保存**：生涯数据是按 `className` 分桶存的
+  （`CareerStatisticsPackage.classInfos`），而原版 `AddCampaignInfo` 对**找不到桶**的职业是
+  **静默跳过**（`Where` 空集合，一次循环都不跑）⇒ 那一局的胜负只进了总览、没进职业桶。
+  现在装配完职业即建桶 + 置为已解锁 + 立即落盘（只在存档已加载时写，避免空包覆盖真存档），
+  并在 `AddCampaignInfo` 前补一道"缺桶就补"的守护。
+- **生涯数据面板能看到 mod 职业**：该面板列的是 `classInfos.Where(isUnlocked)`，
+  以前要等第一次"新开一局"（原版 `Validate()` 才补桶）之后才出现；现在启动后就有。
+- **升魔盒不再把 mod 职业压在进阶 1**：可选上限 = 该职业桶的 `highestAscensionLevel + 1`，
+  桶不存在时恒为 1；建桶后随胜利正常提升。
+
+### 说明（成就侧不需要再动）
+
+「全职业进阶 10 / 20」这两个**跨职业聚合**成就在 0.4.1 起已改为按"只看原版职业桶"的口径事后补发
+（`AchievementCompat`）——本次刻意**不删 mod 职业桶**：删桶换判定会让进度丢失，而且
+`GainAchievement` 会顺手 `SaveCareerStatistics`，那一瞬间就会把丢的数据写死。
+
+完整变更见 [CHANGELOG](https://github.com/Kirisor/DiceomancerModkit/blob/main/CHANGELOG.md)。
+
 ## 奶蛙 mod 0.5.0（独立发行版 `naifrog-v0.5.0`）
 
 > 独立于平台版本号发行；**需要平台 0.4.1 及以上**（遗物的稀有度 / 职业专属池 /

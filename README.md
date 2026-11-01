@@ -12,11 +12,11 @@ DICEOMANCER（骰子浪游者）的 mod 内容平台：用 **JSON 声明内容**
 
 | 我要… | 下载 | 说明 |
 |---|---|---|
-| **玩别人做的 mod** | **[ModKit-Platform-0.4.1.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.1/ModKit-Platform-0.4.1.zip)** | **199 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
+| **玩别人做的 mod** | **[ModKit-Platform-0.4.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.2/ModKit-Platform-0.4.2.zip)** | **199 KB · 必装**：平台本体（**4 个 dll** + 配置模板，缺一不可） |
 | **自己做 mod** | **[ModKit-Studio-0.2.3-win-x64.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.2.3-studio/ModKit-Studio-0.2.3-win-x64.zip)** | **55 MB · 双击即用**：编辑器，自包含，不用装 .NET |
-| **玩奶蛙 mod** | **[Naifrog-Mod-0.5.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.5.0/Naifrog-Mod-0.5.0.zip)** | **660 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）41 张卡（职业池 34 / 初始牌组 10 / 衍生 6）+ 4 遗物（3 件职业专属）+ 2 关键词 + 4 能力，中英双语；需要平台包 **0.4.1+** |
+| **玩奶蛙 mod** | **[Naifrog-Mod-0.5.0.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/naifrog-v0.5.0/Naifrog-Mod-0.5.0.zip)** | **660 KB · 职业 mod**：奶蛙（紫/绿/黑三色护符）41 张卡（职业池 34 / 初始牌组 10 / 衍生 6）+ 4 遗物（3 件职业专属）+ 2 关键词 + 4 能力，中英双语；需要平台包 **0.4.1+**（含职业专属遗物与生涯进度修复，建议 0.4.2） |
 | **看战绩** | **[RunHistory-v0.3.2.zip](https://github.com/Kirisor/DiceomancerModkit/releases/download/runhistory-v0.3.2/RunHistory-v0.3.2.zip)** | **33 KB · 独立插件**：逐局战绩（日期/职业/结果/时长 → 路线、终局卡组、遗物、骰子与检定统计），悬停卡片高亮「第几层拿到」；**支持用种子重开一局（同种子 → 同地图）**；丢进 `BepInEx/plugins` 即用，**不需要平台包** |
-| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.1/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
+| **核对完整性** | [SHA256SUMS.txt](https://github.com/Kirisor/DiceomancerModkit/releases/download/v0.4.2/SHA256SUMS.txt) | 平台包 zip 的 sha256（包内另附逐文件 `CHECKSUMS.txt`） |
 
 > 做 mod 的人：**平台包 + Studio 包**都要下（平台包让内容能在游戏里生效）。
 > 全部历史版本见 [Releases](https://github.com/Kirisor/DiceomancerModkit/releases)。
