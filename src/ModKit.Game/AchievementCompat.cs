@@ -34,6 +34,14 @@ using UnityEngine;
 namespace ModKit.Game
 {
     /// <summary>按「原版职业」口径补发「全职业进阶 10 / 20」。</summary>
+    /// <remarks>
+    /// ★ 2026-11-02 决策反转（原 `CareerStatsCompat` 已删除）：早期版本在**读档/写档时把 mod 职业条目摘掉**，
+    /// 想让存档里"只有原版 6 职业"。代价是 mod 职业的生涯进度永远落不了盘 —— 升魔盒对该职业恒为
+    /// 进阶 1、生涯数据里也看不到它（实机：4 局奶蛙全部记在进阶 1，存档里没有它的桶）。
+    /// 现在的分工：**mod 职业条目照常保留并落盘**（进度归进度），
+    /// 「跨职业聚合」判定只在本文件里按 `Standard_Class_` 前缀过滤 —— 两者互不牺牲。
+    /// 别再回去摘表：摘表等于删进度。
+    /// </remarks>
     internal static class AchievementCompat
     {
         private const string AchievementAsc10 = "ACH_CLEAR_ALL_CLASS_ASC_10";
